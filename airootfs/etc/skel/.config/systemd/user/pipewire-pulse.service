@@ -1,0 +1,12 @@
+[Unit]
+Description=PipeWire PulseAudio
+After=pipewire.service
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/pipewire-pulse
+Restart=on-failure
+Slice=session.slice
+
+[Install]
+WantedBy=graphical-session.target

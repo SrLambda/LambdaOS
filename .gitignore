@@ -1,2 +1,7 @@
+.venv/
 out/
+work/
 tmp/
+__pycache__/
+.pytest_cache/
+*.pyc

@@ -1,0 +1,5 @@
+require("core.tui_bridge")
+require("core.env")
+require("core.options")
+require("core.keymaps")
+require("core.lazy")

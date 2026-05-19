@@ -1,0 +1,12 @@
+[Unit]
+Description=PipeWire Multimedia Service
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/pipewire
+Restart=on-failure
+Slice=session.slice
+
+[Install]
+WantedBy=graphical-session.target
