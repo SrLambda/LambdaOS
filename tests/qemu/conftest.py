@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 import subprocess
 import time
@@ -18,45 +17,36 @@ TIMEOUT_CMD = 30
 DEBUG_LOG = Path("/tmp/opencode/qemu_boot_debug.log")
 EXTRACT_DIR = Path("/tmp/opencode/iso_extract")
 
+# Expresión regular robusta: Busca $, # o % ignorando códigos ANSI (colores) entre el símbolo y el espacio
+PROMPT = r"archiso[^\r\n]*[\$#%](?:\x1b\[[0-9;]*[a-zA-Z])*\s*"
 
 def _run(cmd, **kwargs):
-    """Shortcut for subprocess.run with capture."""
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
 
-
 def _extract_from_iso(iso_path, pattern):
-    """Extract a file from ISO using 7z. Returns path string or None."""
     os.makedirs(EXTRACT_DIR, exist_ok=True)
     seven_z = shutil.which("7z")
     if seven_z is None:
         return None
-    result = _run(
-        [seven_z, "x", "-aoa", f"-o{EXTRACT_DIR}", iso_path, pattern, "-y"],
-    )
-    if result.returncode != 0:
-        return None
-    extracted = EXTRACT_DIR / pattern
-    if extracted.is_file():
-        return str(extracted)
+    result = _run([seven_z, "x", "-aoa", f"-o{EXTRACT_DIR}", iso_path, pattern, "-y"])
+    if result.returncode == 0:
+        extracted = EXTRACT_DIR / pattern
+        if extracted.is_file():
+            return str(extracted)
     return None
 
-
 def _get_iso_uuid(iso_path):
-    """Get the ISO9660 filesystem UUID via blkid."""
     result = _run(["blkid", "-s", "UUID", "-o", "value", iso_path])
     if result.returncode == 0 and result.stdout.strip():
         return result.stdout.strip()
     return None
 
-
 def pytest_configure(config):
     config.addinivalue_line("markers", "qemu: tests that require QEMU to run")
-
 
 @pytest.fixture(scope="session")
 def project_root():
     return PROJECT_ROOT
-
 
 @pytest.fixture(scope="session")
 def qemu_binary():
@@ -64,7 +54,6 @@ def qemu_binary():
     if binary is None:
         pytest.skip("qemu-system-x86_64 not found in PATH")
     return binary
-
 
 @pytest.fixture(scope="session")
 def iso_path(project_root):
@@ -74,9 +63,7 @@ def iso_path(project_root):
     candidates = sorted(out_dir.glob("lambda-os-*-x86_64.iso"))
     if not candidates:
         pytest.skip(f"No ISO matching lambda-os-*-x86_64.iso found in {out_dir}")
-    iso = candidates[-1]
-    return str(iso)
-
+    return str(candidates[-1])
 
 @pytest.fixture(scope="session")
 def kernel_path(iso_path):
@@ -85,14 +72,12 @@ def kernel_path(iso_path):
         pytest.skip("Could not extract vmlinuz-linux from ISO")
     return path
 
-
 @pytest.fixture(scope="session")
 def initrd_path(iso_path):
     path = _extract_from_iso(iso_path, "arch/boot/x86_64/initramfs-linux.img")
     if path is None:
         pytest.skip("Could not extract initramfs-linux.img from ISO")
     return path
-
 
 @pytest.fixture(scope="session")
 def iso_uuid(iso_path):
@@ -101,47 +86,22 @@ def iso_uuid(iso_path):
         pytest.skip("Could not determine ISO filesystem UUID")
     return uuid
 
-
 def _try_login(child, username, password, timeout=90):
-    """Try to log in via getty; return True if we get a shell prompt."""
     child.sendline(username)
-    try:
-        child.expect("Password:", timeout=30)
-    except pexpect.TIMEOUT:
-        return False
-    child.sendline(password)
-    try:
-        idx = child.expect(
-            [
-                r"\[" + username + r"@.*\][\$#%>]",
-                username + r"@.*[\$#%>]",
-                r"[\$#%>] ",
-                pexpect.TIMEOUT,
-                pexpect.EOF,
-            ],
-            timeout=timeout,
-        )
-        return idx < 3
-    except pexpect.TIMEOUT:
-        return False
-
+    idx = child.expect([r"Password:", PROMPT, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout)
+    if idx == 0:
+        child.sendline(password)
+        idx2 = child.expect([PROMPT, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout)
+        return idx2 == 0
+    elif idx == 1:
+        return True
+    return False
 
 @pytest.fixture(scope="session")
 def qemu_booted(qemu_binary, kernel_path, initrd_path, iso_path, iso_uuid):
-    """Boot QEMU with direct kernel boot to get serial console output.
-
-    Since the ISO's syslinux config does not include console=ttyS0, we
-    bypass the bootloader entirely using -kernel, -initrd, and -append.
-    The ISO filesystem is still exposed via -cdrom so archiso's init
-    system can find and mount it via archisosearchuuid.
-
-    We use -device isa-serial + -chardev explicitly (instead of -serial)
-    to ensure the ISA serial port is registered in the guest's ACPI/PNP
-    tables so the kernel detects it and creates /dev/ttyS0.
-    """
     append = (
         f"archisobasedir=arch archisosearchuuid={iso_uuid} "
-        f"console=ttyS0,115200 8250.nr_uarts=1"
+        f"console=ttyS0,115200"
     )
 
     cmd = [
@@ -149,13 +109,14 @@ def qemu_booted(qemu_binary, kernel_path, initrd_path, iso_path, iso_uuid):
         "-M", "pc",
         "-m", "2G",
         "-display", "none",
-        "-device", "isa-serial,chardev=serial0",
-        "-chardev", "stdio,id=serial0",
+        "-serial", "stdio",             # <--- LA MAGIA ESTÁ AQUÍ (Universal Serial)
+        "-device", "virtio-rng-pci",    # <--- Mantiene el arranque ultra rápido
         "-kernel", kernel_path,
         "-initrd", initrd_path,
         "-append", append,
         "-cdrom", iso_path,
     ]
+
 
     os.makedirs(DEBUG_LOG.parent, exist_ok=True)
 
@@ -167,56 +128,37 @@ def qemu_booted(qemu_binary, kernel_path, initrd_path, iso_path, iso_uuid):
     try:
         idx = child.expect(
             [
-                r"\[liveuser@.*\][\$#%>]",      # 0: autologin shell (bracketed)
-                r"liveuser@.*[\$#%>]",           # 1: autologin shell (no brackets)
-                r"liveuser@\S+",                 # 2: catch-all liveuser
-                r"[\$#%>] ",                     # 3: bare prompt
-                r"liveuser login:",              # 4: missing autologin (liveuser)
-                r"login:",                       # 5: generic login prompt
-                pexpect.TIMEOUT,                 # 6
-                pexpect.EOF,                     # 7
+                r"liveuser login:",              # 0
+                r"login:",                       # 1
+                PROMPT,                          # 2 (Entró directo por autologin)
+                pexpect.TIMEOUT,
+                pexpect.EOF,
             ],
             timeout=TIMEOUT_BOOT,
         )
 
-        if idx in (4, 5):
-            # No autologin on serial — log in manually.
-            # Liveuser may not exist (created at runtime, sometimes fails).
-            # Fall back to root (empty password) and su to liveuser.
+        if idx in (0, 1):
             login_ok = _try_login(child, "root", "")
             if login_ok:
-                child.sendline("id liveuser 2>/dev/null || (useradd -m liveuser && passwd -d liveuser)")
-                child.expect([r"[\$#%>] ", pexpect.TIMEOUT], timeout=30)
+                child.sendline("useradd -m liveuser 2>/dev/null; passwd -d liveuser 2>/dev/null")
+                child.expect([PROMPT, pexpect.TIMEOUT], timeout=30)
                 child.sendline("su - liveuser")
-                child.expect(
-                    [
-                        r"\[liveuser@.*\][\$#%>]",
-                        r"liveuser@.*[\$#%>]",
-                        r"liveuser@\S+",
-                        r"[\$#%>] ",
-                        pexpect.TIMEOUT,
-                        pexpect.EOF,
-                    ],
-                    timeout=30,
-                )
+                child.expect([PROMPT, pexpect.TIMEOUT, pexpect.EOF], timeout=30)
             else:
-                _dump_last_output(child, "root manual login prompt")
-        elif idx >= 6:
-            _dump_last_output(child, "autologin shell prompt")
+                _dump_last_output(child, "Fallo al loguear root")
+        elif idx >= 3:
+            _dump_last_output(child, "Timeout esperando login prompt")
 
         time.sleep(1)
-        child.expect([r"[\$#%>] ", pexpect.TIMEOUT], timeout=5)
-
         yield child
     finally:
         if child.isalive():
             try:
                 child.sendline("sudo poweroff")
                 child.expect(pexpect.EOF, timeout=15)
-            except (pexpect.TIMEOUT, pexpect.EOF, OSError):
+            except Exception:
                 pass
             child.close(force=True)
-
 
 def _dump_last_output(child, phase_name):
     before = getattr(child, "before", None) or ""
@@ -230,18 +172,11 @@ def _dump_last_output(child, phase_name):
     )
     with open(str(DEBUG_LOG), "a") as f:
         f.write(trace)
-    pytest.fail(
-        f"QEMU did not reach expected state: {phase_name}.\n"
-        f"Last output (truncated to 3000 chars):\n{snippet}\n"
-        f"Full debug log: {DEBUG_LOG}"
-    )
-
+    pytest.fail(f"QEMU did not reach expected state: {phase_name}.\nLog: {DEBUG_LOG}")
 
 @pytest.fixture(scope="session")
 def qemu_logged_in(qemu_booted):
     child = qemu_booted
-
     child.sendline("cd ~/dotfiles && stow */ 2>&1")
-    child.expect([r"[\$#%>] ", pexpect.TIMEOUT, pexpect.EOF], timeout=TIMEOUT_STOW)
-
+    child.expect([PROMPT, pexpect.TIMEOUT, pexpect.EOF], timeout=TIMEOUT_STOW)
     return child

@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = base
+
+[Action]
+Description = Creando el usuario liveuser...
+When = PostTransaction
+Exec = /bin/sh -c 'useradd -m -g users -G wheel,video,audio,input,storage -s /bin/bash liveuser && passwd -d liveuser'
