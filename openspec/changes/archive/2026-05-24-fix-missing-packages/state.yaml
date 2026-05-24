@@ -1,0 +1,8 @@
+change: fix-missing-packages
+phase: propose
+status: complete
+started: "2026-05-24"
+artifacts:
+  exploration: openspec/changes/fix-missing-packages/exploration.md
+  proposal: openspec/changes/fix-missing-packages/proposal.md
+next: spec
