@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LambdaOS — Qtile Desktop Mockup</title>
+
+  <!-- FontAwesome for workspace icons and widget icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
+
+  <!-- Monoid Nerd Font (fallback to system monospace if unavailable) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/monoid@4.5.0/index.min.css">
+
+  <style>
+    /* ========================================
+       PHASE 2: CSS — Base + Themes
+       (Phase 1: HTML Structure only — CSS stubs)
+       ======================================== */
+
+    /* Reset */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Monoid Nerd Font', 'Fira Code', 'JetBrains Mono', monospace;
+    }
+
+    /* ========================================
+       THEME SYSTEM — All 5 themes from theme.py
+       ======================================== */
+
+    :root[data-theme="catppuccin"] {
+      --bg: #1e1e2e;
+      --fg: #cdd6f4;
+      --primary: #cba6f7;
+      --secondary: #89b4fa;
+      --accent: #f5c2e7;
+      --urgent: #f38ba8;
+      --inactive: #45475a;
+      --bar-bg: #181825;
+      --bar-fg: #cdd6f4;
+    }
+
+    :root[data-theme="gruvbox"] {
+      --bg: #282828;
+      --fg: #ebdbb2;
+      --primary: #d79921;
+      --secondary: #458588;
+      --accent: #b16286;
+      --urgent: #cc241d;
+      --inactive: #3c3836;
+      --bar-bg: #1d2021;
+      --bar-fg: #ebdbb2;
+    }
+
+    :root[data-theme="tokyonight"] {
+      --bg: #1a1b26;
+      --fg: #c0caf5;
+      --primary: #bb9af7;
+      --secondary: #7aa2f7;
+      --accent: #ff9e64;
+      --urgent: #f7768e;
+      --inactive: #3b4261;
+      --bar-bg: #16161e;
+      --bar-fg: #c0caf5;
+    }
+
+    :root[data-theme="nord"] {
+      --bg: #2e3440;
+      --fg: #d8dee9;
+      --primary: #81a1c1;
+      --secondary: #88c0d0;
+      --accent: #b48ead;
+      --urgent: #bf616a;
+      --inactive: #434c5e;
+      --bar-bg: #3b4252;
+      --bar-fg: #d8dee9;
+    }
+
+    :root[data-theme="onedark"] {
+      --bg: #282c34;
+      --fg: #abb2bf;
+      --primary: #c678dd;
+      --secondary: #61afef;
+      --accent: #e5c07b;
+      --urgent: #e06c75;
+      --inactive: #3e4452;
+      --bar-bg: #21252b;
+      --bar-fg: #abb2bf;
+    }
+
+    /* ========================================
+       PHASE 3: CSS — Responsive
+       ======================================== */
+
+    /* Desktop: 769px and above
+       (Explicit reinforcement of base styles)
+       ---------------------------------------- */
+    @media (min-width: 769px) {
+      :root {
+        --monadtall-main-ratio: 60%;
+        --max-columns: 999;
+      }
+
+      #bar {
+        gap: 12px;
+        padding: 0 8px;
+      }
+
+      #keybindings {
+        width: 380px;
+      }
+
+      #desktop {
+        overflow: hidden;
+      }
+
+      .window {
+        position: absolute;
+      }
+    }
+
+    /* Tablet: 481px–768px
+       Reduced chrome, layout ratios adjusted for smaller screens
+       ---------------------------------------- */
+    @media (max-width: 768px) and (min-width: 481px) {
+      :root {
+        --monadtall-main-ratio: 50%;
+        --max-columns: 2;
+      }
+
+      #bar {
+        gap: 8px;
+        padding: 0 6px;
+      }
+
+      #keybindings {
+        width: 300px;
+      }
+    }
+
+    /* Mobile: 480px and below
+       Stacked windows, minimal bar, fullscreen overlays
+       ---------------------------------------- */
+    @media (max-width: 480px) {
+      :root {
+        --monadtall-main-ratio: 100%;
+        --max-columns: 1;
+      }
+
+      /* Bar: only GroupBox + Clock visible, horizontally scrollable */
+      #bar {
+        gap: 6px;
+        padding: 0 6px;
+        overflow-x: auto;
+        scrollbar-width: none; /* Firefox */
+      }
+
+      #bar::-webkit-scrollbar {
+        display: none;
+      }
+
+      #current-layout,
+      #window-name,
+      #systray,
+      #volume,
+      #battery {
+        display: none;
+      }
+
+      /* Desktop: vertical stacking, internal scroll */
+      #desktop {
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 8px 0;
+      }
+
+      .window {
+        position: relative !important;
+        width: 94% !important;
+        height: auto !important;
+        min-height: 180px !important;
+        left: auto !important;
+        top: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        margin: 6px auto !important;
+      }
+
+      /* Keybindings panel: fullscreen overlay */
+      #keybindings {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        border-radius: 0;
+        padding: 12px;
+      }
+
+      /* Theme selector: compact, anchored bottom-right */
+      #theme-selector {
+        top: auto;
+        bottom: 8px;
+        right: 8px;
+        font-size: 10px;
+        padding: 3px 6px;
+      }
+
+      /* Keybindings toggle: compact, anchored bottom-right */
+      #keybindings-toggle {
+        top: auto;
+        bottom: 8px;
+        right: 120px;
+        font-size: 10px;
+        padding: 3px 8px;
+      }
+
+      /* Super badge: smaller */
+      #super-badge {
+        font-size: 9px;
+        padding: 3px 8px;
+        bottom: 8px;
+        left: 8px;
+      }
+
+      /* Notifications: full-width, bottom-aligned */
+      #notifications {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+      }
+
+      .notification {
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
+    /* ========================================
+       BASE STYLES (Phase 1)
+       ======================================== */
+
+    /* Desktop area */
+    #desktop {
+      position: absolute;
+      top: 32px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg, #1e1e2e);
+      overflow: hidden;
+    }
+
+    /* Top bar */
+    #bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 12px;
+      background-color: var(--bar-bg, #181825);
+      color: var(--bar-fg, #cdd6f4);
+      font-size: 12px;
+      opacity: 0.95;
+      z-index: 1000;
+    }
+
+    /* Bar widget base */
+    .bar-widget {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    /* GroupBox — workspace indicators */
+    #groupbox {
+      display: flex;
+      gap: 4px;
+      padding: 2px 4px;
+    }
+
+    #groupbox .workspace {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 22px;
+      border: 2px solid transparent;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--inactive, #45475a);
+      transition: color 150ms, border-color 150ms, background-color 150ms;
+    }
+
+    #groupbox .workspace.active {
+      color: var(--fg, #cdd6f4);
+      background-color: var(--primary, #cba6f7);
+      border-color: var(--primary, #cba6f7);
+    }
+
+    #groupbox .workspace:hover:not(.active) {
+      color: var(--fg, #cdd6f4);
+    }
+
+    /* CurrentLayout indicator */
+    #current-layout {
+      color: var(--accent, #f5c2e7);
+      font-weight: 600;
+    }
+
+    /* WindowName — focused window title */
+    #window-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    /* SystemTray placeholder */
+    #systray {
+      display: flex;
+      gap: 8px;
+      opacity: 0.7;
+    }
+
+    #systray i {
+      font-size: 12px;
+    }
+
+    /* Volume widget */
+    #volume {
+      color: var(--secondary, #89b4fa);
+    }
+
+    /* Battery widget */
+    #battery {
+      color: var(--secondary, #89b4fa);
+    }
+
+    /* Clock widget */
+    #clock {
+      color: var(--fg, #cdd6f4);
+      font-size: 12px;
+    }
+
+    /* Theme selector */
+    #theme-selector {
+      position: fixed;
+      top: 38px;
+      right: 8px;
+      z-index: 1001;
+      background-color: var(--bar-bg, #181825);
+      color: var(--bar-fg, #cdd6f4);
+      border: 1px solid var(--inactive, #45475a);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    #theme-selector:focus {
+      outline: none;
+      border-color: var(--primary, #cba6f7);
+    }
+
+    /* Keybindings toggle button */
+    #keybindings-toggle {
+      position: fixed;
+      top: 38px;
+      right: 160px;
+      z-index: 1001;
+      background-color: var(--bar-bg, #181825);
+      color: var(--bar-fg, #cdd6f4);
+      border: 1px solid var(--inactive, #45475a);
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    #keybindings-toggle:hover {
+      border-color: var(--primary, #cba6f7);
+    }
+
+    /* Keybindings panel */
+    #keybindings {
+      position: fixed;
+      top: 70px;
+      right: 8px;
+      bottom: 8px;
+      width: 380px;
+      background-color: var(--bg, #1e1e2e);
+      border: 1px solid var(--inactive, #45475a);
+      border-radius: 6px;
+      padding: 16px;
+      overflow-y: auto;
+      z-index: 1002;
+      display: none;
+    }
+
+    #keybindings.visible {
+      display: block;
+    }
+
+    #keybindings h2 {
+      font-size: 16px;
+      color: var(--primary, #cba6f7);
+      margin-bottom: 12px;
+    }
+
+    #keybindings h3 {
+      font-size: 13px;
+      color: var(--accent, #f5c2e7);
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+
+    #keybindings table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    #keybindings td {
+      padding: 3px 6px;
+      border-bottom: 1px solid var(--inactive, #45475a);
+    }
+
+    #keybindings td:first-child {
+      color: var(--secondary, #89b4fa);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    #keybindings .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: var(--fg, #cdd6f4);
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* Super key badge */
+    #super-badge {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      background-color: var(--primary, #cba6f7);
+      color: var(--bg, #1e1e2e);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      z-index: 1003;
+      display: none;
+    }
+
+    #super-badge.visible {
+      display: block;
+    }
+
+    /* Notification container */
+    #notifications {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      z-index: 1004;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .notification {
+      background-color: var(--primary, #cba6f7);
+      color: var(--bg, #1e1e2e);
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      animation: slideIn 200ms ease-out, fadeOut 300ms ease-in 1.7s forwards;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    /* ========================================
+       WINDOW STYLES (Phase 1)
+       ======================================== */
+
+    .window {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      border: 2px solid var(--inactive, #45475a);
+      border-radius: 4px;
+      overflow: hidden;
+      background-color: var(--bg, #1e1e2e);
+      transition: left 200ms, top 200ms, width 200ms, height 200ms, transform 200ms, box-shadow 200ms;
+    }
+
+    .window.focused {
+      border-color: var(--primary, #cba6f7);
+      z-index: 100;
+    }
+
+    .window.floating {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      z-index: 200;
+    }
+
+    .window.floating .window-title .floating-badge {
+      display: inline-block;
+    }
+
+    .window-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 8px;
+      background-color: var(--bar-bg, #181825);
+      color: var(--bar-fg, #cdd6f4);
+      font-size: 11px;
+      cursor: move;
+      user-select: none;
+    }
+
+    .window-title .window-name {
+      font-weight: 600;
+    }
+
+    .window-title .floating-badge {
+      display: none;
+      background-color: var(--accent, #f5c2e7);
+      color: var(--bg, #1e1e2e);
+      padding: 1px 5px;
+      border-radius: 2px;
+      font-size: 9px;
+      margin-left: 8px;
+      font-weight: 700;
+    }
+
+    .window-title .window-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .window-title .window-controls button {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 0;
+    }
+
+    .window-title .window-controls .btn-close {
+      background-color: var(--urgent, #f38ba8);
+    }
+
+    .window-title .window-controls .btn-minimize {
+      background-color: var(--inactive, #45475a);
+    }
+
+    .window-content {
+      flex: 1;
+      overflow: hidden;
+      font-family: 'Monoid Nerd Font', 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    /* Kitty Terminal */
+    .window.kitty .window-content {
+      background-color: var(--bg, #1e1e2e);
+      color: var(--fg, #cdd6f4);
+      padding: 8px;
+      line-height: 1.6;
+    }
+
+    .window.kitty .prompt {
+      color: var(--primary, #cba6f7);
+    }
+
+    .window.kitty .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 14px;
+      background-color: var(--fg, #cdd6f4);
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    /* Chromium Browser */
+    .window.chromium .window-content {
+      display: flex;
+      flex-direction: column;
+      background-color: #fff;
+      color: #333;
+    }
+
+    .window.chromium .tab-bar {
+      display: flex;
+      align-items: center;
+      background-color: #202124;
+      padding: 4px 8px 0;
+      gap: 2px;
+    }
+
+    .window.chromium .tab {
+      background-color: #35363a;
+      color: #e8eaed;
+      padding: 4px 12px;
+      border-radius: 8px 8px 0 0;
+      font-size: 11px;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .window.chromium .address-bar {
+      display: flex;
+      align-items: center;
+      background-color: #35363a;
+      padding: 4px 8px;
+      gap: 6px;
+    }
+
+    .window.chromium .address-bar input {
+      flex: 1;
+      background-color: #202124;
+      border: none;
+      color: #e8eaed;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-family: inherit;
+    }
+
+    .window.chromium .page-content {
+      flex: 1;
+      padding: 20px;
+      background-color: #fff;
+      color: #333;
+    }
+
+    .window.chromium .page-content h1 {
+      font-size: 20px;
+      color: var(--primary, #cba6f7);
+      margin-bottom: 8px;
+    }
+
+    .window.chromium .page-content p {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #555;
+    }
+
+    /* Yazi File Manager */
+    .window.yazi .window-content {
+      display: flex;
+      background-color: var(--bg, #1e1e2e);
+      color: var(--fg, #cdd6f4);
+      font-size: 12px;
+    }
+
+    .window.yazi .file-list {
+      flex: 1;
+      padding: 4px 0;
+      overflow-y: auto;
+    }
+
+    .window.yazi .file-item {
+      display: flex;
+      align-items: center;
+      padding: 2px 8px;
+      cursor: pointer;
+    }
+
+    .window.yazi .file-item.selected {
+      background-color: var(--primary, #cba6f7);
+      color: var(--bg, #1e1e2e);
+    }
+
+    .window.yazi .file-item i {
+      width: 18px;
+      margin-right: 6px;
+      text-align: center;
+    }
+
+    .window.yazi .file-item .file-name {
+      flex: 1;
+    }
+
+    .window.yazi .file-item .file-size {
+      color: var(--inactive, #45475a);
+      font-size: 10px;
+      margin-left: 8px;
+    }
+
+    .window.yazi .file-item.selected .file-size {
+      color: var(--bg, #1e1e2e);
+    }
+
+    .window.yazi .preview-pane {
+      width: 40%;
+      border-left: 1px solid var(--inactive, #45475a);
+      padding: 8px;
+      overflow-y: auto;
+    }
+
+    .window.yazi .preview-pane .preview-title {
+      color: var(--primary, #cba6f7);
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 11px;
+    }
+
+    .window.yazi .preview-pane pre {
+      font-size: 10px;
+      line-height: 1.4;
+      color: var(--fg, #cdd6f4);
+      white-space: pre-wrap;
+    }
+
+    .window.yazi .status-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 8px;
+      background-color: var(--bar-bg, #181825);
+      color: var(--bar-fg, #cdd6f4);
+      font-size: 10px;
+    }
+
+    .window.yazi .status-bar .mode {
+      color: var(--primary, #cba6f7);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================
+       PHASE 1: HTML Structure
+       ======================================== -->
+
+  <!-- Top Bar -->
+  <header id="bar">
+    <!-- GroupBox: 5 workspace indicators -->
+    <div id="groupbox" class="bar-widget">
+      <div class="workspace active" data-ws="1" title="Terminal">
+        <i class="fa-solid fa-terminal"></i>
+      </div>
+      <div class="workspace" data-ws="2" title="Code">
+        <i class="fa-solid fa-code"></i>
+      </div>
+      <div class="workspace" data-ws="3" title="Files">
+        <i class="fa-solid fa-folder"></i>
+      </div>
+      <div class="workspace" data-ws="4" title="Music">
+        <i class="fa-solid fa-music"></i>
+      </div>
+      <div class="workspace" data-ws="5" title="Entertainment">
+        <i class="fa-solid fa-gamepad"></i>
+      </div>
+    </div>
+
+    <!-- CurrentLayout indicator -->
+    <div id="current-layout" class="bar-widget">
+      <i class="fa-solid fa-table-columns"></i>
+      <span>MonadTall</span>
+    </div>
+
+    <!-- WindowName — focused window title -->
+    <div id="window-name" class="bar-widget">
+      <span>Kitty</span>
+    </div>
+
+    <!-- SystemTray placeholder -->
+    <div id="systray" class="bar-widget">
+      <i class="fa-solid fa-wifi" title="Network"></i>
+      <i class="fa-solid fa-bell" title="Notifications"></i>
+    </div>
+
+    <!-- Volume widget -->
+    <div id="volume" class="bar-widget">
+      <i class="fa-solid fa-volume-high"></i>
+      <span>75%</span>
+    </div>
+
+    <!-- Battery widget -->
+    <div id="battery" class="bar-widget">
+      <i class="fa-solid fa-battery-three-quarters"></i>
+      <span>82%</span>
+    </div>
+
+    <!-- Clock widget -->
+    <div id="clock" class="bar-widget">
+      <span id="clock-time">--:--</span>
+    </div>
+  </header>
+
+  <!-- Desktop Area -->
+  <main id="desktop">
+    <!-- Simulated Windows (Phase 1: static placement) -->
+
+    <!-- Kitty Terminal -->
+    <div class="window kitty focused" data-window-id="0" data-app="kitty" data-ws="1">
+      <div class="window-title">
+        <span class="window-name">Kitty</span>
+        <span class="floating-badge">FLOAT</span>
+        <div class="window-controls">
+          <button class="btn-minimize" title="Minimize"></button>
+          <button class="btn-close" title="Close"></button>
+        </div>
+      </div>
+      <div class="window-content">
+        <div>
+          <span class="prompt">lambda@lambdaos</span> <span style="color: var(--secondary, #89b4fa)">~</span> %
+        </div>
+        <div style="color: var(--inactive, #45475a)">Last login: Sat May 24 10:30:00 on tty1</div>
+        <div>&nbsp;</div>
+        <div style="color: var(--secondary, #89b4fa)">Welcome to LambdaOS!</div>
+        <div style="color: var(--inactive, #45475a)">Arch Linux + Qtile + TUI Configurator</div>
+        <div>&nbsp;</div>
+        <div>
+          <span class="prompt">lambda@lambdaos</span> <span style="color: var(--secondary, #89b4fa)">~</span> % <span class="cursor"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chromium Browser -->
+    <div class="window chromium" data-window-id="1" data-app="chromium" data-ws="1">
+      <div class="window-title">
+        <span class="window-name">Chromium</span>
+        <span class="floating-badge">FLOAT</span>
+        <div class="window-controls">
+          <button class="btn-minimize" title="Minimize"></button>
+          <button class="btn-close" title="Close"></button>
+        </div>
+      </div>
+      <div class="window-content">
+        <div class="tab-bar">
+          <div class="tab">
+            <i class="fa-brands fa-chrome"></i> LambdaOS — Welcome
+          </div>
+        </div>
+        <div class="address-bar">
+          <i class="fa-solid fa-lock" style="color: #4caf50; font-size: 11px;"></i>
+          <input type="text" value="https://lambdaos.local/welcome" readonly>
+        </div>
+        <div class="page-content">
+          <h1>Welcome to LambdaOS</h1>
+          <p>A minimal, tiling-window-manager-first Arch Linux distribution built for developers who value keyboard-driven workflows.</p>
+          <p style="margin-top: 12px;">Powered by <strong>Qtile</strong>, <strong>Kitty</strong>, <strong>Neovim</strong>, and a custom <strong>TUI Configurator</strong>.</p>
+          <p style="margin-top: 12px; color: #888; font-size: 11px;">Press <kbd style="background: #eee; padding: 2px 6px; border-radius: 3px;">Super+?</kbd> to see all keybindings.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Yazi File Manager -->
+    <div class="window yazi" data-window-id="2" data-app="yazi" data-ws="1">
+      <div class="window-title">
+        <span class="window-name">Yazi</span>
+        <span class="floating-badge">FLOAT</span>
+        <div class="window-controls">
+          <button class="btn-minimize" title="Minimize"></button>
+          <button class="btn-close" title="Close"></button>
+        </div>
+      </div>
+      <div class="window-content">
+        <div class="file-list">
+          <div class="file-item selected">
+            <i class="fa-solid fa-folder" style="color: var(--secondary, #89b4fa);"></i>
+            <span class="file-name">dotfiles</span>
+            <span class="file-size">4.0K</span>
+          </div>
+          <div class="file-item">
+            <i class="fa-solid fa-folder" style="color: var(--secondary, #89b4fa);"></i>
+            <span class="file-name">projects</span>
+            <span class="file-size">4.0K</span>
+          </div>
+          <div class="file-item">
+            <i class="fa-solid fa-file" style="color: var(--fg, #cdd6f4);"></i>
+            <span class="file-name">.zshrc</span>
+            <span class="file-size">2.1K</span>
+          </div>
+          <div class="file-item">
+            <i class="fa-solid fa-file" style="color: var(--fg, #cdd6f4);"></i>
+            <span class="file-name">os_theme.json</span>
+            <span class="file-size">48B</span>
+          </div>
+          <div class="file-item">
+            <i class="fa-solid fa-file" style="color: var(--fg, #cdd6f4);"></i>
+            <span class="file-name">tui_settings.json</span>
+            <span class="file-size">128B</span>
+          </div>
+        </div>
+        <div class="preview-pane">
+          <div class="preview-title">os_theme.json</div>
+          <pre>{
+  "theme": "catppuccin",
+  "bar_opacity": 0.95,
+  "border_width": 2
+}</pre>
+        </div>
+        <div class="status-bar">
+          <span class="mode">NORMAL</span>
+          <span>/home/lambda</span>
+          <span>5 items</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Theme Selector -->
+  <select id="theme-selector" title="Switch theme">
+    <option value="catppuccin">Catppuccin</option>
+    <option value="gruvbox">Gruvbox</option>
+    <option value="tokyonight">Tokyo Night</option>
+    <option value="nord">Nord</option>
+    <option value="onedark">One Dark</option>
+  </select>
+
+  <!-- Keybindings Toggle Button -->
+  <button id="keybindings-toggle" title="Show keybindings">
+    <i class="fa-solid fa-keyboard"></i> Keys
+  </button>
+
+  <!-- Keybindings Panel -->
+  <aside id="keybindings">
+    <button class="close-btn" title="Close">&times;</button>
+    <h2><i class="fa-solid fa-keyboard"></i> Keybindings</h2>
+
+    <h3>Launchers</h3>
+    <table>
+      <tr><td>Super+Return</td><td>Launch Kitty terminal</td></tr>
+      <tr><td>Super+r</td><td>Launch Rofi (app launcher)</td></tr>
+      <tr><td>Super+b</td><td>Launch Chromium browser</td></tr>
+      <tr><td>Super+e</td><td>Launch Yazi (file manager)</td></tr>
+    </table>
+
+    <h3>Window Management</h3>
+    <table>
+      <tr><td>Super+q</td><td>Kill focused window</td></tr>
+      <tr><td>Super+Shift+q</td><td>Shutdown Qtile</td></tr>
+      <tr><td>Super+f</td><td>Toggle fullscreen</td></tr>
+      <tr><td>Super+t</td><td>Toggle floating mode</td></tr>
+    </table>
+
+    <h3>Navigation</h3>
+    <table>
+      <tr><td>Super+h</td><td>Focus window left</td></tr>
+      <tr><td>Super+j</td><td>Focus window down</td></tr>
+      <tr><td>Super+k</td><td>Focus window up</td></tr>
+      <tr><td>Super+l</td><td>Focus window right</td></tr>
+    </table>
+
+    <h3>Layouts</h3>
+    <table>
+      <tr><td>Super+Tab</td><td>Next layout</td></tr>
+      <tr><td>Super+Shift+Tab</td><td>Previous layout</td></tr>
+    </table>
+
+    <h3>Workspaces</h3>
+    <table>
+      <tr><td>Super+1-5</td><td>Switch to workspace</td></tr>
+      <tr><td>Super+Shift+1-5</td><td>Move window to workspace</td></tr>
+    </table>
+  </aside>
+
+  <!-- Super Key Badge -->
+  <div id="super-badge">SUPER</div>
+
+  <!-- Notification Container -->
+  <div id="notifications"></div>
+
+  <!-- ========================================
+       PHASE 4: JavaScript — State Management + Theme Engine
+       PHASE 5-8: Stubs for later phases
+       ======================================== -->
+  <script>
+    // ========================================
+    // PHASE 4: State Management + Theme Engine
+    // ========================================
+
+    // ---- 4.1 State Object ----
+    const state = {
+      theme: 'catppuccin',
+      layout: 'monadtall',
+      activeWorkspace: 1,
+      workspaces: {
+        1: [], 2: [], 3: [], 4: [], 5: []
+      },
+      focusedWindowId: null,
+      superHeld: false,
+      nextWindowId: 0,
+    };
+
+    // ---- 4.2 Theme Engine ----
+    function applyTheme(themeName) {
+      document.documentElement.setAttribute('data-theme', themeName);
+      state.theme = themeName;
+    }
+
+    function saveTheme(themeName) {
+      try {
+        localStorage.setItem('lambdaos-qtile-theme', themeName);
+      } catch (e) {
+        console.warn('localStorage unavailable, theme will not persist:', e);
+      }
+    }
+
+    function loadTheme() {
+      let themeName = 'catppuccin';
+      try {
+        const saved = localStorage.getItem('lambdaos-qtile-theme');
+        if (saved) themeName = saved;
+      } catch (e) {
+        console.warn('localStorage unavailable, using default theme:', e);
+      }
+      applyTheme(themeName);
+      return themeName;
+    }
+
+    function setTheme(themeName) {
+      applyTheme(themeName);
+      saveTheme(themeName);
+    }
+
+    // Initialize theme on page load
+    (function initTheme() {
+      const theme = loadTheme();
+      const selector = document.getElementById('theme-selector');
+      if (selector) selector.value = theme;
+    })();
+
+    // ---- 4.3 Live Clock ----
+    (function initClock() {
+      function updateClock() {
+        const now = new Date();
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const d = days[now.getDay()];
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mi = String(now.getMinutes()).padStart(2, '0');
+        const clockEl = document.getElementById('clock-time');
+        if (clockEl) {
+          clockEl.textContent = `${d} ${dd}/${mm} ${hh}:${mi}`;
+        }
+      }
+      updateClock();
+      setInterval(updateClock, 1000);
+    })();
+
+    // ---- 4.4 Theme Selector Handler ----
+    (function initThemeSelector() {
+      const selector = document.getElementById('theme-selector');
+      if (!selector) return;
+      selector.addEventListener('change', function() {
+        setTheme(this.value);
+      });
+    })();
+
+    // ========================================
+    // PHASE 8: JS — Keybindings Panel
+    // ========================================
+
+    // ---- 8.1 Categorized Shortcuts Data Structure ----
+    const KEYBINDINGS_DATA = [
+      {
+        category: 'Launchers',
+        shortcuts: [
+          { keys: 'Super+Return', action: 'Launch Kitty terminal' },
+          { keys: 'Super+r', action: 'Launch Rofi (app launcher)' },
+          { keys: 'Super+b', action: 'Launch Chromium browser' },
+          { keys: 'Super+e', action: 'Launch Yazi (file manager)' },
+        ]
+      },
+      {
+        category: 'Window Management',
+        shortcuts: [
+          { keys: 'Super+q', action: 'Kill focused window' },
+          { keys: 'Super+Shift+q', action: 'Shutdown Qtile' },
+          { keys: 'Super+f', action: 'Toggle fullscreen' },
+          { keys: 'Super+t', action: 'Toggle floating mode' },
+        ]
+      },
+      {
+        category: 'Navigation',
+        shortcuts: [
+          { keys: 'Super+h', action: 'Focus window left' },
+          { keys: 'Super+j', action: 'Focus window down' },
+          { keys: 'Super+k', action: 'Focus window up' },
+          { keys: 'Super+l', action: 'Focus window right' },
+        ]
+      },
+      {
+        category: 'Layouts',
+        shortcuts: [
+          { keys: 'Super+Tab', action: 'Next layout' },
+          { keys: 'Super+Shift+Tab', action: 'Previous layout' },
+        ]
+      },
+      {
+        category: 'Workspaces',
+        shortcuts: [
+          { keys: 'Super+1-5', action: 'Switch to workspace' },
+          { keys: 'Super+Shift+1-5', action: 'Move window to workspace' },
+        ]
+      },
+    ];
+
+    // ---- 8.3 Render Categorized Table Rows ----
+    function renderKeybindings() {
+      const kbPanel = document.getElementById('keybindings');
+      if (!kbPanel) return;
+
+      // Preserve close button and h2 title; remove everything else
+      const closeBtn = kbPanel.querySelector('.close-btn');
+      const h2 = kbPanel.querySelector('h2');
+
+      // Clear panel content
+      kbPanel.innerHTML = '';
+
+      // Re-append preserved elements
+      if (closeBtn) kbPanel.appendChild(closeBtn);
+      if (h2) kbPanel.appendChild(h2);
+
+      // Re-attach close handler since innerHTML wipe removes listeners
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          kbPanel.classList.remove('visible');
+        });
+      }
+
+      // Build categorized sections
+      for (const section of KEYBINDINGS_DATA) {
+        const h3 = document.createElement('h3');
+        h3.textContent = section.category;
+        kbPanel.appendChild(h3);
+
+        const table = document.createElement('table');
+        for (const shortcut of section.shortcuts) {
+          const tr = document.createElement('tr');
+
+          const tdKeys = document.createElement('td');
+          tdKeys.textContent = shortcut.keys;
+          tdKeys.style.color = 'var(--secondary, #89b4fa)';
+          tdKeys.style.fontWeight = '600';
+          tdKeys.style.whiteSpace = 'nowrap';
+
+          const tdAction = document.createElement('td');
+          tdAction.textContent = shortcut.action;
+
+          tr.appendChild(tdKeys);
+          tr.appendChild(tdAction);
+          table.appendChild(tr);
+        }
+        kbPanel.appendChild(table);
+      }
+    }
+
+    // ---- 8.2 Toggle Handler ----
+    (function initKeybindingsPanel() {
+      const kbPanel = document.getElementById('keybindings');
+      const kbToggle = document.getElementById('keybindings-toggle');
+
+      if (!kbPanel || !kbToggle) return;
+
+      kbToggle.addEventListener('click', function() {
+        const isVisible = kbPanel.classList.contains('visible');
+        if (!isVisible) {
+          renderKeybindings();
+        }
+        kbPanel.classList.toggle('visible');
+      });
+
+      // Close when clicking outside of the panel and the toggle button
+      document.addEventListener('click', function(e) {
+        if (!kbPanel.classList.contains('visible')) return;
+        const target = e.target;
+        if (!kbPanel.contains(target) && target !== kbToggle && !kbToggle.contains(target)) {
+          kbPanel.classList.remove('visible');
+        }
+      });
+    })();
+
+    // ========================================
+    // PHASE 5: Layout Engine
+    // ========================================
+
+    // ---- 5.1 computeMonadTall ----
+    // Main window at 60% left; remaining windows stacked on right.
+    function computeMonadTall(windows, desktopW, desktopH) {
+      const result = new Map();
+      const count = windows.length;
+      if (count === 0) return result;
+
+      const mainW = desktopW * 0.6;
+
+      if (count === 1) {
+        result.set(windows[0], { x: 0, y: 0, w: mainW, h: desktopH, display: 'flex' });
+        return result;
+      }
+
+      // Main window (first)
+      result.set(windows[0], { x: 0, y: 0, w: mainW, h: desktopH, display: 'flex' });
+
+      // Remaining windows stacked on the right
+      const remaining = count - 1;
+      const stackW = desktopW - mainW;
+      const stackH = desktopH / remaining;
+
+      for (let i = 1; i < count; i++) {
+        result.set(windows[i], {
+          x: mainW,
+          y: (i - 1) * stackH,
+          w: stackW,
+          h: stackH,
+          display: 'flex'
+        });
+      }
+
+      return result;
+    }
+
+    // ---- 5.2 computeMax ----
+    // Focused window fills the entire desktop; all others are hidden.
+    function computeMax(windows, focusedId, desktopW, desktopH) {
+      const result = new Map();
+      for (const win of windows) {
+        const winId = parseInt(win.getAttribute('data-window-id'), 10);
+        if (winId === focusedId) {
+          result.set(win, { x: 0, y: 0, w: desktopW, h: desktopH, display: 'flex' });
+        } else {
+          result.set(win, { x: 0, y: 0, w: 0, h: 0, display: 'none' });
+        }
+      }
+      return result;
+    }
+
+    // ---- 5.3 computeColumns ----
+    // N windows arranged in equal-width columns side by side.
+    function computeColumns(windows, desktopW, desktopH) {
+      const result = new Map();
+      const count = windows.length;
+      if (count === 0) return result;
+
+      const colW = desktopW / count;
+      for (let i = 0; i < count; i++) {
+        result.set(windows[i], {
+          x: i * colW,
+          y: 0,
+          w: colW,
+          h: desktopH,
+          display: 'flex'
+        });
+      }
+      return result;
+    }
+
+    // ---- 5.4 applyLayout ----
+    // Reads state, selects compute function, and applies positions to DOM.
+    function applyLayout() {
+      const desktop = document.getElementById('desktop');
+      if (!desktop) return;
+
+      const desktopW = desktop.offsetWidth;
+      const desktopH = desktop.offsetHeight;
+
+      const allWindows = Array.from(document.querySelectorAll('.window'));
+
+      // Hide windows not on the active workspace before laying out
+      allWindows.forEach(win => {
+        const winWs = parseInt(win.getAttribute('data-ws'), 10);
+        if (winWs !== state.activeWorkspace) {
+          win.style.display = 'none';
+        }
+      });
+
+      // Gather windows belonging to the active workspace
+      const wsWindows = allWindows.filter(w => parseInt(w.getAttribute('data-ws'), 10) === state.activeWorkspace);
+
+      let layoutMap;
+      switch (state.layout) {
+        case 'monadtall':
+          layoutMap = computeMonadTall(wsWindows, desktopW, desktopH);
+          break;
+        case 'max':
+          layoutMap = computeMax(wsWindows, state.focusedWindowId, desktopW, desktopH);
+          break;
+        case 'columns':
+          layoutMap = computeColumns(wsWindows, desktopW, desktopH);
+          break;
+        default:
+          layoutMap = computeMonadTall(wsWindows, desktopW, desktopH);
+      }
+
+      // Apply computed positions to each window
+      for (const [win, rect] of layoutMap) {
+        win.style.left = rect.x + 'px';
+        win.style.top = rect.y + 'px';
+        win.style.width = rect.w + 'px';
+        win.style.height = rect.h + 'px';
+        win.style.display = rect.display;
+      }
+
+      // Update CurrentLayout widget text (capitalize first letter)
+      const layoutName = state.layout === 'monadtall' ? 'MonadTall'
+        : state.layout.charAt(0).toUpperCase() + state.layout.slice(1);
+      const layoutSpan = document.querySelector('#current-layout span');
+      if (layoutSpan) {
+        layoutSpan.textContent = layoutName;
+      }
+    }
+
+    // ========================================
+    // PHASE 6: Window Management
+    // ========================================
+
+    // ---- focusWindow helper ----
+    function focusWindow(id) {
+      if (id === null || id === undefined) return;
+      document.querySelectorAll('.window').forEach(w => w.classList.remove('focused'));
+      const win = document.querySelector(`.window[data-window-id="${id}"]`);
+      if (!win) return;
+      win.classList.add('focused');
+      state.focusedWindowId = id;
+      const app = win.getAttribute('data-app') || '';
+      const appNames = { kitty: 'Kitty', chromium: 'Chromium', yazi: 'Yazi' };
+      const windowNameSpan = document.querySelector('#window-name span');
+      if (windowNameSpan) windowNameSpan.textContent = appNames[app] || app;
+    }
+
+    // ---- 6.1 createWindow ----
+    function createWindow(type) {
+      const id = state.nextWindowId++;
+      const activeWs = state.activeWorkspace;
+      const appNames = { kitty: 'Kitty', chromium: 'Chromium', yazi: 'Yazi' };
+      const appName = appNames[type] || type;
+
+      const win = document.createElement('div');
+      win.className = `window ${type}`;
+      win.setAttribute('data-window-id', id);
+      win.setAttribute('data-app', type);
+      win.setAttribute('data-ws', activeWs);
+
+      let contentHtml = '';
+      if (type === 'kitty') {
+        contentHtml = `
+          <div><span class="prompt">lambda@lambdaos</span> <span style="color: var(--secondary, #89b4fa)">~</span> %</div>
+          <div style="color: var(--inactive, #45475a)">Last login: Sat May 24 10:30:00 on tty1</div>
+          <div>&nbsp;</div>
+          <div style="color: var(--secondary, #89b4fa)">Welcome to LambdaOS!</div>
+          <div style="color: var(--inactive, #45475a)">Arch Linux + Qtile + TUI Configurator</div>
+          <div>&nbsp;</div>
+          <div><span class="prompt">lambda@lambdaos</span> <span style="color: var(--secondary, #89b4fa)">~</span> % <span class="cursor"></span></div>
+        `;
+      } else if (type === 'chromium') {
+        contentHtml = `
+          <div class="tab-bar"><div class="tab"><i class="fa-brands fa-chrome"></i> LambdaOS — Welcome</div></div>
+          <div class="address-bar"><i class="fa-solid fa-lock" style="color: #4caf50; font-size: 11px;"></i><input type="text" value="https://lambdaos.local/welcome" readonly></div>
+          <div class="page-content">
+            <h1>Welcome to LambdaOS</h1>
+            <p>A minimal, tiling-window-manager-first Arch Linux distribution built for developers who value keyboard-driven workflows.</p>
+            <p style="margin-top: 12px;">Powered by <strong>Qtile</strong>, <strong>Kitty</strong>, <strong>Neovim</strong>, and a custom <strong>TUI Configurator</strong>.</p>
+            <p style="margin-top: 12px; color: #888; font-size: 11px;">Press <kbd style="background: #eee; padding: 2px 6px; border-radius: 3px;">Super+?</kbd> to see all keybindings.</p>
+          </div>
+        `;
+      } else if (type === 'yazi') {
+        contentHtml = `
+          <div class="file-list">
+            <div class="file-item selected"><i class="fa-solid fa-folder" style="color: var(--secondary, #89b4fa);"></i><span class="file-name">dotfiles</span><span class="file-size">4.0K</span></div>
+            <div class="file-item"><i class="fa-solid fa-folder" style="color: var(--secondary, #89b4fa);"></i><span class="file-name">projects</span><span class="file-size">4.0K</span></div>
+            <div class="file-item"><i class="fa-solid fa-file" style="color: var(--fg, #cdd6f4);"></i><span class="file-name">.zshrc</span><span class="file-size">2.1K</span></div>
+            <div class="file-item"><i class="fa-solid fa-file" style="color: var(--fg, #cdd6f4);"></i><span class="file-name">os_theme.json</span><span class="file-size">48B</span></div>
+            <div class="file-item"><i class="fa-solid fa-file" style="color: var(--fg, #cdd6f4);"></i><span class="file-name">tui_settings.json</span><span class="file-size">128B</span></div>
+          </div>
+          <div class="preview-pane">
+            <div class="preview-title">os_theme.json</div>
+            <pre>{
+  "theme": "catppuccin",
+  "bar_opacity": 0.95,
+  "border_width": 2
+}</pre>
+          </div>
+          <div class="status-bar"><span class="mode">NORMAL</span><span>/home/lambda</span><span>5 items</span></div>
+        `;
+      }
+
+      win.innerHTML = `
+        <div class="window-title">
+          <span class="window-name">${appName}</span>
+          <span class="floating-badge">FLOAT</span>
+          <div class="window-controls">
+            <button class="btn-minimize" title="Minimize"></button>
+            <button class="btn-close" title="Close"></button>
+          </div>
+        </div>
+        <div class="window-content">${contentHtml}</div>
+      `;
+
+      const closeBtn = win.querySelector('.btn-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          destroyWindow(id);
+        });
+      }
+
+      state.workspaces[activeWs].push(id);
+      const desktop = document.getElementById('desktop');
+      if (desktop) desktop.appendChild(win);
+      focusWindow(id);
+      applyLayout();
+    }
+
+    // ---- 6.2 destroyWindow ----
+    function destroyWindow(id) {
+      const win = document.querySelector(`.window[data-window-id="${id}"]`);
+      if (!win) return;
+      const wasFocused = state.focusedWindowId === id;
+
+      for (let ws = 1; ws <= 5; ws++) {
+        const arr = state.workspaces[ws];
+        const idx = arr.indexOf(id);
+        if (idx !== -1) {
+          arr.splice(idx, 1);
+          break;
+        }
+      }
+
+      win.remove();
+
+      if (wasFocused) {
+        const activeWs = state.activeWorkspace;
+        if (state.workspaces[activeWs].length > 0) {
+          focusWindow(state.workspaces[activeWs][0]);
+        } else {
+          state.focusedWindowId = null;
+          const windowNameSpan = document.querySelector('#window-name span');
+          if (windowNameSpan) windowNameSpan.textContent = '';
+        }
+      }
+
+      applyLayout();
+    }
+
+    // ---- 6.3 click-to-front ----
+    (function initClickToFront() {
+      const desktop = document.getElementById('desktop');
+      if (!desktop) return;
+      desktop.addEventListener('mousedown', (e) => {
+        const win = e.target.closest('.window');
+        if (!win) return;
+        const winId = parseInt(win.getAttribute('data-window-id'), 10);
+        if (!isNaN(winId)) {
+          focusWindow(winId);
+          applyLayout();
+        }
+      });
+    })();
+
+    // ---- 6.4 workspace switching ----
+    function switchWorkspace(wsNum) {
+      if (wsNum < 1 || wsNum > 5) return;
+      if (wsNum === state.activeWorkspace) return;
+
+      state.activeWorkspace = wsNum;
+
+      document.querySelectorAll('#groupbox .workspace').forEach(el => {
+        el.classList.toggle('active', parseInt(el.getAttribute('data-ws'), 10) === wsNum);
+      });
+
+      document.querySelectorAll('.window').forEach(win => {
+        const winWs = parseInt(win.getAttribute('data-ws'), 10);
+        win.style.display = winWs === wsNum ? 'flex' : 'none';
+      });
+
+      if (state.workspaces[wsNum].length > 0) {
+        focusWindow(state.workspaces[wsNum][0]);
+      } else {
+        state.focusedWindowId = null;
+        const windowNameSpan = document.querySelector('#window-name span');
+        if (windowNameSpan) windowNameSpan.textContent = '';
+      }
+
+      applyLayout();
+    }
+
+    (function initWorkspaceClicks() {
+      document.querySelectorAll('#groupbox .workspace').forEach(el => {
+        el.addEventListener('click', () => {
+          const wsNum = parseInt(el.getAttribute('data-ws'), 10);
+          switchWorkspace(wsNum);
+        });
+      });
+    })();
+
+    // ---- Initial state setup: scan existing DOM windows ----
+    (function initWindows() {
+      const windows = document.querySelectorAll('.window');
+      windows.forEach(win => {
+        const id = parseInt(win.getAttribute('data-window-id'), 10);
+        const ws = parseInt(win.getAttribute('data-ws'), 10) || 1;
+
+        if (!isNaN(id)) {
+          if (!state.workspaces[ws].includes(id)) {
+            state.workspaces[ws].push(id);
+          }
+          if (id >= state.nextWindowId) {
+            state.nextWindowId = id + 1;
+          }
+        }
+
+        const closeBtn = win.querySelector('.btn-close');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            destroyWindow(id);
+          });
+        }
+      });
+
+      const focusedWin = document.querySelector('.window.focused');
+      if (focusedWin) {
+        const id = parseInt(focusedWin.getAttribute('data-window-id'), 10);
+        if (!isNaN(id)) {
+          state.focusedWindowId = id;
+        }
+      } else if (state.workspaces[1].length > 0) {
+        state.focusedWindowId = state.workspaces[1][0];
+        const firstWin = document.querySelector(`.window[data-window-id="${state.focusedWindowId}"]`);
+        if (firstWin) firstWin.classList.add('focused');
+      }
+
+      applyLayout();
+    })();
+
+    // ========================================
+    // PHASE 7: JS — Keyboard Handler
+    // ========================================
+
+    // ---- 7.3 Super Badge UI ----
+    function showSuperBadge() {
+      const badge = document.getElementById('super-badge');
+      if (badge) badge.classList.add('visible');
+    }
+
+    function hideSuperBadge() {
+      const badge = document.getElementById('super-badge');
+      if (badge) badge.classList.remove('visible');
+    }
+
+    // ---- 7.4 Notification System ----
+    function showNotification(message) {
+      const container = document.getElementById('notifications');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = 'notification';
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 2000);
+    }
+
+    // ---- 7.2 SHORTCUT_MAP ----
+    const LAYOUTS = ['monadtall', 'max', 'columns'];
+
+    function getShortcutAction(key, shift) {
+      // Launchers
+      if (key === 'Enter' || key === 'Return') {
+        const fn = () => createWindow('kitty');
+        fn.description = 'Launch terminal';
+        return fn;
+      }
+      if (key === 'b') {
+        const fn = () => createWindow('chromium');
+        fn.description = 'Launch browser';
+        return fn;
+      }
+      if (key === 'e') {
+        const fn = () => createWindow('yazi');
+        fn.description = 'Launch file manager';
+        return fn;
+      }
+
+      // Window management
+      if (key === 'q') {
+        const fn = () => {
+          if (state.focusedWindowId !== null) {
+            destroyWindow(state.focusedWindowId);
+          }
+        };
+        fn.description = 'Kill focused window';
+        return fn;
+      }
+
+      // Layout cycling
+      if (key === 'Tab') {
+        if (shift) {
+          const fn = () => {
+            const idx = LAYOUTS.indexOf(state.layout);
+            const newIdx = idx <= 0 ? LAYOUTS.length - 1 : idx - 1;
+            state.layout = LAYOUTS[newIdx];
+            applyLayout();
+          };
+          fn.description = 'Previous layout';
+          return fn;
+        } else {
+          const fn = () => {
+            const idx = LAYOUTS.indexOf(state.layout);
+            const newIdx = (idx + 1) % LAYOUTS.length;
+            state.layout = LAYOUTS[newIdx];
+            applyLayout();
+          };
+          fn.description = 'Next layout';
+          return fn;
+        }
+      }
+
+      // Workspaces
+      if (key >= '1' && key <= '5') {
+        const num = parseInt(key, 10);
+        if (shift) {
+          const fn = () => moveWindowToWorkspace(num);
+          fn.description = 'Move window to workspace ' + num;
+          return fn;
+        } else {
+          const fn = () => switchWorkspace(num);
+          fn.description = 'Switch to workspace ' + num;
+          return fn;
+        }
+      }
+
+      // Navigation h/j/k/l
+      if (key === 'h') {
+        const fn = () => focusAdjacentWindow('left');
+        fn.description = 'Focus left';
+        return fn;
+      }
+      if (key === 'j') {
+        const fn = () => focusAdjacentWindow('down');
+        fn.description = 'Focus down';
+        return fn;
+      }
+      if (key === 'k') {
+        const fn = () => focusAdjacentWindow('up');
+        fn.description = 'Focus up';
+        return fn;
+      }
+      if (key === 'l') {
+        const fn = () => focusAdjacentWindow('right');
+        fn.description = 'Focus right';
+        return fn;
+      }
+
+      // Toggle floating
+      if (key === 't') {
+        const fn = () => toggleFloating();
+        fn.description = 'Toggle floating';
+        return fn;
+      }
+
+      return null;
+    }
+
+    // Helper: move focused window to another workspace
+    function moveWindowToWorkspace(targetWs) {
+      if (state.focusedWindowId === null) return;
+      const winId = state.focusedWindowId;
+      const currentWs = state.activeWorkspace;
+      if (targetWs === currentWs) return;
+
+      const currentArr = state.workspaces[currentWs];
+      const idx = currentArr.indexOf(winId);
+      if (idx !== -1) currentArr.splice(idx, 1);
+
+      if (!state.workspaces[targetWs].includes(winId)) {
+        state.workspaces[targetWs].push(winId);
+      }
+
+      const win = document.querySelector('.window[data-window-id="' + winId + '"]');
+      if (win) win.setAttribute('data-ws', targetWs);
+
+      if (state.workspaces[currentWs].length > 0) {
+        focusWindow(state.workspaces[currentWs][0]);
+      } else {
+        state.focusedWindowId = null;
+        const windowNameSpan = document.querySelector('#window-name span');
+        if (windowNameSpan) windowNameSpan.textContent = '';
+      }
+      applyLayout();
+    }
+
+    // Helper: focus adjacent window in a direction
+    function focusAdjacentWindow(direction) {
+      const activeWs = state.activeWorkspace;
+      const wsWindowIds = state.workspaces[activeWs];
+      if (wsWindowIds.length === 0) return;
+
+      if (state.focusedWindowId === null) {
+        focusWindow(wsWindowIds[0]);
+        return;
+      }
+
+      const windows = wsWindowIds
+        .map(id => {
+          const el = document.querySelector('.window[data-window-id="' + id + '"]');
+          if (!el) return null;
+          return {
+            id: id,
+            left: parseFloat(el.style.left) || 0,
+            top: parseFloat(el.style.top) || 0
+          };
+        })
+        .filter(Boolean);
+
+      const focusedIdx = windows.findIndex(w => w.id === state.focusedWindowId);
+      if (focusedIdx === -1) return;
+
+      if (direction === 'left' || direction === 'right') {
+        windows.sort((a, b) => a.left - b.left);
+      } else {
+        windows.sort((a, b) => a.top - b.top);
+      }
+
+      const sortedFocusedIdx = windows.findIndex(w => w.id === state.focusedWindowId);
+      if (sortedFocusedIdx === -1) return;
+
+      let nextIdx;
+      if (direction === 'left' || direction === 'up') {
+        nextIdx = sortedFocusedIdx > 0 ? sortedFocusedIdx - 1 : windows.length - 1;
+      } else {
+        nextIdx = (sortedFocusedIdx + 1) % windows.length;
+      }
+
+      focusWindow(windows[nextIdx].id);
+    }
+
+    // Helper: toggle floating mode on focused window
+    function toggleFloating() {
+      if (state.focusedWindowId === null) return;
+      const win = document.querySelector('.window[data-window-id="' + state.focusedWindowId + '"]');
+      if (!win) return;
+      win.classList.toggle('floating');
+    }
+
+    // ---- 7.1 Global Keyboard Listeners ----
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Meta' || e.key === 'OS') {
+        state.superHeld = true;
+        showSuperBadge();
+        return;
+      }
+      if (!state.superHeld) return;
+      if (e.repeat) return;
+      e.preventDefault();
+
+      const action = getShortcutAction(e.key, e.shiftKey);
+      if (action) {
+        action();
+        showNotification(action.description || 'Action executed');
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      if (e.key === 'Meta' || e.key === 'OS') {
+        state.superHeld = false;
+        hideSuperBadge();
+      }
+    });
+  </script>
+
+</body>
+</html>
