@@ -2,10 +2,19 @@
 # shellcheck disable=SC2034
 
 iso_name="lambda-os"
-iso_label="Lambda_OS_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
 iso_publisher="SrLambda <https://github.com/SrLambda>"
 iso_application="Lambda OS Live/Rescue DVD"
-iso_version="$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y.%m.%d)"
+
+# Version resolution: env var → exact tag → describe → fallback
+if [[ -n "${LAMBDAOS_VERSION:-}" ]]; then
+    iso_version="${LAMBDAOS_VERSION}"
+elif tag=$(git describe --tags --exact-match 2>/dev/null); then
+    iso_version="${tag#v}"
+else
+    iso_version="$(git describe --tags --always --dirty 2>/dev/null || echo 'dev')"
+fi
+
+iso_label="Lambda_OS_${iso_version//./}"
 install_dir="arch"
 buildmodes=('iso')
 bootmodes=('bios.syslinux'

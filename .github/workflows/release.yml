@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+    timeout-minutes: 45
+    steps:
+      - name: Install prerequisites
+        run: |
+          pacman -Sy --noconfirm git zstd sudo
+      - uses: actions/checkout@v4
+      - name: Cache pacman packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/pacman/pkg
+          key: pacman-${{ hashFiles('packages.x86_64', 'pacman.conf') }}
+          restore-keys: |
+            pacman-
+      - name: Install build dependencies
+        run: |
+          pacman -Sy --noconfirm archiso base-devel
+      - name: Set SOURCE_DATE_EPOCH
+        run: |
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct ${{ github.ref_name }})" >> $GITHUB_ENV
+      - name: Build ISO
+        run: |
+          sudo mkarchiso -v -w work/ -o out/ .
+      - name: Generate checksums
+        run: |
+          sha256sum out/*.iso > out/checksums.sha256
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/*.iso
+            out/checksums.sha256
