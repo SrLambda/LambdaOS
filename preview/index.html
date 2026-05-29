@@ -83,6 +83,18 @@
       --bar-fg: #d8dee9;
     }
 
+    :root[data-theme="lambda"] {
+      --bg: #0B0F19;
+      --fg: #E2E8F0;
+      --primary: #6D40FF;
+      --secondary: #00E5FF;
+      --accent: #2E00C7;
+      --urgent: #FF453A;
+      --inactive: #1E293B;
+      --bar-bg: #080C14;
+      --bar-fg: #E2E8F0;
+    }
+
     :root[data-theme="onedark"] {
       --bg: #282c34;
       --fg: #abb2bf;
@@ -282,6 +294,30 @@
       align-items: center;
       gap: 6px;
       white-space: nowrap;
+    }
+
+    /* Bar Logo */
+    #bar-logo {
+      gap: 4px;
+      padding-right: 8px;
+      border-right: 1px solid var(--inactive, #45475a);
+      margin-right: 4px;
+    }
+
+    .bar-logo-svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .bar-logo-text {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--bar-fg, #cdd6f4);
+    }
+
+    .bar-logo-accent {
+      color: var(--primary, #6D40FF);
     }
 
     /* GroupBox — workspace indicators */
@@ -781,6 +817,15 @@
 
   <!-- Top Bar -->
   <header id="bar">
+    <!-- LambdaOS Logo -->
+    <div id="bar-logo" class="bar-widget" title="LambdaOS">
+      <svg viewBox="0 0 200 200" class="bar-logo-svg">
+        <polygon points="97,95 45,180 85,180 127,125" fill="var(--primary, #6D40FF)" />
+        <polygon points="65,20 105,20 165,180 125,180" fill="var(--primary, #6D40FF)" />
+      </svg>
+      <span class="bar-logo-text">Lambda<span class="bar-logo-accent">OS</span></span>
+    </div>
+
     <!-- GroupBox: 5 workspace indicators -->
     <div id="groupbox" class="bar-widget">
       <div class="workspace active" data-ws="1" title="Terminal">
@@ -851,12 +896,47 @@
       </div>
       <div class="window-content">
         <div>
-          <span class="prompt">lambda@lambdaos</span> <span style="color: var(--secondary, #89b4fa)">~</span> %
+          <span class="prompt">lambda@lambdaos</span> <span style="color: var(--secondary, #89b4fa)">~</span> % <span style="color: var(--fg)">fastfetch</span>
         </div>
-        <div style="color: var(--inactive, #45475a)">Last login: Sat May 24 10:30:00 on tty1</div>
         <div>&nbsp;</div>
-        <div style="color: var(--secondary, #89b4fa)">Welcome to LambdaOS!</div>
-        <div style="color: var(--inactive, #45475a)">Arch Linux + Qtile + TUI Configurator</div>
+        <!-- Neofetch-style ASCII Art -->
+        <div style="display: flex; gap: 16px; margin-bottom: 8px;">
+          <pre style="font-family: inherit; font-size: inherit; line-height: 1.15; margin: 0; padding: 0; background: none; color: inherit; flex-shrink: 0;"><span style="color: #2E00C7">       ·--·
+        \SS\
+         \SS\
+          \SS\
+           \SS\
+            \SS\
+</span><span style="color: #6D40FF">           /O</span><span style="color: #2E00C7">\SS\</span>
+          <span style="color: #6D40FF">/OO/</span><span style="color: #2E00C7">\SS\</span>
+         <span style="color: #6D40FF">/OO/  </span><span style="color: #2E00C7">\SS\</span>
+        <span style="color: #6D40FF">/OO/    </span><span style="color: #2E00C7">\SS\</span>
+       <span style="color: #6D40FF">/OO/      </span><span style="color: #2E00C7">\SS\</span>
+      <span style="color: #6D40FF">/OO/        </span><span style="color: #2E00C7">\SS\</span>
+      <span style="color: #6D40FF">¨¨¨          </span><span style="color: #2E00C7">¨¨¨</span></pre>
+          <div>
+            <div><span style="color: #6D40FF; font-weight: bold">lambda</span>@<span style="color: #6D40FF; font-weight: bold">lambdaos</span></div>
+            <div style="color: var(--inactive)">-------------------</div>
+            <div><span style="color: #00E5FF; font-weight: bold">OS</span>: LambdaOS x86_64</div>
+            <div><span style="color: #00E5FF; font-weight: bold">Host</span>: Custom PC</div>
+            <div><span style="color: #00E5FF; font-weight: bold">Kernel</span>: 6.8.9-lambda-1</div>
+            <div><span style="color: #00E5FF; font-weight: bold">Uptime</span>: 2 hours, 14 mins</div>
+            <div><span style="color: #00E5FF; font-weight: bold">Packages</span>: 842 (pacman)</div>
+            <div><span style="color: #00E5FF; font-weight: bold">Shell</span>: zsh 5.9</div>
+            <div><span style="color: #00E5FF; font-weight: bold">DE/WM</span>: qtile</div>
+            <div><span style="color: #00E5FF; font-weight: bold">Terminal</span>: kitty</div>
+            <div style="display: flex; gap: 3px; margin-top: 6px;">
+              <span style="display: inline-block; width: 12px; height: 12px; background: #0B0F19; border-radius: 2px;"></span>
+              <span style="display: inline-block; width: 12px; height: 12px; background: #FF453A; border-radius: 2px;"></span>
+              <span style="display: inline-block; width: 12px; height: 12px; background: #4CAF50; border-radius: 2px;"></span>
+              <span style="display: inline-block; width: 12px; height: 12px; background: #FFC107; border-radius: 2px;"></span>
+              <span style="display: inline-block; width: 12px; height: 12px; background: #2E00C7; border-radius: 2px;"></span>
+              <span style="display: inline-block; width: 12px; height: 12px; background: #6D40FF; border-radius: 2px;"></span>
+              <span style="display: inline-block; width: 12px; height: 12px; background: #00E5FF; border-radius: 2px;"></span>
+              <span style="display: inline-block; width: 12px; height: 12px; background: #E2E8F0; border-radius: 2px;"></span>
+            </div>
+          </div>
+        </div>
         <div>&nbsp;</div>
         <div>
           <span class="prompt">lambda@lambdaos</span> <span style="color: var(--secondary, #89b4fa)">~</span> % <span class="cursor"></span>
@@ -950,6 +1030,7 @@
 
   <!-- Theme Selector -->
   <select id="theme-selector" title="Switch theme">
+    <option value="lambda">LambdaOS</option>
     <option value="catppuccin">Catppuccin</option>
     <option value="gruvbox">Gruvbox</option>
     <option value="tokyonight">Tokyo Night</option>
@@ -1021,7 +1102,7 @@
 
     // ---- 4.1 State Object ----
     const state = {
-      theme: 'catppuccin',
+      theme: 'lambda',
       layout: 'monadtall',
       activeWorkspace: 1,
       workspaces: {
@@ -1047,7 +1128,7 @@
     }
 
     function loadTheme() {
-      let themeName = 'catppuccin';
+      let themeName = 'lambda';
       try {
         const saved = localStorage.getItem('lambdaos-qtile-theme');
         if (saved) themeName = saved;
@@ -1385,11 +1466,45 @@
       let contentHtml = '';
       if (type === 'kitty') {
         contentHtml = `
-          <div><span class="prompt">lambda@lambdaos</span> <span style="color: var(--secondary, #89b4fa)">~</span> %</div>
-          <div style="color: var(--inactive, #45475a)">Last login: Sat May 24 10:30:00 on tty1</div>
+          <div><span class="prompt">lambda@lambdaos</span> <span style="color: var(--secondary, #89b4fa)">~</span> % <span style="color: var(--fg)">fastfetch</span></div>
           <div>&nbsp;</div>
-          <div style="color: var(--secondary, #89b4fa)">Welcome to LambdaOS!</div>
-          <div style="color: var(--inactive, #45475a)">Arch Linux + Qtile + TUI Configurator</div>
+          <div style="display: flex; gap: 16px; margin-bottom: 8px;">
+            <pre style="font-family: inherit; font-size: inherit; line-height: 1.15; margin: 0; padding: 0; background: none; color: inherit; flex-shrink: 0;"><span style="color: #2E00C7">       ·--·
+        \\SS\\
+         \\SS\\
+          \\SS\\
+           \\SS\\
+            \\SS\\
+</span><span style="color: #6D40FF">           /O</span><span style="color: #2E00C7">\\SS\\
+          /OO/</span><span style="color: #2E00C7">\\SS\\
+         /OO/  </span><span style="color: #2E00C7">\\SS\\
+        /OO/    </span><span style="color: #2E00C7">\\SS\\
+       /OO/      </span><span style="color: #2E00C7">\\SS\\
+      /OO/        </span><span style="color: #2E00C7">\\SS\\
+      ¨¨          ¨¨¨</span></pre>
+            <div>
+              <div><span style="color: #6D40FF; font-weight: bold">lambda</span>@<span style="color: #6D40FF; font-weight: bold">lambdaos</span></div>
+              <div style="color: var(--inactive)">-------------------</div>
+              <div><span style="color: #00E5FF; font-weight: bold">OS</span>: LambdaOS x86_64</div>
+              <div><span style="color: #00E5FF; font-weight: bold">Host</span>: Custom PC</div>
+              <div><span style="color: #00E5FF; font-weight: bold">Kernel</span>: 6.8.9-lambda-1</div>
+              <div><span style="color: #00E5FF; font-weight: bold">Uptime</span>: 2 hours, 14 mins</div>
+              <div><span style="color: #00E5FF; font-weight: bold">Packages</span>: 842 (pacman)</div>
+              <div><span style="color: #00E5FF; font-weight: bold">Shell</span>: zsh 5.9</div>
+              <div><span style="color: #00E5FF; font-weight: bold">DE/WM</span>: qtile</div>
+              <div><span style="color: #00E5FF; font-weight: bold">Terminal</span>: kitty</div>
+              <div style="display: flex; gap: 3px; margin-top: 6px;">
+                <span style="display: inline-block; width: 12px; height: 12px; background: #0B0F19; border-radius: 2px;"></span>
+                <span style="display: inline-block; width: 12px; height: 12px; background: #FF453A; border-radius: 2px;"></span>
+                <span style="display: inline-block; width: 12px; height: 12px; background: #4CAF50; border-radius: 2px;"></span>
+                <span style="display: inline-block; width: 12px; height: 12px; background: #FFC107; border-radius: 2px;"></span>
+                <span style="display: inline-block; width: 12px; height: 12px; background: #2E00C7; border-radius: 2px;"></span>
+                <span style="display: inline-block; width: 12px; height: 12px; background: #6D40FF; border-radius: 2px;"></span>
+                <span style="display: inline-block; width: 12px; height: 12px; background: #00E5FF; border-radius: 2px;"></span>
+                <span style="display: inline-block; width: 12px; height: 12px; background: #E2E8F0; border-radius: 2px;"></span>
+              </div>
+            </div>
+          </div>
           <div>&nbsp;</div>
           <div><span class="prompt">lambda@lambdaos</span> <span style="color: var(--secondary, #89b4fa)">~</span> % <span class="cursor"></span></div>
         `;
@@ -1416,7 +1531,7 @@
           <div class="preview-pane">
             <div class="preview-title">os_theme.json</div>
             <pre>{
-  "theme": "catppuccin",
+  "theme": "lambda",
   "bar_opacity": 0.95,
   "border_width": 2
 }</pre>
@@ -1789,7 +1904,8 @@
 
     // ---- 7.1 Global Keyboard Listeners ----
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Meta' || e.key === 'OS') {
+      // Map 'x' key as the Super key for mockup interactivity
+      if (e.key === 'Meta' || e.key === 'OS' || e.key === 'x') {
         state.superHeld = true;
         showSuperBadge();
         return;
@@ -1806,7 +1922,7 @@
     });
 
     document.addEventListener('keyup', (e) => {
-      if (e.key === 'Meta' || e.key === 'OS') {
+      if (e.key === 'Meta' || e.key === 'OS' || e.key === 'x') {
         state.superHeld = false;
         hideSuperBadge();
       }

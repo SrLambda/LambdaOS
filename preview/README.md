@@ -19,7 +19,7 @@ start index.html
 
 ## Features
 
-- **5 Themes**: Catppuccin, Gruvbox, Tokyo Night, Nord, One Dark — switch via the dropdown in the top-right corner
+- **6 Themes**: LambdaOS (default), Catppuccin, Gruvbox, Tokyo Night, Nord, One Dark — switch via the dropdown in the top-right corner
 - **3 Layouts**: MonadTall, Max, Columns — cycle with Super+Tab
 - **5 Workspaces**: Click the workspace icons in the bar or use Super+1-5
 - **Keyboard Shortcuts**: Full Qtile keybinding simulation (see Keybindings section)
@@ -65,6 +65,7 @@ All shortcuts use the Super (⌘/Win) key as the modifier.
 
 | Theme | Background | Primary | Accent |
 |-------|-----------|---------|--------|
+| **LambdaOS** | `#0B0F19` | `#6D40FF` | `#2E00C7` |
 | Catppuccin | `#1e1e2e` | `#cba6f7` | `#f5c2e7` |
 | Gruvbox | `#282828` | `#d79921` | `#b16286` |
 | Tokyo Night | `#1a1b26` | `#bb9af7` | `#ff9e64` |
@@ -89,9 +90,18 @@ All shortcuts use the Super (⌘/Win) key as the modifier.
 
 ```
 preview/
-├── index.html    # Self-contained mockup (~1700 lines)
+├── index.html    # Self-contained desktop mockup
+├── logo.tsx      # LambdaOS brand: logo SVG, color palette, neofetch/boot mockups
 └── README.md     # This file
 ```
+
+## Brand
+
+The LambdaOS brand uses a geometric lowercase lambda (λ) as its symbol:
+
+- **Logo**: SVG with gradient from `#6D40FF` (Neon Purple) to `#2E00C7` (Deep Lambda)
+- **ASCII Art**: Terminal-friendly lambda shape using `/`, `\`, `S`, `O`, and `·` characters
+- **Full palette**: See `logo.tsx` for the complete brand system including gradient demos and boot screen mockup
 
 ## Related
 
