@@ -33,6 +33,9 @@ keys = [
     Key([mod, "control"], "k", lazy.layout.grow_up(), desc="Grow up"),
     Key([mod, "control"], "l", lazy.layout.grow_right(), desc="Grow right"),
 
+    Key([mod, "shift"], "s", lazy.spawn("flameshot gui"), desc="Screenshot area"),
+    Key([mod, "control"], "s", lazy.spawn("flameshot full"), desc="Screenshot full screen"),
+
     Key([mod], "1", lazy.group["1"].toscreen(), desc="Switch to group 1"),
     Key([mod], "2", lazy.group["2"].toscreen(), desc="Switch to group 2"),
     Key([mod], "3", lazy.group["3"].toscreen(), desc="Switch to group 3"),

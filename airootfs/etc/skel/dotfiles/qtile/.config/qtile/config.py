@@ -58,3 +58,5 @@ def autostart():
     ])
 
     subprocess.Popen(["picom", "--experimental-backends"])
+
+    subprocess.Popen(["flameshot"])
