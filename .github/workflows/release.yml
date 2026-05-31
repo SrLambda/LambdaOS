@@ -29,7 +29,7 @@ jobs:
       - name: Generate changelog
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git cliff --latest --output CHANGELOG.md
+          git cliff --tag "${{ github.ref_name }}" --output CHANGELOG.md
       - name: Cache pacman packages
         uses: actions/cache@v4
         with:
