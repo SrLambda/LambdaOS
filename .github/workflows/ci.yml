@@ -24,6 +24,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shellcheck
           go install mvdan.cc/sh/v3/cmd/shfmt@latest
+      - name: Install luacheck
+        run: |
+          sudo apt-get install -y lua-check
       - name: Run black
         run: black --check .
       - name: Run isort
@@ -36,8 +39,10 @@ jobs:
         run: |
           shopt -s globstar
           $(go env GOPATH)/bin/shfmt -d **/*.sh
+      - name: Run luacheck
+        run: luacheck .
 
-  test:
+  test-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,3 +56,44 @@ jobs:
           python -m pip install -r requirements-dev.txt
       - name: Run pytest
         run: python -m pytest tests/unit/ -v
+
+  validate-specs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run validate-specs
+        run: |
+          chmod +x scripts/validate-specs.sh
+          ./scripts/validate-specs.sh
+
+  build-iso:
+    needs: [lint, test-unit, validate-specs]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+    timeout-minutes: 60
+    steps:
+      - name: Install prerequisites
+        run: |
+          pacman -Sy --noconfirm git zstd sudo
+      - uses: actions/checkout@v4
+      - name: Cache pacman packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/pacman/pkg
+          key: pacman-${{ hashFiles('packages.x86_64', 'pacman.conf') }}
+          restore-keys: |
+            pacman-
+      - name: Install build dependencies
+        run: |
+          pacman -Sy --noconfirm archiso base-devel
+      - name: Build ISO
+        run: |
+          sudo mkarchiso -v -w work/ -o out/ .
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambdaos-iso
+          path: out/*.iso
