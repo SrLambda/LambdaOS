@@ -1,0 +1,35 @@
+# Maintainer: LambdaOS Team <packages@lambdaos.local>
+pkgname=lambdaos-tui
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="LambdaOS TUI hub and module system"
+arch=('x86_64')
+url="https://github.com/lambdaos/lambdaos"
+license=('MIT')
+depends=('glibc')
+makedepends=('go')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/lambdaos/lambdaos/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "lambdaos-${pkgver}/src/lambda-env"
+    export CGO_ENABLED=0
+    export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw"
+    go build -o lambda-env ./cmd/lambda-env
+}
+
+check() {
+    cd "lambdaos-${pkgver}/src/lambda-env"
+    go test ./...
+}
+
+package() {
+    cd "lambdaos-${pkgver}/src/lambda-env"
+
+    # Install hub binary
+    install -Dm755 lambda-env "${pkgdir}/usr/bin/lambda-env"
+
+    # Create system module directories for discovery scanner
+    install -dm755 "${pkgdir}/usr/share/lambda-env/modules"
+    install -dm755 "${pkgdir}/var/log/lambda-env"
+}
