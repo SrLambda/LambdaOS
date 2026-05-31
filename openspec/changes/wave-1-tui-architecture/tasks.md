@@ -45,9 +45,9 @@ Chain strategy: pending
 
 ## Phase 3: Core — Settings Schema
 
-- [ ] 3.1 Create `internal/settings/schema.go` — 9 section structs + defaults + `Validate()` typed checks
-- [ ] 3.2 Create `internal/settings/store.go` — `Load()` (with defaults+migration), `Save()` (atomic temp+rename), `SaveDelta()` (deep merge), `Migrate()` (version check)
-- [ ] 3.3 Create `internal/settings/store_test.go` — atomic write, delta merge, field preservation, downgrade rejection, migration adds missing fields
+- [x] 3.1 Create `internal/settings/schema.go` — 9 section structs + defaults + `Validate()` typed checks
+- [x] 3.2 Create `internal/settings/store.go` — `Load()` (with defaults+migration), `Save()` (atomic temp+rename), `SaveDelta()` (deep merge), `Migrate()` (version check)
+- [x] 3.3 Create `internal/settings/store_test.go` — atomic write, delta merge, field preservation, downgrade rejection, migration adds missing fields
 
 ## Phase 4: Core — Hub System
 
