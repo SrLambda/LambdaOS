@@ -20,6 +20,8 @@ jobs:
         run: |
           pacman -Sy --noconfirm git zstd sudo
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Download git-cliff v2.13.1
         run: |
           curl -sLO https://github.com/orhun/git-cliff/releases/download/v2.13.1/git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz
