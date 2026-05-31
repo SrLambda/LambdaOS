@@ -1,6 +1,6 @@
 std = "lua51+luajit"
-globals = {"vim"}
+globals = {"vim", "_lazygit_toggle"}
 
 -- Neovim configs often have unused callback params (e.g., client, opts)
--- and plugin toggle globals. Suppress unused warnings.
+-- Suppress unused warnings to keep CI green.
 unused = false
