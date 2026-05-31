@@ -15,6 +15,27 @@ pip install -q -r requirements-dev.txt
 echo "Dependencies installed"
 
 echo "=== Phase 1: Cleaning previous builds ==="
+# Unmount virtual filesystems from previous chroot before removing
+# Handle shared/busy mounts by iterating in reverse order with retries
+if [ -d work/x86_64/airootfs ]; then
+    echo "Unmounting previous chroot filesystems..."
+    for attempt in 1 2 3; do
+        local_mounts=$(grep "work/x86_64/airootfs" /proc/self/mountinfo 2>/dev/null | awk '{print $5}' | sort -r)
+        if [ -z "$local_mounts" ]; then
+            break
+        fi
+        while IFS= read -r mountpoint; do
+            sudo umount -l "$mountpoint" 2>/dev/null || true
+        done <<< "$local_mounts"
+        sleep 1
+    done
+    # Final check: if mounts still exist, warn but continue
+    remaining=$(grep -c "work/x86_64/airootfs" /proc/self/mountinfo 2>/dev/null || echo "0")
+    if [ "$remaining" -gt 0 ]; then
+        echo "WARNING: $remaining mounts still active under work/. rm may fail."
+        echo "Run manually: sudo umount -l -R work/x86_64/airootfs/"
+    fi
+fi
 sudo rm -rf work/ out/
 
 echo "=== Phase 2: Verifying prerequisites ==="
