@@ -5,23 +5,13 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 PACKAGES_FILE = PROJECT_ROOT / "packages.x86_64"
 
+# Packages that MUST remain in the base ISO (essential tools).
+# Heavy/optional packages live in scripts/post-install/ profiles.
 EXPECTED_PACKAGES = [
-    "chromium",
-    "docker",
-    "docker-compose",
     "keepassxc",
     "lazydocker",
-    "libreoffice-fresh",
-    "okular",
     "qalculate-gtk",
-    "steam",
     "tailscale",
-    "thunderbird",
-    "virtualbox",
-    "vlc",
-    "wine",
-    "wine-mono",
-    "winetricks",
     "yazi",
 ]
 
