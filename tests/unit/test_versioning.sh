@@ -112,10 +112,10 @@ test_env_var_priority() {
     result="$(LAMBDAOS_VERSION="1.5.0" get_iso_version_direct)"
     if [[ "${result}" == "1.5.0" ]]; then
         echo "PASS: ${name}"
-        PASSED=$((PASSED+1))
+        PASSED=$((PASSED + 1))
     else
         echo "FAIL: ${name} — expected '1.5.0', got '${result}'"
-        FAILED=$((FAILED+1))
+        FAILED=$((FAILED + 1))
     fi
 }
 
@@ -126,10 +126,10 @@ test_no_date_in_version() {
     # Date-based versions look like 2026.05.24 or 202605
     if [[ "${result}" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$ ]] || [[ "${result}" =~ ^[0-9]{6}$ ]]; then
         echo "FAIL: ${name} — looks date-based: '${result}'"
-        FAILED=$((FAILED+1))
+        FAILED=$((FAILED + 1))
     else
         echo "PASS: ${name} (not date-based: '${result}')"
-        PASSED=$((PASSED+1))
+        PASSED=$((PASSED + 1))
     fi
 }
 
@@ -139,10 +139,10 @@ test_not_empty() {
     result="$(get_iso_version_direct)"
     if [[ -n "${result}" && "${result}" != "UNDEFINED" ]]; then
         echo "PASS: ${name} (value: '${result}')"
-        PASSED=$((PASSED+1))
+        PASSED=$((PASSED + 1))
     else
         echo "FAIL: ${name} — version is empty or undefined"
-        FAILED=$((FAILED+1))
+        FAILED=$((FAILED + 1))
     fi
 }
 
@@ -151,16 +151,16 @@ test_v_prefix_stripped() {
     # This test checks the logic itself, not the current git state.
     # We verify that if a tag v1.0.0 is present, the version logic strips the v.
     local tag
-    tag=$(git describe --tags --exact-match 2>/dev/null || echo "")
+    tag=$(git describe --tags --exact-match 2> /dev/null || echo "")
     if [[ -n "${tag}" && "${tag}" == v* ]]; then
         local result
         result="$(get_iso_version_direct)"
         if [[ "${result}" == "${tag#v}" ]]; then
             echo "PASS: ${name} (tag '${tag}' → version '${result}')"
-            PASSED=$((PASSED+1))
+            PASSED=$((PASSED + 1))
         else
             echo "FAIL: ${name} — tag '${tag}' should produce '${tag#v}', got '${result}'"
-            FAILED=$((FAILED+1))
+            FAILED=$((FAILED + 1))
         fi
     else
         echo "SKIP: ${name} (no v-prefixed tag on current commit)"

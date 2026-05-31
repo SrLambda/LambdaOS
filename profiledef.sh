@@ -8,10 +8,10 @@ iso_application="LambdaOS — The TUI-First Linux Distribution"
 # Version resolution: env var → exact tag → describe → fallback
 if [[ -n "${LAMBDAOS_VERSION:-}" ]]; then
     iso_version="${LAMBDAOS_VERSION}"
-elif tag=$(git describe --tags --exact-match 2>/dev/null); then
+elif tag=$(git describe --tags --exact-match 2> /dev/null); then
     iso_version="${tag#v}"
 else
-    iso_version="$(git describe --tags --always --dirty 2>/dev/null || echo 'dev')"
+    iso_version="$(git describe --tags --always --dirty 2> /dev/null || echo 'dev')"
 fi
 
 iso_label="Lambda_OS_${iso_version//./}"

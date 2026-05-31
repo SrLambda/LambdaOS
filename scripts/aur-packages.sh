@@ -21,10 +21,10 @@ AUR_PACKAGES=(
 
 # Detect AUR helper
 detect_aur_helper() {
-    if command -v yay >/dev/null 2>&1; then
+    if command -v yay > /dev/null 2>&1; then
         echo "yay"
         return 0
-    elif command -v paru >/dev/null 2>&1; then
+    elif command -v paru > /dev/null 2>&1; then
         echo "paru"
         return 0
     fi
