@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo '{"status":"ok","action":"run","data":{"outputs":[]},"settings_delta":{"display":{"active_profile":"home"}}}'
