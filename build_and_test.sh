@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 # build_and_test.sh — Compila LambdaOS ISO y ejecuta pruebas E2E en QEMU
 set -euo pipefail
 
