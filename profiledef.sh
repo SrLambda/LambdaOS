@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
 
-iso_name="lambda-os"
-iso_publisher="SrLambda <https://github.com/SrLambda>"
-iso_application="Lambda OS Live/Rescue DVD"
+iso_name="LambdaOS"
+iso_publisher="LambdaOS Project <https://lambdaos.dev>"
+iso_application="LambdaOS — The TUI-First Linux Distribution"
 
 # Version resolution: env var → exact tag → describe → fallback
 if [[ -n "${LAMBDAOS_VERSION:-}" ]]; then

@@ -31,7 +31,7 @@ The ISO version SHALL be derived from the git tag name, not from the build times
 - GIVEN a tag `v1.2.3` is checked out
 - WHEN the build process determines the version
 - THEN the version SHALL be `1.2.3` (without the `v` prefix)
-- AND the ISO filename SHALL be `lambda-os-1.2.3-x86_64.iso`
+- AND the ISO filename SHALL be `LambdaOS-1.2.3-x86_64.iso`
 
 #### Scenario: Version from GITHUB_REF_NAME
 

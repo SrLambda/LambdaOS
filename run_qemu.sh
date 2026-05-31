@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 1. Define la ruta a tu ISO
-ISO_PATH=$(ls out/lambda-os-*-x86_64.iso | tail -n 1)
+ISO_PATH=$(ls out/LambdaOS-*-x86_64.iso | tail -n 1)
 echo "Usando ISO: $ISO_PATH"
 
 # 2. Obtener el UUID del sistema de archivos de la ISO

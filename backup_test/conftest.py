@@ -71,9 +71,9 @@ def iso_path(project_root):
     out_dir = project_root / "out"
     if not out_dir.is_dir():
         pytest.skip(f"Output directory not found: {out_dir}")
-    candidates = sorted(out_dir.glob("lambda-os-*-x86_64.iso"))
+    candidates = sorted(out_dir.glob("LambdaOS-*-x86_64.iso"))
     if not candidates:
-        pytest.skip(f"No ISO matching lambda-os-*-x86_64.iso found in {out_dir}")
+        pytest.skip(f"No ISO matching LambdaOS-*-x86_64.iso found in {out_dir}")
     iso = candidates[-1]
     return str(iso)
 

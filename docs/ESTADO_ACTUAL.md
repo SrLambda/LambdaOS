@@ -78,7 +78,7 @@ Documento generado el 2026-05-19. Resume el progreso del proyecto hasta la Fase 
 | Archivo | Función |
 |---------|---------|
 | `build_and_test.sh` | Script: clean → pacman.conf check → mkarchiso → symlink ISO → pytest QEMU |
-| `profiledef.sh` | Configuración mkarchiso: `iso_name="lambda-os"`, bootmodes bios+uefi, squashfs |
+| `profiledef.sh` | Configuración mkarchiso: `iso_name="LambdaOS"`, bootmodes bios+uefi, squashfs |
 | `packages.x86_64` | 172 paquetes (neovim, qtile, pipewire, ly, kitty, etc.) |
 | `pacman.conf` | Configuración de pacman para el entorno archiso |
 | `tests/unit/test_tui_config.py` | 18 tests (11 ConfigManager + 7 App UI) |
