@@ -337,25 +337,19 @@ luacheck airootfs/etc/skel/dotfiles/nvim/.config/nvim/
 
 ## 7. TUI View Prototypes (HTML)
 
-**EN**: Every TUI interface design (view/screen) MUST have an HTML prototype before implementation. The prototype lives in `src/lambda-env/prototypes/` and is a single self-contained HTML file that renders the intended layout using basic HTML + CSS only — no JavaScript frameworks, no build step.
+### Phase 1: Design Prototypes (Waves 1–8)
 
-**ES**: Cada diseño de interfaz TUI (vista/pantalla) DEBE tener un prototipo en HTML antes de la implementación. El prototipo vive en `src/lambda-env/prototypes/` y es un archivo HTML autocontenido que renderiza el layout usando HTML + CSS básico — sin frameworks JavaScript, sin build step.
+**EN**: Every TUI interface design (view/screen) MUST have an HTML prototype before implementation. The prototype lives in `src/lambda-env/prototypes/` and is a single self-contained HTML file that renders the intended layout using basic HTML + CSS only — no JavaScript frameworks, no build step. Static layout is enough.
 
-### Why HTML Prototypes
+**ES**: Cada diseño de interfaz TUI (vista/pantalla) DEBE tener un prototipo en HTML antes de la implementación. El prototipo vive en `src/lambda-env/prototypes/` y es un archivo HTML autocontenido que renderiza el layout usando HTML + CSS básico — sin frameworks JavaScript, sin build step. El layout estático es suficiente.
 
-**EN**: HTML prototypes let you:
-- Iterate on layout and visual hierarchy in seconds (browser refresh vs recompiling TUI)
-- Share designs with stakeholders who can open a file in any browser
-- Validate spacing, colors, and readability before locking implementation
+#### Why
+
+- Iterate on layout in seconds (browser refresh vs recompiling TUI)
+- Zero maintenance overhead — no dependencies, no build step
 - Serve as the visual spec that the TUI implementation must match
 
-**ES**: Los prototipos HTML permiten:
-- Iterar sobre layout y jerarquía visual en segundos (refresh del browser vs recompilar TUI)
-- Compartir diseños con stakeholders que pueden abrir un archivo en cualquier browser
-- Validar espaciado, colores y legibilidad antes de fijar la implementación
-- Servir como especificación visual que la implementación TUI debe respetar
-
-### File Naming
+#### File Naming
 
 ```
 src/lambda-env/prototypes/
@@ -367,15 +361,29 @@ src/lambda-env/prototypes/
 └── ...
 ```
 
-### Prototype Requirements
+#### Prototype Requirements (Waves 1–8)
 
 1. **Single file** — all CSS inline or in `<style>` tag, no external dependencies
 2. **Terminal aesthetic** — use monospace fonts, dark background, terminal-like colors
-3. **No interactivity required** — static layout is enough; hover effects are optional
+3. **Static layout** — no interactivity required; hover effects are optional
 4. **Labeled sections** — each UI region has a comment explaining its purpose
 5. **Updated when views change** — if the TUI view changes significantly, update the prototype
 
-### Example Skeleton
+### Phase 2: Public Demo (Wave 9 / vX.0 releases)
+
+**EN**: Before a vX.0 release (Wave 3 branding, Wave 9 polish), create an interactive public demo of the TUI using a lightweight framework (e.g., Alpine.js, HTMX, or vanilla JS with router). This demo lives in `src/lambda-env/demo/` and is deployed to GitHub Pages. It combines all prototypes into a navigable, interactive experience that showcases the full TUI in a browser.
+
+**ES**: Antes de un release vX.0 (Wave 3 branding, Wave 9 polish), crear una demo pública interactiva de la TUI usando un framework liviano (ej: Alpine.js, HTMX, o vanilla JS con router). Esta demo vive en `src/lambda-env/demo/` y se despliega en GitHub Pages. Combina todos los prototipos en una experiencia navegable e interactiva que muestra la TUI completa en un browser.
+
+#### Demo Requirements
+
+1. **Interactive navigation** — users can click through menus, open modules, change settings
+2. **Built from prototypes** — reuse the layout and CSS from `prototypes/`; add interactivity on top
+3. **Lightweight framework** — prefer Alpine.js or vanilla JS; avoid heavy frameworks (React, Angular) unless there's a compelling reason
+4. **GitHub Pages ready** — single `index.html` entry point, all assets relative paths
+5. **Terminal aesthetic preserved** — the demo should look like the real TUI, not a web app
+
+### Example Skeleton (Phase 1)
 
 ```html
 <!DOCTYPE html>
