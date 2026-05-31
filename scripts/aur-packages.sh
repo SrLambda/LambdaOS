@@ -12,11 +12,11 @@ set -euo pipefail
 
 # AUR packages to install (must exist in AUR)
 AUR_PACKAGES=(
-    spotify       # Music streaming client
-    obsidian      # Knowledge base / notes
-    megasync      # Mega.nz cloud sync
-    bluetui       # Bluetooth TUI manager
-    impala        # WiFi TUI manager
+    spotify  # Music streaming client
+    obsidian # Knowledge base / notes
+    megasync # Mega.nz cloud sync
+    bluetui  # Bluetooth TUI manager
+    impala   # WiFi TUI manager
 )
 
 # Detect AUR helper

@@ -38,7 +38,7 @@ jobs:
       - name: Run shfmt
         run: |
           shopt -s globstar
-          $(go env GOPATH)/bin/shfmt -d **/*.sh
+          $(go env GOPATH)/bin/shfmt -i 4 -sr -d **/*.sh
       - name: Run luacheck
         run: luacheck .
 
