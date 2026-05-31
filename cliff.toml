@@ -3,8 +3,6 @@ header = """
 # LambdaOS Changelog
 
 All notable changes to this project will be documented in this file.
-
-## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
 """
 body = """
 {% for group, commits in commits | group_by(attribute="group") %}
@@ -15,6 +13,9 @@ body = """
 {% endfor %}\
 """
 footer = """
+{% if version %}
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% endif %}
 {% if previous.version %}
 **Full Changelog**: {{ remote.github.web_url }}/compare/{{ previous.version }}..{{ version }}
 {% endif %}
