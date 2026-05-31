@@ -1,10 +1,14 @@
 from libqtile import bar
 from libqtile.config import Screen
 from libqtile.widget import (
-    GroupBox, WindowName, Clock, Systray,
-    Battery, Volume, CurrentLayout,
+    Battery,
+    Clock,
+    CurrentLayout,
+    GroupBox,
+    Systray,
+    Volume,
+    WindowName,
 )
-
 from theme import load_theme
 
 colors = load_theme()

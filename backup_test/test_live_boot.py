@@ -65,8 +65,7 @@ class TestLiveBoot:
         output = child.before.strip() if child.before else ""
 
         assert "init.lua" in output, (
-            f"~/.config/nvim/init.lua not found via ls.\n"
-            f"Command output:\n{output}"
+            f"~/.config/nvim/init.lua not found via ls.\n" f"Command output:\n{output}"
         )
 
         child.sendline("test -f ~/.config/nvim/init.lua && echo EXISTS || echo MISSING")

@@ -1,0 +1,12 @@
+[tool.black]
+extend-exclude = '''
+/(
+  | work
+  | \.venv
+)/
+'''
+
+[tool.isort]
+profile = "black"
+skip = ["work", ".venv"]
+skip_glob = ["work/**/*", ".venv/**/*"]

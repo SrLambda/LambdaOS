@@ -4,7 +4,16 @@ from pathlib import Path
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-QTILE_DIR = PROJECT_ROOT / "airootfs" / "etc" / "skel" / "dotfiles" / "qtile" / ".config" / "qtile"
+QTILE_DIR = (
+    PROJECT_ROOT
+    / "airootfs"
+    / "etc"
+    / "skel"
+    / "dotfiles"
+    / "qtile"
+    / ".config"
+    / "qtile"
+)
 
 QTILE_FILES = ["config.py", "theme.py", "keys.py", "groups.py", "screens.py"]
 
@@ -39,7 +48,9 @@ class TestQtileConfigSyntax:
 
         for module in local_imports:
             module_path = QTILE_DIR / f"{module}.py"
-            assert module_path.exists(), f"Local import '{module}' not found at {module_path}"
+            assert (
+                module_path.exists()
+            ), f"Local import '{module}' not found at {module_path}"
             module_source = module_path.read_text()
             try:
                 ast.parse(module_source)
@@ -79,7 +90,9 @@ class TestQtileConfigSyntax:
                 if hasattr(node.func, "id") and node.func.id == "Group":
                     group_count += 1
 
-        assert group_count >= 5, f"groups.py debe definir al menos 5 Group, encontrados {group_count}"
+        assert (
+            group_count >= 5
+        ), f"groups.py debe definir al menos 5 Group, encontrados {group_count}"
 
     def test_screens_py_creates_bar(self):
         """screens.py crea una barra con widgets."""

@@ -18,11 +18,13 @@ class TestPacmanConfig:
     def test_multilib_section_uncommented(self, pacman_conf_content):
         """The [multilib] section header is not prefixed with #."""
         lines = pacman_conf_content.splitlines()
-        multilib_headers = [line for line in lines if line.strip().startswith("[multilib]")]
+        multilib_headers = [
+            line for line in lines if line.strip().startswith("[multilib]")
+        ]
         assert len(multilib_headers) >= 1, "[multilib] section not found in pacman.conf"
-        assert multilib_headers[0].strip() == "[multilib]", (
-            f"[multilib] is commented out: {multilib_headers[0]}"
-        )
+        assert (
+            multilib_headers[0].strip() == "[multilib]"
+        ), f"[multilib] is commented out: {multilib_headers[0]}"
 
     def test_multilib_include_uncommented(self, pacman_conf_content):
         """The Include line under [multilib] is not commented out."""
@@ -40,20 +42,24 @@ class TestPacmanConfig:
                 include_line = stripped
                 break
         assert include_line is not None, "No Include line found under [multilib]"
-        assert not include_line.startswith("#"), (
-            f"Include line under [multilib] is commented out: {include_line}"
-        )
-        assert "mirrorlist" in include_line, (
-            f"Include line does not reference mirrorlist: {include_line}"
-        )
+        assert not include_line.startswith(
+            "#"
+        ), f"Include line under [multilib] is commented out: {include_line}"
+        assert (
+            "mirrorlist" in include_line
+        ), f"Include line does not reference mirrorlist: {include_line}"
 
     def test_core_section_uncommented(self, pacman_conf_content):
         """[core] section remains uncommented."""
-        assert "\n[core]\n" in pacman_conf_content, "[core] section not found or commented"
+        assert (
+            "\n[core]\n" in pacman_conf_content
+        ), "[core] section not found or commented"
 
     def test_extra_section_uncommented(self, pacman_conf_content):
         """[extra] section remains uncommented."""
-        assert "\n[extra]\n" in pacman_conf_content, "[extra] section not found or commented"
+        assert (
+            "\n[extra]\n" in pacman_conf_content
+        ), "[extra] section not found or commented"
 
     def test_repository_order(self, pacman_conf_content):
         """Repositories appear in correct order: core, extra, multilib."""
@@ -65,6 +71,6 @@ class TestPacmanConfig:
         assert extra_idx != -1, "[extra] not found"
         assert multilib_idx != -1, "[multilib] not found"
 
-        assert core_idx < extra_idx < multilib_idx, (
-            f"Repository order incorrect: core@{core_idx}, extra@{extra_idx}, multilib@{multilib_idx}"
-        )
+        assert (
+            core_idx < extra_idx < multilib_idx
+        ), f"Repository order incorrect: core@{core_idx}, extra@{extra_idx}, multilib@{multilib_idx}"

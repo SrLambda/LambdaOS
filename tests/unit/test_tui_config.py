@@ -35,25 +35,41 @@ class TestConfigManager:
         settings = cm.load_tui_settings()
 
         assert isinstance(settings, dict)
-        assert settings == {"enable_lsp": True, "enable_copilot": False, "enable_neotree": True}
+        assert settings == {
+            "enable_lsp": True,
+            "enable_copilot": False,
+            "enable_neotree": True,
+        }
 
     def test_load_tui_settings_missing_file_returns_defaults(self, tmp_config_dir):
         """Si el JSON no existe, devuelve defaults (todo true)."""
-        settings_file = tmp_config_dir / "nvim" / ".config" / "nvim" / "tui_settings.json"
+        settings_file = (
+            tmp_config_dir / "nvim" / ".config" / "nvim" / "tui_settings.json"
+        )
         settings_file.unlink()
 
         cm = ConfigManager()
         settings = cm.load_tui_settings()
 
-        assert settings == {"enable_lsp": True, "enable_copilot": True, "enable_neotree": True}
+        assert settings == {
+            "enable_lsp": True,
+            "enable_copilot": True,
+            "enable_neotree": True,
+        }
 
     def test_save_tui_settings_writes_correct_values(self, tmp_config_dir):
         """Guarda flags y verifica que el archivo se escribio correctamente."""
         cm = ConfigManager()
-        new_settings = {"enable_lsp": False, "enable_copilot": True, "enable_neotree": False}
+        new_settings = {
+            "enable_lsp": False,
+            "enable_copilot": True,
+            "enable_neotree": False,
+        }
         cm.save_tui_settings(new_settings)
 
-        settings_file = tmp_config_dir / "nvim" / ".config" / "nvim" / "tui_settings.json"
+        settings_file = (
+            tmp_config_dir / "nvim" / ".config" / "nvim" / "tui_settings.json"
+        )
         saved = json.loads(settings_file.read_text())
 
         assert saved == new_settings
@@ -61,7 +77,11 @@ class TestConfigManager:
     def test_save_and_reload_preserves_data(self, tmp_config_dir):
         """Round-trip: guarda, recarga, verifica que los datos son identicos."""
         cm = ConfigManager()
-        new_settings = {"enable_lsp": False, "enable_copilot": True, "enable_neotree": False}
+        new_settings = {
+            "enable_lsp": False,
+            "enable_copilot": True,
+            "enable_neotree": False,
+        }
         cm.save_tui_settings(new_settings)
 
         reloaded = cm.load_tui_settings()
@@ -105,7 +125,11 @@ class TestConfigManager:
         theme_path = tmp_config_dir / "os_theme.json"
         assert theme_path.exists()
         data = json.loads(theme_path.read_text())
-        assert data == {"theme": "gruvbox", "nvim_theme": "gruvbox", "qtile_theme": "gruvbox"}
+        assert data == {
+            "theme": "gruvbox",
+            "nvim_theme": "gruvbox",
+            "qtile_theme": "gruvbox",
+        }
 
     def test_load_os_theme_returns_none_when_missing(self, tmp_config_dir):
         """load_os_theme devuelve None si el archivo no existe."""
@@ -186,7 +210,9 @@ class TestOsTuiConfiguratorApp:
             await pilot.click("#switch_copilot")
             await pilot.press("ctrl+s")
 
-            settings_file = tmp_config_dir / "nvim" / ".config" / "nvim" / "tui_settings.json"
+            settings_file = (
+                tmp_config_dir / "nvim" / ".config" / "nvim" / "tui_settings.json"
+            )
             saved = json.loads(settings_file.read_text())
 
             assert saved == app.settings

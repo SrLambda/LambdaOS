@@ -105,21 +105,21 @@ def iso_uuid(iso_path):
 def _try_login(child, username, password, timeout=90):
     """Try to log in via getty; return True if we get a shell prompt."""
     child.sendline(username)
-    
+
     # Archiso root usually drops straight to a shell without asking for a password.
     # We expect EITHER a password prompt OR a successful shell prompt.
     idx = child.expect(
         [
-            r"Password:",                        # 0: Requires password
+            r"Password:",  # 0: Requires password
             r"\[" + username + r"@.*\][\$#%>]",  # 1: Shell prompt (bracketed)
-            username + r"@.*[\$#%>]",            # 2: Shell prompt (no brackets)
-            r"[\$#%>] ",                         # 3: Bare prompt (e.g. root's '# ')
-            pexpect.TIMEOUT,                     # 4
-            pexpect.EOF,                         # 5
+            username + r"@.*[\$#%>]",  # 2: Shell prompt (no brackets)
+            r"[\$#%>] ",  # 3: Bare prompt (e.g. root's '# ')
+            pexpect.TIMEOUT,  # 4
+            pexpect.EOF,  # 5
         ],
         timeout=30,
     )
-    
+
     if idx == 0:
         # Prompted for password
         child.sendline(password)
@@ -139,6 +139,7 @@ def _try_login(child, username, password, timeout=90):
         return True
     else:
         return False
+
 
 @pytest.fixture(scope="session")
 def qemu_booted(qemu_binary, kernel_path, initrd_path, iso_path, iso_uuid):
@@ -160,34 +161,47 @@ def qemu_booted(qemu_binary, kernel_path, initrd_path, iso_path, iso_uuid):
 
     cmd = [
         qemu_binary,
-        "-M", "pc",
-        "-m", "2G",
-        "-display", "none",
-        "-device", "isa-serial,chardev=serial0",
-        "-chardev", "stdio,id=serial0",
-        "-device", "virtio-rng-pci",     # <--- AÑADE ESTA LÍNEA AQUÍ
-        "-kernel", kernel_path,
-        "-initrd", initrd_path,
-        "-append", append,
-        "-cdrom", iso_path,
+        "-M",
+        "pc",
+        "-m",
+        "2G",
+        "-display",
+        "none",
+        "-device",
+        "isa-serial,chardev=serial0",
+        "-chardev",
+        "stdio,id=serial0",
+        "-device",
+        "virtio-rng-pci",  # <--- AÑADE ESTA LÍNEA AQUÍ
+        "-kernel",
+        kernel_path,
+        "-initrd",
+        initrd_path,
+        "-append",
+        append,
+        "-cdrom",
+        iso_path,
     ]
 
     child = pexpect.spawn(
-        cmd[0], args=cmd[1:], encoding="utf-8", timeout=TIMEOUT_PEXPECT,
+        cmd[0],
+        args=cmd[1:],
+        encoding="utf-8",
+        timeout=TIMEOUT_PEXPECT,
         logfile=open(str(DEBUG_LOG), "w"),
     )
 
     try:
         idx = child.expect(
             [
-                r"\[liveuser@.*\][\$#%>]",      # 0: autologin shell (bracketed)
-                r"liveuser@.*[\$#%>]",           # 1: autologin shell (no brackets)
-                r"liveuser@\S+",                 # 2: catch-all liveuser
-                r"[\$#%>] ",                     # 3: bare prompt
-                r"liveuser login:",              # 4: missing autologin (liveuser)
-                r"login:",                       # 5: generic login prompt
-                pexpect.TIMEOUT,                 # 6
-                pexpect.EOF,                     # 7
+                r"\[liveuser@.*\][\$#%>]",  # 0: autologin shell (bracketed)
+                r"liveuser@.*[\$#%>]",  # 1: autologin shell (no brackets)
+                r"liveuser@\S+",  # 2: catch-all liveuser
+                r"[\$#%>] ",  # 3: bare prompt
+                r"liveuser login:",  # 4: missing autologin (liveuser)
+                r"login:",  # 5: generic login prompt
+                pexpect.TIMEOUT,  # 6
+                pexpect.EOF,  # 7
             ],
             timeout=TIMEOUT_BOOT,
         )
@@ -198,7 +212,9 @@ def qemu_booted(qemu_binary, kernel_path, initrd_path, iso_path, iso_uuid):
             # Fall back to root (empty password) and su to liveuser.
             login_ok = _try_login(child, "root", "")
             if login_ok:
-                child.sendline("id liveuser 2>/dev/null || (useradd -m liveuser && passwd -d liveuser)")
+                child.sendline(
+                    "id liveuser 2>/dev/null || (useradd -m liveuser && passwd -d liveuser)"
+                )
                 child.expect([r"[\$#%>] ", pexpect.TIMEOUT], timeout=30)
                 child.sendline("su - liveuser")
                 child.expect(

@@ -45,14 +45,14 @@ class TestPackagesList:
     def test_package_present(self, package, packages_lines):
         """Each expected package appears exactly once in packages.x86_64."""
         found = [line for line in packages_lines if line.strip() == package]
-        assert len(found) == 1, (
-            f"Expected '{package}' to appear exactly once, found {len(found)} times"
-        )
+        assert (
+            len(found) == 1
+        ), f"Expected '{package}' to appear exactly once, found {len(found)} times"
 
     def test_alphabetical_order(self, packages_lines):
         """packages.x86_64 is strictly alphabetically sorted."""
         # Filter out empty lines and comments (if any)
         clean_lines = [line.strip() for line in packages_lines if line.strip()]
-        assert clean_lines == sorted(clean_lines), (
-            "packages.x86_64 is not in alphabetical order"
-        )
+        assert clean_lines == sorted(
+            clean_lines
+        ), "packages.x86_64 is not in alphabetical order"

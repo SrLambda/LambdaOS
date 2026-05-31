@@ -1,7 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Header, Footer, Switch, ListView, ListItem, Select, Label
+from textual.widgets import Footer, Header, Label, ListItem, ListView, Select, Switch
 
 from .config_manager import ConfigManager
 
@@ -50,14 +50,24 @@ class OsTuiConfigurator(App):
                     )
                     with Horizontal(classes="switch-row"):
                         yield Label("enable_lsp")
-                        yield Switch(value=self.settings.get("enable_lsp", True), id="switch_lsp")
+                        yield Switch(
+                            value=self.settings.get("enable_lsp", True), id="switch_lsp"
+                        )
                     with Horizontal(classes="switch-row"):
                         yield Label("enable_copilot")
-                        yield Switch(value=self.settings.get("enable_copilot", True), id="switch_copilot")
+                        yield Switch(
+                            value=self.settings.get("enable_copilot", True),
+                            id="switch_copilot",
+                        )
                     with Horizontal(classes="switch-row"):
                         yield Label("enable_neotree")
-                        yield Switch(value=self.settings.get("enable_neotree", True), id="switch_neotree")
-                yield Label("Qtile Configuration \u2014 Coming Soon", id="qtile-content")
+                        yield Switch(
+                            value=self.settings.get("enable_neotree", True),
+                            id="switch_neotree",
+                        )
+                yield Label(
+                    "Qtile Configuration \u2014 Coming Soon", id="qtile-content"
+                )
         yield Footer()
 
     def on_mount(self) -> None:

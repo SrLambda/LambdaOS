@@ -23,8 +23,8 @@ jobs:
       - name: Download git-cliff v2.13.1
         run: |
           curl -sLO https://github.com/orhun/git-cliff/releases/download/v2.13.1/git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz
-          curl -sLO https://github.com/orhun/git-cliff/releases/download/v2.13.1/git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz.sha256
-          sha256sum -c git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz.sha256
+          curl -sLO https://github.com/orhun/git-cliff/releases/download/v2.13.1/git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz.sha512
+          sha512sum -c git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz.sha512
           tar xzf git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin --strip-components=1
       - name: Generate changelog
         run: git cliff --latest --output CHANGELOG.md

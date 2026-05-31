@@ -18,10 +18,14 @@ class ConfigManager:
         return Path(base)
 
     def _get_settings_path(self) -> Path:
-        return self._get_config_base() / "nvim" / ".config" / "nvim" / "tui_settings.json"
+        return (
+            self._get_config_base() / "nvim" / ".config" / "nvim" / "tui_settings.json"
+        )
 
     def _get_theme_path(self) -> Path:
-        return self._get_config_base() / "nvim" / ".config" / "nvim" / self.THEME_FILENAME
+        return (
+            self._get_config_base() / "nvim" / ".config" / "nvim" / self.THEME_FILENAME
+        )
 
     def load_tui_settings(self) -> dict:
         path = self._get_settings_path()
