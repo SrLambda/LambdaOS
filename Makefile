@@ -1,10 +1,13 @@
 # Makefile — LambdaOS CI/CD local parity
 # Mirrors CI commands for lint, test, and build
 
-.PHONY: lint test build release clean
+.PHONY: lint test build release clean validate-specs
 
 lint:
-	black --check . && isort --check . && shellcheck **/*.sh && shfmt -d **/*.sh
+	black --check . && isort --check . && shellcheck **/*.sh && shfmt -d **/*.sh && luacheck .
+
+validate-specs:
+	./scripts/validate-specs.sh
 
 test:
 	python -m pytest tests/unit/ -v
