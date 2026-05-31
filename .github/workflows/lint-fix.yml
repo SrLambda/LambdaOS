@@ -1,0 +1,49 @@
+name: Lint Fix
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python formatters
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install black isort
+
+      - name: Install shfmt
+        run: |
+          go install mvdan.cc/sh/v3/cmd/shfmt@latest
+
+      - name: Run autofix
+        run: |
+          black .
+          isort .
+          shopt -s globstar
+          $(go env GOPATH)/bin/shfmt -i 4 -sr -w **/*.sh
+
+      - name: Commit fixes
+        run: |
+          git config user.name "lambdaos-bot"
+          git config user.email "bot@lambdaos.dev"
+          if git diff --quiet; then
+            echo "No formatting changes to commit."
+            exit 0
+          fi
+          git add -A
+          git commit -m "chore: auto-fix lint formatting [bot]"
+          git push
