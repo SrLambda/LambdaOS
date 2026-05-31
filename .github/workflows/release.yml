@@ -20,6 +20,14 @@ jobs:
         run: |
           pacman -Sy --noconfirm git zstd sudo
       - uses: actions/checkout@v4
+      - name: Download git-cliff v2.13.1
+        run: |
+          curl -sLO https://github.com/orhun/git-cliff/releases/download/v2.13.1/git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz
+          curl -sLO https://github.com/orhun/git-cliff/releases/download/v2.13.1/git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz.sha256
+          sha256sum -c git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz.sha256
+          tar xzf git-cliff-2.13.1-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin --strip-components=1
+      - name: Generate changelog
+        run: git cliff --latest --output CHANGELOG.md
       - name: Cache pacman packages
         uses: actions/cache@v4
         with:
@@ -42,6 +50,8 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
+          body_path: CHANGELOG.md
           files: |
             out/*.iso
             out/checksums.sha256
+            CHANGELOG.md
