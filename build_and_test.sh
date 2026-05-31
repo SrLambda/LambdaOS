@@ -20,6 +20,7 @@ echo "=== Phase 1: Cleaning previous builds ==="
 if [ -d work/x86_64/airootfs ]; then
     echo "Unmounting previous chroot filesystems..."
     for attempt in 1 2 3; do
+        echo "  Unmount attempt ${attempt}/3..."
         local_mounts=$(grep "work/x86_64/airootfs" /proc/self/mountinfo 2>/dev/null | awk '{print $5}' | sort -r)
         if [ -z "$local_mounts" ]; then
             break
