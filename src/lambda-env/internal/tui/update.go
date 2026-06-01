@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"fmt"
+
 	"lambdaos.dev/lambda-env/internal/hub"
 	"lambdaos.dev/lambda-env/internal/tui/components"
 	"lambdaos.dev/lambda-env/internal/tui/views"
@@ -47,6 +49,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case views.ModuleSelectedMsg:
 		return m.handleModuleSelected(msg)
+
+	case views.ActionExecuteMsg:
+		return m.handleActionExecute(msg)
 
 	case views.BackMsg:
 		return m.handleBack()
@@ -96,28 +101,55 @@ func (m Model) handleCategorySelected(msg views.CategorySelectedMsg) (tea.Model,
 }
 
 func (m Model) handleModuleSelected(msg views.ModuleSelectedMsg) (tea.Model, tea.Cmd) {
-	// Wave 2 behavior: execute the module directly.
-	// Wave 3b will navigate to detail view instead.
-	if m.hub != nil {
-		return m, executeCmd(m.hub, msg.Module)
+	m.view = viewModuleDetail
+	m.cursor = 0
+	m.statusMsg = ""
+
+	m.detailSub = views.NewDetailView(msg.Module)
+	m.activeSubModel = m.detailSub
+
+	if m.statusBar != nil {
+		m.statusBar.SetContext("detail").SetModule(msg.Module.Name)
 	}
+
 	return m, nil
 }
 
 func (m Model) handleBack() (tea.Model, tea.Cmd) {
-	m.view = viewCategories
-	m.cursor = 0
-	m.modules = nil
-	m.currentCategory = ""
-	m.statusMsg = ""
+	switch m.view {
+	case viewModuleDetail:
+		m.view = viewModules
+		m.cursor = 0
+		m.statusMsg = ""
+		m.detailSub = nil
+		m.activeSubModel = m.modulesSub
 
-	m.activeSubModel = m.categoriesSub
+		if m.statusBar != nil {
+			m.statusBar.SetContext("modules").SetModule(m.currentCategory)
+		}
+	default:
+		m.view = viewCategories
+		m.cursor = 0
+		m.modules = nil
+		m.currentCategory = ""
+		m.statusMsg = ""
+		m.modulesSub = nil
+		m.detailSub = nil
+		m.activeSubModel = m.categoriesSub
 
-	if m.statusBar != nil {
-		m.statusBar.SetContext("categories").SetModule("")
+		if m.statusBar != nil {
+			m.statusBar.SetContext("categories").SetModule("")
+		}
 	}
 
 	return m, nil
+}
+
+func (m Model) handleActionExecute(msg views.ActionExecuteMsg) (tea.Model, tea.Cmd) {
+	if m.hub == nil {
+		return m, nil
+	}
+	return m, executeActionCmd(m.hub, msg.Module, msg.Action, msg.Params)
 }
 
 func (m Model) handleExecMsg(msg execMsg) (tea.Model, tea.Cmd) {
@@ -157,6 +189,20 @@ func (m Model) handleExecMsg(msg execMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	// If detail view is active, update its state from the response.
+	if m.detailSub != nil && msg.response != nil {
+		if msg.response.Data != nil {
+			if opts, ok := msg.response.Data["available_options"]; ok {
+				m.detailSub.MergeDynamicOptions(convertOptionsMap(opts), msg.response.Data)
+			}
+			if vals, ok := msg.response.Data["current_value"]; ok {
+				if valMap, ok := vals.(map[string]interface{}); ok {
+					m.detailSub.MergeDynamicOptions(nil, valMap)
+				}
+			}
+		}
+	}
+
 	return m, nil
 }
 
@@ -171,10 +217,33 @@ func filterByCategory(mods []module.Manifest, cat string) []module.Manifest {
 	return out
 }
 
-// executeCmd returns a bubbletea command that runs a module.
+// executeCmd returns a bubbletea command that runs a module's default action.
 func executeCmd(h *hub.Hub, mod module.Manifest) tea.Cmd {
 	return func() tea.Msg {
 		resp, err := h.ExecuteModule(mod)
 		return execMsg{mod: mod, response: resp, err: err}
 	}
+}
+
+// executeActionCmd returns a bubbletea command that runs a specific action.
+func executeActionCmd(h *hub.Hub, mod module.Manifest, action string, params map[string]interface{}) tea.Cmd {
+	return func() tea.Msg {
+		resp, err := h.ExecuteAction(mod, action, params)
+		return execMsg{mod: mod, response: resp, err: err}
+	}
+}
+
+// convertOptionsMap converts an interface{} from JSON to map[string][]string.
+func convertOptionsMap(v interface{}) map[string][]string {
+	result := make(map[string][]string)
+	if m, ok := v.(map[string]interface{}); ok {
+		for key, val := range m {
+			if arr, ok := val.([]interface{}); ok {
+				for _, item := range arr {
+					result[key] = append(result[key], fmt.Sprintf("%v", item))
+				}
+			}
+		}
+	}
+	return result
 }

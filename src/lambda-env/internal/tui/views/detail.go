@@ -30,6 +30,7 @@ var (
 
 // ActionExecuteMsg is emitted when the user triggers an action.
 type ActionExecuteMsg struct {
+	Module module.Manifest
 	Name   string
 	Action string
 	Params map[string]interface{}
@@ -246,6 +247,7 @@ func (d *DetailView) emitAction(actionName string, value interface{}) tea.Cmd {
 	}
 	return func() tea.Msg {
 		return ActionExecuteMsg{
+			Module: d.manifest,
 			Name:   d.manifest.Name,
 			Action: actionName,
 			Params: params,
@@ -260,6 +262,7 @@ func (d *DetailView) emitConfirmAction(actionName string, confirmed bool) tea.Cm
 	}
 	return func() tea.Msg {
 		return ActionExecuteMsg{
+			Module: d.manifest,
 			Name:   d.manifest.Name,
 			Action: actionName,
 			Params: params,
@@ -375,6 +378,11 @@ func (d *DetailView) MergeDynamicOptions(options map[string][]string, values map
 			}
 		}
 	}
+}
+
+// Manifest returns the current manifest (with any merged dynamic options).
+func (d *DetailView) Manifest() module.Manifest {
+	return d.manifest
 }
 
 // SetWarning sets a warning message to display in the view.

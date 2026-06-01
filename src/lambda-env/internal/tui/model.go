@@ -39,6 +39,7 @@ type Model struct {
 	// Sub-models
 	categoriesSub  *views.CategoriesView
 	modulesSub     *views.ModulesView
+	detailSub      *views.DetailView
 	activeSubModel SubModel
 
 	// Components

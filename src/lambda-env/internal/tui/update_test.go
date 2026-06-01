@@ -54,16 +54,25 @@ func TestModuleSelectedWithNilHub(t *testing.T) {
 	// First transition to modules view
 	m.view = viewModules
 	m.modulesSub = views.NewModulesView([]module.Manifest{
-		{Name: "keyboard", Description: "Set layout"},
+		{Name: "keyboard", Description: "Set layout", Actions: []module.ActionConfig{
+			{Name: "apply", Label: "Apply", Type: "execute"},
+		}},
 	}, "system")
 	m.activeSubModel = m.modulesSub
 
-	// Simulate selecting a module with nil hub — should not crash, no cmd
-	_, cmd := m.Update(views.ModuleSelectedMsg{
+	// Simulate selecting a module with nil hub — should transition to detail view
+	updated, cmd := m.Update(views.ModuleSelectedMsg{
 		Module: module.Manifest{Name: "keyboard", Description: "Set layout"},
 		Index:  0,
 	})
+	model := updated.(Model)
 
+	if model.view != viewModuleDetail {
+		t.Errorf("view = %q, want %q", model.view, viewModuleDetail)
+	}
+	if model.detailSub == nil {
+		t.Fatal("detailSub should be initialized")
+	}
 	if cmd != nil {
 		t.Error("expected nil cmd when hub is nil")
 	}
@@ -75,32 +84,27 @@ func TestModuleSelectedWithHub(t *testing.T) {
 	// First transition to modules view
 	m.view = viewModules
 	m.modulesSub = views.NewModulesView([]module.Manifest{
-		{Name: "keyboard", Description: "Set layout"},
+		{Name: "keyboard", Description: "Set layout", Actions: []module.ActionConfig{
+			{Name: "apply", Label: "Apply", Type: "execute"},
+		}},
 	}, "system")
 	m.activeSubModel = m.modulesSub
-	m.hub = &hub.Hub{} // Non-nil hub for command generation
+	m.hub = &hub.Hub{}
 
-	// Simulate selecting a module
-	_, cmd := m.Update(views.ModuleSelectedMsg{
-		Module: module.Manifest{Name: "keyboard", Description: "Set layout", Path: "/tmp"},
-		Index:  0,
+	// Simulate selecting a module — should transition to detail view
+	updated, _ := m.Update(views.ModuleSelectedMsg{
+		Module: module.Manifest{Name: "keyboard", Description: "Set layout", Path: "/tmp", Actions: []module.ActionConfig{
+			{Name: "apply", Label: "Apply", Type: "execute"},
+		}},
+		Index: 0,
 	})
+	model := updated.(Model)
 
-	if cmd == nil {
-		t.Fatal("expected cmd after module selection, got nil")
+	if model.view != viewModuleDetail {
+		t.Errorf("view = %q, want %q", model.view, viewModuleDetail)
 	}
-
-	// The command should produce an execMsg when executed
-	// (it may error because Path doesn't exist, but it should still produce execMsg)
-	msg := cmd()
-	if msg == nil {
-		// This is expected because the module path doesn't exist
-		// The important thing is that cmd was generated
-		return
-	}
-	_, ok := msg.(execMsg)
-	if !ok {
-		t.Fatalf("expected execMsg, got %T", msg)
+	if model.detailSub == nil {
+		t.Fatal("detailSub should be initialized after module selection")
 	}
 }
 
@@ -247,6 +251,179 @@ func createTestModel() Model {
 	m.activeSubModel = m.categoriesSub
 	m.helpOverlay.Visible = false
 	return m
+}
+
+func TestModuleSelectedTransitionsToDetailView(t *testing.T) {
+	m := createTestModel()
+
+	// Transition to modules view first
+	m.view = viewModules
+	m.modulesSub = views.NewModulesView([]module.Manifest{
+		{Name: "keyboard", Description: "Set layout", Actions: []module.ActionConfig{
+			{Name: "toggle-feature", Label: "Feature", Type: "toggle"},
+		}},
+	}, "system")
+	m.activeSubModel = m.modulesSub
+
+	// Select a module — should transition to detail view
+	updated, _ := m.Update(views.ModuleSelectedMsg{
+		Module: module.Manifest{Name: "keyboard", Description: "Set layout", Actions: []module.ActionConfig{
+			{Name: "toggle-feature", Label: "Feature", Type: "toggle"},
+		}},
+		Index: 0,
+	})
+	model := updated.(Model)
+
+	if model.view != viewModuleDetail {
+		t.Errorf("view = %q, want %q", model.view, viewModuleDetail)
+	}
+	if model.detailSub == nil {
+		t.Fatal("detailSub should be initialized after module selection")
+	}
+	if model.activeSubModel != model.detailSub {
+		t.Error("activeSubModel should be detailSub after module selection")
+	}
+}
+
+func TestActionExecuteMsgWithNilHub(t *testing.T) {
+	m := createTestModel()
+
+	// Set up detail view
+	m.view = viewModuleDetail
+	m.detailSub = views.NewDetailView(module.Manifest{
+		Name: "keyboard",
+		Actions: []module.ActionConfig{
+			{Name: "apply", Label: "Apply", Type: "execute"},
+		},
+	})
+	m.activeSubModel = m.detailSub
+
+	// ActionExecuteMsg with nil hub should not crash and produce no cmd
+	_, cmd := m.Update(views.ActionExecuteMsg{
+		Module: module.Manifest{Name: "keyboard"},
+		Name:   "keyboard",
+		Action: "apply",
+		Params: nil,
+	})
+
+	if cmd != nil {
+		t.Error("expected nil cmd when hub is nil")
+	}
+}
+
+func TestActionExecuteMsgWithHub(t *testing.T) {
+	m := createTestModel()
+
+	// Set up detail view with a module that has a path
+	m.view = viewModuleDetail
+	m.detailSub = views.NewDetailView(module.Manifest{
+		Name: "keyboard",
+		Path: "/tmp/nonexistent",
+		Actions: []module.ActionConfig{
+			{Name: "apply", Label: "Apply", Type: "execute"},
+		},
+	})
+	m.activeSubModel = m.detailSub
+	m.hub = &hub.Hub{}
+
+	// ActionExecuteMsg with hub should generate a command
+	_, cmd := m.Update(views.ActionExecuteMsg{
+		Module: module.Manifest{Name: "keyboard", Path: "/tmp/nonexistent"},
+		Name:   "keyboard",
+		Action: "apply",
+		Params: nil,
+	})
+
+	if cmd == nil {
+		t.Fatal("expected cmd after ActionExecuteMsg, got nil")
+	}
+
+	// The command may error because path doesn't exist, but it should produce execMsg
+	msg := cmd()
+	if msg == nil {
+		return
+	}
+	_, ok := msg.(execMsg)
+	if !ok {
+		t.Fatalf("expected execMsg, got %T", msg)
+	}
+}
+
+func TestExecMsgUpdatesDetailViewState(t *testing.T) {
+	m := createTestModel()
+
+	// Set up detail view
+	m.view = viewModuleDetail
+	m.detailSub = views.NewDetailView(module.Manifest{
+		Name: "keyboard",
+		Actions: []module.ActionConfig{
+			{Name: "layout", Label: "Layout", Type: "select", Options: []string{"us", "dvorak"}},
+		},
+	})
+	m.activeSubModel = m.detailSub
+
+	// Simulate an execMsg with data that should update detail view
+	updated, _ := m.Update(execMsg{
+		mod: module.Manifest{Name: "keyboard"},
+		response: &module.Response{
+			Status: "ok",
+			Data: map[string]interface{}{
+				"available_options": map[string]interface{}{
+					"layout": []interface{}{"us", "dvorak", "colemak"},
+				},
+				"current_value": map[string]interface{}{
+					"layout": "dvorak",
+				},
+			},
+		},
+		err: nil,
+	})
+	model := updated.(Model)
+
+	// Verify status bar updated
+	if model.statusBar == nil {
+		t.Fatal("statusBar should be initialized")
+	}
+	view := model.statusBar.View()
+	if !strings.Contains(view, "Module executed successfully") {
+		t.Errorf("statusBar view = %q, want to contain success message", view)
+	}
+
+	// Verify detail view options were merged
+	if model.detailSub == nil {
+		t.Fatal("detailSub should exist")
+	}
+	if len(model.detailSub.Manifest().Actions[0].Options) != 3 {
+		t.Errorf("expected 3 options after merge, got %d", len(model.detailSub.Manifest().Actions[0].Options))
+	}
+}
+
+func TestBackFromDetailReturnsToModules(t *testing.T) {
+	m := createTestModel()
+
+	// Transition to detail view
+	m.view = viewModuleDetail
+	m.modulesSub = views.NewModulesView([]module.Manifest{
+		{Name: "keyboard", Description: "Set layout"},
+	}, "system")
+	m.detailSub = views.NewDetailView(module.Manifest{
+		Name: "keyboard",
+		Actions: []module.ActionConfig{
+			{Name: "toggle", Label: "Toggle", Type: "toggle"},
+		},
+	})
+	m.activeSubModel = m.detailSub
+
+	// Send back message
+	updated, _ := m.Update(views.BackMsg{})
+	model := updated.(Model)
+
+	if model.view != viewModules {
+		t.Errorf("view = %q, want %q", model.view, viewModules)
+	}
+	if model.activeSubModel != model.modulesSub {
+		t.Error("activeSubModel should be modulesSub after back from detail")
+	}
 }
 
 type testError struct {
