@@ -15,9 +15,16 @@ import (
 	"lambdaos.dev/lambda-env/pkg/version"
 )
 
-// ExecuteModule runs the module's executable with the required environment,
-// parses its JSON stdout, logs the execution, and optionally merges settings_delta.
+// ExecuteModule runs the module's default "run" action.
+// It is backward-compatible and delegates to ExecuteAction with action="run".
 func (h *Hub) ExecuteModule(mod module.Manifest) (*module.Response, error) {
+	return h.ExecuteAction(mod, "run", nil)
+}
+
+// ExecuteAction runs a specific module action with optional parameters.
+// It sets LAMBDA_ENV_ACTION to the action name and passes params as JSON
+// in the LAMBDA_ENV_PARAMS environment variable.
+func (h *Hub) ExecuteAction(mod module.Manifest, actionName string, params map[string]interface{}) (*module.Response, error) {
 	binPath := filepath.Join(mod.Path, "module")
 	if _, err := os.Stat(binPath); err != nil {
 		return nil, fmt.Errorf("module executable not found at %s: %w", binPath, err)
@@ -29,10 +36,17 @@ func (h *Hub) ExecuteModule(mod module.Manifest) (*module.Response, error) {
 	}
 
 	env := map[string]string{
-		"LAMBDA_ENV_ACTION":      "run",
+		"LAMBDA_ENV_ACTION":      actionName,
 		"LAMBDA_ENV_SETTINGS":    h.StorePath,
 		"LAMBDA_ENV_HUB_VERSION": version.Version,
 		"LAMBDA_ENV_LOCALE":      locale,
+	}
+
+	if params != nil && len(params) > 0 {
+		paramsJSON, err := json.Marshal(params)
+		if err == nil {
+			env["LAMBDA_ENV_PARAMS"] = string(paramsJSON)
+		}
 	}
 
 	timeout := mod.Timeout
@@ -71,7 +85,7 @@ func (h *Hub) ExecuteModule(mod module.Manifest) (*module.Response, error) {
 
 	// Log regardless of outcome.
 	if h.Logger != nil {
-		_ = h.Logger.Log(mod.Name, "run", exitCode, stdoutStr, stderrStr, env)
+		_ = h.Logger.Log(mod.Name, actionName, exitCode, stdoutStr, stderrStr, env)
 	}
 
 	// Parse JSON response from stdout.
