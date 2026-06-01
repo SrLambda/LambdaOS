@@ -1,0 +1,35 @@
+{
+  "name": "audio",
+  "version": "0.1.0",
+  "description": "Configure audio: volume, mute, and default sink",
+  "description_es": "Configurar audio: volumen, silencio y salida por defecto",
+  "category": "system",
+  "requires_root": false,
+  "dependencies": ["pactl"],
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "run",
+      "label": "Refresh",
+      "type": "execute"
+    },
+    {
+      "name": "set-volume",
+      "label": "Volume",
+      "type": "text",
+      "field": "audio.volume"
+    },
+    {
+      "name": "set-mute",
+      "label": "Mute",
+      "type": "toggle",
+      "field": "audio.muted"
+    },
+    {
+      "name": "set-sink",
+      "label": "Default Sink",
+      "type": "select",
+      "field": "audio.default_sink"
+    }
+  ]
+}
