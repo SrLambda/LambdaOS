@@ -48,13 +48,13 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3a: TUI Sub-model Architecture
 
-- [ ] 3a.1 Expand viewState: add `viewModuleDetail`, `viewConfirmDialog` to `internal/tui/model.go`; add sub-model fields + SubModel interface
-- [ ] 3a.2 Extract `internal/tui/views/categories.go` — category list sub-model from existing flat logic
-- [ ] 3a.3 Extract `internal/tui/views/modules.go` — module list sub-model with preserved selection state
-- [ ] 3a.4 Rewrite `internal/tui/update.go` — parent delegates to active sub-model; route execMsg to status bar component
-- [ ] 3a.5 Rewrite `internal/tui/view.go` — parent delegates rendering; status bar component rendered by parent across all views
-- [ ] 3a.6 Tests: sub-model navigation (categories→modules→back), selection preservation, empty states
-- [ ] 3a.7 **Debt fix**: Update design.md to match implementation conventions (`ActionConfig`, `pkg/module/executor.go`, pointer receivers, custom help overlay)
+- [x] 3a.1 Expand viewState: add `viewModuleDetail`, `viewConfirmDialog` to `internal/tui/model.go`; add sub-model fields + SubModel interface
+- [x] 3a.2 Extract `internal/tui/views/categories.go` — category list sub-model from existing flat logic
+- [x] 3a.3 Extract `internal/tui/views/modules.go` — module list sub-model with preserved selection state
+- [x] 3a.4 Rewrite `internal/tui/update.go` — parent delegates to active sub-model; route execMsg to status bar component
+- [x] 3a.5 Rewrite `internal/tui/view.go` — parent delegates rendering; status bar component rendered by parent across all views
+- [x] 3a.6 Tests: sub-model navigation (categories→modules→back), selection preservation, empty states
+- [x] 3a.7 **Debt fix**: Update design.md to match implementation conventions (`ActionConfig`, `pkg/module/executor.go`, pointer receivers, custom help overlay)
 
 ## Phase 3b: Module Detail View + ExecuteAction
 
