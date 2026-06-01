@@ -34,17 +34,25 @@ func main() {
 		handleRun(settingsPath)
 	case "set-volume":
 		volume := 0
+		valid := false
 		if params != nil {
 			switch v := params["value"].(type) {
 			case float64:
 				volume = int(v)
+				valid = true
 			case int:
 				volume = v
+				valid = true
 			case string:
 				if parsed, err := strconv.Atoi(v); err == nil {
 					volume = parsed
+					valid = true
 				}
 			}
+		}
+		if !valid {
+			emitError("set-volume", "invalid volume value", "expected a number between 0 and 100")
+			return
 		}
 		handleSetVolume(settingsPath, volume)
 	case "set-mute":

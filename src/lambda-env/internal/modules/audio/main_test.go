@@ -176,6 +176,25 @@ func TestSetVolumeClamping(t *testing.T) {
 	}
 }
 
+func TestSetVolumeInvalidStringReturnsError(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	s.Audio.DefaultSink = "alsa_output.pci-0000_00_1f.3.analog-stereo"
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureAudioResponse(t, "set-volume", `{"value":"not-a-number"}`, settingsPath)
+	if resp.Status != "error" {
+		t.Fatalf("expected status error for invalid volume string, got %s", resp.Status)
+	}
+}
+
 func TestSetMuteCallsPactl(t *testing.T) {
 	oldExecutor := executor
 	executor = &module.MockExecutor{

@@ -84,6 +84,32 @@ func TestIntegrationDefaultsFullFlow(t *testing.T) {
 		t.Errorf("terminal = %q, want kitty", loaded.Defaults.Terminal)
 	}
 
+	// Set editor
+	resp = captureDefaultsResponse(t, "set-editor", `{"value":"nvim"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("set-editor expected ok, got %s", resp.Status)
+	}
+	loaded, err = settings.Load(settingsPath)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if loaded.Defaults.Editor != "nvim" {
+		t.Errorf("editor = %q, want nvim", loaded.Defaults.Editor)
+	}
+
+	// Set file manager
+	resp = captureDefaultsResponse(t, "set-file-manager", `{"value":"thunar"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("set-file-manager expected ok, got %s", resp.Status)
+	}
+	loaded, err = settings.Load(settingsPath)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if loaded.Defaults.FileManager != "thunar" {
+		t.Errorf("file_manager = %q, want thunar", loaded.Defaults.FileManager)
+	}
+
 	// Apply all defaults via batch
 	s = settings.Defaults()
 	s.Defaults.Browser = "firefox"

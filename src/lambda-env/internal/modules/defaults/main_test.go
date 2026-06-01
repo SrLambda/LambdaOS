@@ -361,3 +361,28 @@ func TestDesktopFileValidation(t *testing.T) {
 		t.Error("expected nonexistent to be invalid")
 	}
 }
+
+func TestApplyEmptyDefaultsReturnsOk(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{}
+	defer func() { executor = oldExecutor }()
+
+	settingsDir := t.TempDir()
+	settingsPath := filepath.Join(settingsDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureDefaultsResponse(t, "apply", "", settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok for empty defaults, got %s: %s", resp.Status, resp.Message)
+	}
+	results, ok := resp.Data["results"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected results map in data")
+	}
+	if len(results) != 0 {
+		t.Errorf("expected 0 results for empty defaults, got %d", len(results))
+	}
+}
