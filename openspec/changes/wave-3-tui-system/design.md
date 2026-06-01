@@ -51,16 +51,16 @@ User types "dvorak" → textinput widget.Update → chars appear in bubbles text
 | `internal/tui/model.go` | Modify | Parent model delegates to sub-models; viewState gains moduleDetail, confirmDialog |
 | `internal/tui/update.go` | Modify | Parent Update delegates to active sub-model; execMsg for action results |
 | `internal/tui/view.go` | Modify | Parent View delegates to active sub-model; status bar rendered by parent |
-| `internal/tui/components/toggle.go` | Create | Toggle widget wrapping bubbles help+key styles |
-| `internal/tui/components/textinput.go` | Create | Text input wrapping bubbles textinput |
-| `internal/tui/components/confirmer.go` | Create | Confirm dialog wrapping bubbles viewport |
-| `internal/tui/components/helpoverlay.go` | Create | Help overlay wrapping bubbles help |
-| `internal/tui/components/statusbar.go` | Create | Persistent status bar (module, version, modified indicator) |
+| `internal/tui/components/toggle.go` | Create | Boolean toggle; renders ● On / ○ Off; emits `ToggleChangedMsg` |
+| `internal/tui/components/textinput.go` | Create | Text input wrapping bubbles textinput; pointer receiver required for SetValue/Focus/Blur |
+| `internal/tui/components/confirm.go` | Create | Confirm dialog (custom implementation); emits `ConfirmResultMsg` |
+| `internal/tui/components/help.go` | Create | Custom help overlay (NOT bubbles/help wrapper); context-sensitive bindings |
+| `internal/tui/components/statusbar.go` | Create | Persistent status bar (context, module, settings state, modified indicator) |
 | `internal/tui/views/categories.go` | Create | Category list sub-model (extracted from current flat model) |
 | `internal/tui/views/modules.go` | Create | Module list sub-model |
 | `internal/tui/views/detail.go` | Create | Module detail sub-model — reads manifest.actions, builds widgets |
-| `pkg/module/manifest.go` | Modify | Add `Actions []Action` field, `Action` struct with type/label/options/required/value |
-| `internal/modules/system/executor.go` | Create | `CLIExecutor` interface + `RealExecutor` (os/exec) + `MockExecutor` (fixtures) |
+| `pkg/module/manifest.go` | Modify | Add `Actions []ActionConfig` field, `ActionConfig` struct with type/label/options/required/value |
+| `pkg/module/executor.go` | Create | `CLIExecutor` interface + `RealExecutor` (os/exec) + `MockExecutor` (fixtures); returns `(stdout, stderr, exitCode int, err error)` |
 | `internal/modules/keyboard/main.go` | Create | Keyboard module: setxkbmap layout/variant/options via CLIExecutor |
 | `internal/modules/appearance/main.go` | Create | Appearance module: gsettings/feh theme/wallpaper via CLIExecutor |
 | `internal/modules/audio/main.go` | Create | Audio module: pactl/wpctl volume/mute/sink via CLIExecutor |
@@ -73,14 +73,13 @@ User types "dvorak" → textinput widget.Update → chars appear in bubbles text
 ### Manifest Action Type
 
 ```go
-type Action struct {
-    Name        string   `json:"name"`        // "set-layout", "toggle-mute"
-    Type        string   `json:"type"`        // toggle|select|text|confirm|execute
-    Label       string   `json:"label"`       // "Keyboard Layout"
-    Options     []string `json:"options,omitempty"` // for select type
-    Required    bool     `json:"required,omitempty"`
-    Value       string   `json:"value,omitempty"`   // current value path in settings
-    Destructive bool     `json:"destructive,omitempty"` // triggers confirm dialog
+type ActionConfig struct {
+    Name         string   `json:"name"`        // "set-layout", "toggle-mute"
+    Label        string   `json:"label"`       // "Keyboard Layout"
+    Type         string   `json:"type"`        // toggle|select|text|confirm|execute
+    Field        string   `json:"field"`
+    Options      []string `json:"options,omitempty"` // for select type
+    RequiresRoot bool     `json:"requires_root,omitempty"`
 }
 ```
 
@@ -88,7 +87,7 @@ type Action struct {
 
 ```go
 type CLIExecutor interface {
-    Run(command string, args ...string) (stdout, stderr string, err error)
+    Run(command string, args ...string) (stdout, stderr string, exitCode int, err error)
 }
 ```
 
@@ -117,7 +116,20 @@ var themeMap = map[string]struct{ Neovim, Qtile string }{
 
 ## Migration / Rollout
 
-Schema v1.0.0 → v1.1.0 migration uses existing `deepMerge` infrastructure (already atomic). Migration adds 7 sections with defaults and `use_global_theme: false` to Neovim/Qtile. No user data is overwritten — `deepMerge` preserves existing keys. Feature flag: all new TUI components behind `enableWave3` boolean (default `true`) for rollback.
+Schema v1.0.0 → v1.1.0 migration uses existing `deepMerge` infrastructure (already atomic). Migration adds 7 sections with defaults and `use_global_theme: true` to Neovim/Qtile. No user data is overwritten — `deepMerge` preserves existing keys. Feature flag: all new TUI components behind `enableWave3` boolean (default `true`) for rollback.
+
+## Implementation Notes
+
+The following conventions were established during implementation and override earlier design document references:
+
+| Convention | Design Doc | Actual Implementation |
+|------------|-----------|----------------------|
+| Action struct name | `Action` | `ActionConfig` (to avoid conflict with bubbletea's `tea.Msg` action pattern) |
+| Executor location | `internal/modules/system/executor.go` | `pkg/module/executor.go` |
+| Executor return | `(stdout, stderr, err)` | `(stdout, stderr, exitCode int, err error)` |
+| `use_global_theme` default | `false` | `true` |
+| Help overlay | Wrapping `bubbles/help` | Custom implementation (`internal/tui/components/help.go`) — full-screen overlay, NOT bottom-bar wrapper |
+| TextInput receiver | Value receiver | Pointer receiver required because `bubbles/textinput.Model.SetValue` mutates internal state |
 
 ## Open Questions
 
