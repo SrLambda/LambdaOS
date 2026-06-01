@@ -112,6 +112,9 @@ func (m Model) handleModuleSelected(msg views.ModuleSelectedMsg) (tea.Model, tea
 		m.statusBar.SetContext("detail").SetModule(msg.Module.Name)
 	}
 
+	if m.hub != nil {
+		return m, loadDynamicOptionsCmd(m.hub, msg.Module)
+	}
 	return m, nil
 }
 
@@ -230,6 +233,26 @@ func executeActionCmd(h *hub.Hub, mod module.Manifest, action string, params map
 	return func() tea.Msg {
 		resp, err := h.ExecuteAction(mod, action, params)
 		return execMsg{mod: mod, response: resp, err: err}
+	}
+}
+
+// loadDynamicOptionsCmd returns a bubbletea command that queries a module
+// for dynamic options and current values on detail view entry.
+func loadDynamicOptionsCmd(h *hub.Hub, mod module.Manifest) tea.Cmd {
+	return func() tea.Msg {
+		resp, err := h.ExecuteModule(mod)
+		if err != nil {
+			return views.DynamicOptionsMsg{Err: err}
+		}
+		if resp == nil || resp.Data == nil {
+			return views.DynamicOptionsMsg{}
+		}
+		options := convertOptionsMap(resp.Data["available_options"])
+		values := make(map[string]interface{})
+		if v, ok := resp.Data["current_value"].(map[string]interface{}); ok {
+			values = v
+		}
+		return views.DynamicOptionsMsg{Options: options, Values: values}
 	}
 }
 

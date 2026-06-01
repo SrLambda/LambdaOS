@@ -112,6 +112,13 @@ func (d *DetailView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	case DynamicOptionsMsg:
+		if msg.Err != nil {
+			d.SetWarning(fmt.Sprintf("Dynamic options unavailable: %v — using static list", msg.Err))
+			return d, nil
+		}
+		d.MergeDynamicOptions(msg.Options, msg.Values)
+		return d, nil
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyUp:

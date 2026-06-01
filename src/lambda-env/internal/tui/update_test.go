@@ -398,6 +398,45 @@ func TestExecMsgUpdatesDetailViewState(t *testing.T) {
 	}
 }
 
+func TestModuleSelectedWithHubLoadsDynamicOptions(t *testing.T) {
+	m := createTestModel()
+
+	// First transition to modules view
+	m.view = viewModules
+	m.modulesSub = views.NewModulesView([]module.Manifest{
+		{Name: "keyboard", Description: "Set layout", Actions: []module.ActionConfig{
+			{Name: "layout", Label: "Layout", Type: "select", Options: []string{"us"}},
+		}},
+	}, "system")
+	m.activeSubModel = m.modulesSub
+	m.hub = &hub.Hub{}
+
+	// Simulate selecting a module with hub — should transition to detail AND return a cmd
+	updated, cmd := m.Update(views.ModuleSelectedMsg{
+		Module: module.Manifest{Name: "keyboard", Description: "Set layout", Path: "/tmp"},
+		Index:  0,
+	})
+	model := updated.(Model)
+
+	if model.view != viewModuleDetail {
+		t.Errorf("view = %q, want %q", model.view, viewModuleDetail)
+	}
+	if cmd == nil {
+		t.Fatal("expected cmd for dynamic options load, got nil")
+	}
+
+	// The command should produce a DynamicOptionsMsg when executed
+	// (it will likely error because /tmp doesn't have a module executable)
+	msg := cmd()
+	if msg == nil {
+		return
+	}
+	_, ok := msg.(views.DynamicOptionsMsg)
+	if !ok {
+		t.Fatalf("expected DynamicOptionsMsg, got %T", msg)
+	}
+}
+
 func TestBackFromDetailReturnsToModules(t *testing.T) {
 	m := createTestModel()
 

@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -431,5 +432,115 @@ func TestDetailViewBackOnEsc(t *testing.T) {
 	}
 	if cmd != nil {
 		t.Error("expected nil cmd when blurring text, got non-nil")
+	}
+}
+
+func TestDetailViewMergeDynamicOptions(t *testing.T) {
+	mod := module.Manifest{
+		Name: "keyboard",
+		Actions: []module.ActionConfig{
+			{Name: "layout", Label: "Layout", Type: "select", Options: []string{"us", "dvorak"}},
+		},
+	}
+
+	v := NewDetailView(mod)
+
+	// Merge dynamic options that expand the list
+	v.MergeDynamicOptions(
+		map[string][]string{"layout": {"us", "dvorak", "colemak", "workman"}},
+		map[string]interface{}{"layout": "colemak"},
+	)
+
+	if len(v.Manifest().Actions[0].Options) != 4 {
+		t.Errorf("expected 4 options after merge, got %d", len(v.Manifest().Actions[0].Options))
+	}
+	if v.states[0].selectIndex != 2 {
+		t.Errorf("expected selectIndex=2 (colemak), got %d", v.states[0].selectIndex)
+	}
+}
+
+func TestDetailViewMergeDynamicOptionsFallbackToStatic(t *testing.T) {
+	mod := module.Manifest{
+		Name: "keyboard",
+		Actions: []module.ActionConfig{
+			{Name: "layout", Label: "Layout", Type: "select", Options: []string{"us", "dvorak"}},
+		},
+	}
+
+	v := NewDetailView(mod)
+
+	// Merge with no dynamic options for this action — should keep static
+	v.MergeDynamicOptions(
+		map[string][]string{},
+		map[string]interface{}{},
+	)
+
+	if len(v.Manifest().Actions[0].Options) != 2 {
+		t.Errorf("expected 2 static options, got %d", len(v.Manifest().Actions[0].Options))
+	}
+}
+
+func TestDetailViewDynamicOptionsErrorShowsWarning(t *testing.T) {
+	mod := module.Manifest{
+		Name: "keyboard",
+		Actions: []module.ActionConfig{
+			{Name: "layout", Label: "Layout", Type: "select", Options: []string{"us", "dvorak"}},
+		},
+	}
+
+	v := NewDetailView(mod)
+	v.SetWarning("Dynamic options unavailable — using static list")
+
+	view := v.View()
+	if !strings.Contains(view, "unavailable") {
+		t.Errorf("view = %q, want to contain warning about unavailable options", view)
+	}
+}
+
+func TestDetailViewHandlesDynamicOptionsMsg(t *testing.T) {
+	mod := module.Manifest{
+		Name: "keyboard",
+		Actions: []module.ActionConfig{
+			{Name: "layout", Label: "Layout", Type: "select", Options: []string{"us"}},
+		},
+	}
+
+	v := NewDetailView(mod)
+	updated, _ := v.Update(DynamicOptionsMsg{
+		Options: map[string][]string{"layout": {"us", "dvorak", "colemak"}},
+		Values:  map[string]interface{}{"layout": "dvorak"},
+		Err:     nil,
+	})
+	dv := updated.(*DetailView)
+
+	if len(dv.Manifest().Actions[0].Options) != 3 {
+		t.Errorf("expected 3 options after DynamicOptionsMsg, got %d", len(dv.Manifest().Actions[0].Options))
+	}
+	if dv.states[0].selectIndex != 1 {
+		t.Errorf("expected selectIndex=1 (dvorak), got %d", dv.states[0].selectIndex)
+	}
+}
+
+func TestDetailViewHandlesDynamicOptionsMsgError(t *testing.T) {
+	mod := module.Manifest{
+		Name: "keyboard",
+		Actions: []module.ActionConfig{
+			{Name: "layout", Label: "Layout", Type: "select", Options: []string{"us"}},
+		},
+	}
+
+	v := NewDetailView(mod)
+	updated, _ := v.Update(DynamicOptionsMsg{
+		Options: nil,
+		Values:  nil,
+		Err:     fmt.Errorf("module timed out"),
+	})
+	dv := updated.(*DetailView)
+
+	if dv.warning == "" {
+		t.Error("expected warning after error DynamicOptionsMsg")
+	}
+	if !strings.Contains(dv.warning, "timed out") {
+		t.Errorf("warning = %q, want to contain 'timed out'", dv.warning)
 	}
 }
