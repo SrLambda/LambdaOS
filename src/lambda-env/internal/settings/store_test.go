@@ -72,9 +72,9 @@ func TestLoadPartial(t *testing.T) {
 	if s.Appearance.Theme != "dark" {
 		t.Errorf("Appearance.Theme = %q, want %q", s.Appearance.Theme, "dark")
 	}
-	// Version preserved.
-	if s.Version != "1.0.0" {
-		t.Errorf("Version = %q, want %q", s.Version, "1.0.0")
+	// Version migrated to current.
+	if s.Version != CurrentVersion {
+		t.Errorf("Version = %q, want %q", s.Version, CurrentVersion)
 	}
 }
 
@@ -351,5 +351,218 @@ func TestValidateEmptyTerminalSkipped(t *testing.T) {
 	s.Qtile.Terminal = ""
 	if err := s.Validate(); err != nil {
 		t.Fatalf("Validate empty terminal: unexpected error: %v", err)
+	}
+}
+
+func TestLoadDefaultsIncludesNewSections(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "settings.json")
+
+	s, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load missing file: unexpected error: %v", err)
+	}
+
+	if s.Version != CurrentVersion {
+		t.Errorf("Version = %q, want %q", s.Version, CurrentVersion)
+	}
+
+	// Power defaults.
+	if s.Power.ScreenTimeout != 300 {
+		t.Errorf("Power.ScreenTimeout = %d, want %d", s.Power.ScreenTimeout, 300)
+	}
+	if s.Power.SleepTimeout != 600 {
+		t.Errorf("Power.SleepTimeout = %d, want %d", s.Power.SleepTimeout, 600)
+	}
+	if s.Power.LidCloseAction != "suspend" {
+		t.Errorf("Power.LidCloseAction = %q, want %q", s.Power.LidCloseAction, "suspend")
+	}
+
+	// Defaults defaults.
+	if s.Defaults.Browser != "" {
+		t.Errorf("Defaults.Browser = %q, want empty", s.Defaults.Browser)
+	}
+	if s.Defaults.Terminal != "" {
+		t.Errorf("Defaults.Terminal = %q, want empty", s.Defaults.Terminal)
+	}
+	if s.Defaults.Editor != "" {
+		t.Errorf("Defaults.Editor = %q, want empty", s.Defaults.Editor)
+	}
+	if s.Defaults.FileManager != "" {
+		t.Errorf("Defaults.FileManager = %q, want empty", s.Defaults.FileManager)
+	}
+
+	// Autostart defaults.
+	if len(s.Autostart.Enabled) != 0 {
+		t.Errorf("Autostart.Enabled len = %d, want 0", len(s.Autostart.Enabled))
+	}
+
+	// Updates defaults.
+	if s.Updates.AutoUpdate != false {
+		t.Error("Updates.AutoUpdate = true, want false")
+	}
+	if s.Updates.CheckInterval != 86400 {
+		t.Errorf("Updates.CheckInterval = %d, want %d", s.Updates.CheckInterval, 86400)
+	}
+	if len(s.Updates.ExcludePackages) != 0 {
+		t.Errorf("Updates.ExcludePackages len = %d, want 0", len(s.Updates.ExcludePackages))
+	}
+
+	// Security defaults.
+	if s.Security.FirewallEnabled != true {
+		t.Error("Security.FirewallEnabled = false, want true")
+	}
+	if s.Security.SudoTimeout != 5 {
+		t.Errorf("Security.SudoTimeout = %d, want %d", s.Security.SudoTimeout, 5)
+	}
+	if s.Security.ScreenLockTimeout != 300 {
+		t.Errorf("Security.ScreenLockTimeout = %d, want %d", s.Security.ScreenLockTimeout, 300)
+	}
+
+	// Fonts defaults.
+	if s.Fonts.Monospace != "JetBrainsMono" {
+		t.Errorf("Fonts.Monospace = %q, want %q", s.Fonts.Monospace, "JetBrainsMono")
+	}
+	if s.Fonts.SansSerif != "Noto Sans" {
+		t.Errorf("Fonts.SansSerif = %q, want %q", s.Fonts.SansSerif, "Noto Sans")
+	}
+	if s.Fonts.Serif != "Noto Serif" {
+		t.Errorf("Fonts.Serif = %q, want %q", s.Fonts.Serif, "Noto Serif")
+	}
+	if s.Fonts.FontSize != 14 {
+		t.Errorf("Fonts.FontSize = %d, want %d", s.Fonts.FontSize, 14)
+	}
+
+	// Notifications defaults.
+	if s.Notifications.Enabled != true {
+		t.Error("Notifications.Enabled = false, want true")
+	}
+	if s.Notifications.DoNotDisturb != false {
+		t.Error("Notifications.DoNotDisturb = true, want false")
+	}
+	if s.Notifications.TimeoutSeconds != 5 {
+		t.Errorf("Notifications.TimeoutSeconds = %d, want %d", s.Notifications.TimeoutSeconds, 5)
+	}
+}
+
+func TestMigrationV100ToV110(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "settings.json")
+
+	// A realistic v1.0.0 settings file with some user values.
+	old := `{"version":"1.0.0","appearance":{"theme":"gruvbox","font_size":12,"opacity":100,"wallpaper":""},"display":{"active_profile":"home","profiles":[]},"audio":{"default_sink":"alsa_output","volume":80,"muted":false},"network":{"wifi_enabled":false,"known_networks":[]},"bluetooth":{"enabled":false,"paired_devices":[]},"keyboard":{"layout":"es","variant":"","options":""},"neovim":{"theme":"catppuccin","font":"FiraCode","lines":50,"columns":100,"enable_lsp":true,"enable_copilot":false,"enable_neotree":true,"lsp_servers":["gopls"]},"qtile":{"bar_position":"bottom","bar_size":30,"layouts":[],"terminal":"foot","browser":"chromium","default_file_manager":"pcmanfm","groups":[]},"services":{"enabled":[]}}`
+	if err := os.WriteFile(path, []byte(old), 0644); err != nil {
+		t.Fatalf("write old settings: %v", err)
+	}
+
+	s, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load v1.0.0: unexpected error: %v", err)
+	}
+
+	// Version bumped.
+	if s.Version != CurrentVersion {
+		t.Errorf("Version = %q, want %q", s.Version, CurrentVersion)
+	}
+
+	// Existing values preserved.
+	if s.Appearance.Theme != "gruvbox" {
+		t.Errorf("Appearance.Theme = %q, want %q", s.Appearance.Theme, "gruvbox")
+	}
+	if s.Audio.Volume != 80 {
+		t.Errorf("Audio.Volume = %d, want %d", s.Audio.Volume, 80)
+	}
+	if s.Keyboard.Layout != "es" {
+		t.Errorf("Keyboard.Layout = %q, want %q", s.Keyboard.Layout, "es")
+	}
+	if s.Neovim.Theme != "catppuccin" {
+		t.Errorf("Neovim.Theme = %q, want %q", s.Neovim.Theme, "catppuccin")
+	}
+	if s.Qtile.BarPosition != "bottom" {
+		t.Errorf("Qtile.BarPosition = %q, want %q", s.Qtile.BarPosition, "bottom")
+	}
+	if s.Network.WifiEnabled != false {
+		t.Error("Network.WifiEnabled = true, want false")
+	}
+
+	// New sections filled with defaults.
+	if s.Power.ScreenTimeout != 300 {
+		t.Errorf("Power.ScreenTimeout = %d, want %d", s.Power.ScreenTimeout, 300)
+	}
+	if s.Security.FirewallEnabled != true {
+		t.Error("Security.FirewallEnabled = false, want true")
+	}
+	if s.Fonts.Monospace != "JetBrainsMono" {
+		t.Errorf("Fonts.Monospace = %q, want %q", s.Fonts.Monospace, "JetBrainsMono")
+	}
+	if s.Notifications.Enabled != true {
+		t.Error("Notifications.Enabled = false, want true")
+	}
+	if len(s.Autostart.Enabled) != 0 {
+		t.Errorf("Autostart.Enabled len = %d, want 0", len(s.Autostart.Enabled))
+	}
+	if s.Updates.AutoUpdate != false {
+		t.Error("Updates.AutoUpdate = true, want false")
+	}
+	if s.Defaults.Browser != "" {
+		t.Errorf("Defaults.Browser = %q, want empty", s.Defaults.Browser)
+	}
+}
+
+func TestMigrationV100ToV110NoOverwrite(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "settings.json")
+
+	// v1.0.0 with audio.volume set to 80 (default is 75).
+	old := `{"version":"1.0.0","audio":{"volume":80}}`
+	if err := os.WriteFile(path, []byte(old), 0644); err != nil {
+		t.Fatalf("write old settings: %v", err)
+	}
+
+	s, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load v1.0.0: unexpected error: %v", err)
+	}
+
+	// User value preserved despite different default.
+	if s.Audio.Volume != 80 {
+		t.Errorf("Audio.Volume = %d, want 80 (user value preserved)", s.Audio.Volume)
+	}
+}
+
+func TestValidateNewSections(t *testing.T) {
+	// Power validation.
+	s := Defaults()
+	s.Power.ScreenTimeout = -1
+	if err := s.Validate(); err == nil {
+		t.Fatal("Validate negative screen_timeout: expected error, got nil")
+	}
+
+	// Notifications validation.
+	s = Defaults()
+	s.Notifications.TimeoutSeconds = -1
+	if err := s.Validate(); err == nil {
+		t.Fatal("Validate negative timeout_seconds: expected error, got nil")
+	}
+
+	// Security validation.
+	s = Defaults()
+	s.Security.SudoTimeout = -1
+	if err := s.Validate(); err == nil {
+		t.Fatal("Validate negative sudo_timeout: expected error, got nil")
+	}
+
+	// Fonts validation.
+	s = Defaults()
+	s.Fonts.FontSize = 0
+	if err := s.Validate(); err == nil {
+		t.Fatal("Validate zero font_size: expected error, got nil")
+	}
+
+	// Updates validation.
+	s = Defaults()
+	s.Updates.CheckInterval = -1
+	if err := s.Validate(); err == nil {
+		t.Fatal("Validate negative check_interval: expected error, got nil")
 	}
 }
