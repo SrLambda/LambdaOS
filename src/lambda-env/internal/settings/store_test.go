@@ -566,3 +566,74 @@ func TestValidateNewSections(t *testing.T) {
 		t.Fatal("Validate negative check_interval: expected error, got nil")
 	}
 }
+
+func TestUseGlobalThemeDefaultsToTrue(t *testing.T) {
+	s := Defaults()
+	if !s.Neovim.UseGlobalTheme {
+		t.Error("Neovim.UseGlobalTheme = false, want true")
+	}
+	if !s.Qtile.UseGlobalTheme {
+		t.Error("Qtile.UseGlobalTheme = false, want true")
+	}
+}
+
+func TestUseGlobalThemeRequiresNonEmptyTheme(t *testing.T) {
+	// Neovim use_global_theme=true with empty theme should fail.
+	s := Defaults()
+	s.Neovim.UseGlobalTheme = true
+	s.Appearance.Theme = ""
+	err := s.Validate()
+	if err == nil {
+		t.Fatal("Validate empty theme with use_global_theme=true: expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "appearance.theme") {
+		t.Errorf("error = %q, want to contain 'appearance.theme'", err.Error())
+	}
+
+	// Qtile use_global_theme=true with empty theme should fail.
+	s = Defaults()
+	s.Qtile.UseGlobalTheme = true
+	s.Appearance.Theme = ""
+	if err := s.Validate(); err == nil {
+		t.Fatal("Validate empty theme with qtile use_global_theme=true: expected error, got nil")
+	}
+
+	// use_global_theme=false with empty theme should pass.
+	s = Defaults()
+	s.Neovim.UseGlobalTheme = false
+	s.Qtile.UseGlobalTheme = false
+	s.Appearance.Theme = ""
+	if err := s.Validate(); err != nil {
+		t.Fatalf("Validate use_global_theme=false with empty theme: unexpected error: %v", err)
+	}
+}
+
+func TestMigrationV100ToV110AddsUseGlobalTheme(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "settings.json")
+
+	// Minimal v1.0.0 file.
+	old := `{"version":"1.0.0","neovim":{"theme":"tokyonight"},"qtile":{"bar_position":"top"}}`
+	if err := os.WriteFile(path, []byte(old), 0644); err != nil {
+		t.Fatalf("write old settings: %v", err)
+	}
+
+	s, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load v1.0.0: unexpected error: %v", err)
+	}
+
+	if !s.Neovim.UseGlobalTheme {
+		t.Error("Neovim.UseGlobalTheme = false after migration, want true")
+	}
+	if !s.Qtile.UseGlobalTheme {
+		t.Error("Qtile.UseGlobalTheme = false after migration, want true")
+	}
+	// Existing values preserved.
+	if s.Neovim.Theme != "tokyonight" {
+		t.Errorf("Neovim.Theme = %q, want %q", s.Neovim.Theme, "tokyonight")
+	}
+	if s.Qtile.BarPosition != "top" {
+		t.Errorf("Qtile.BarPosition = %q, want %q", s.Qtile.BarPosition, "top")
+	}
+}

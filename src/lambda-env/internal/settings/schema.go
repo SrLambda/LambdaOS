@@ -208,7 +208,7 @@ func Defaults() Settings {
 			EnableCopilot:  true,
 			EnableNeotree:  true,
 			LspServers:     []string{"gopls", "pyright"},
-			UseGlobalTheme: false,
+			UseGlobalTheme: true,
 		},
 		Qtile: QtileSettings{
 			BarPosition:        "top",
@@ -222,7 +222,7 @@ func Defaults() Settings {
 				{Name: "4"}, {Name: "5"}, {Name: "6"},
 				{Name: "7"}, {Name: "8"}, {Name: "9"},
 			},
-			UseGlobalTheme: false,
+			UseGlobalTheme: true,
 		},
 		Services: ServicesSettings{
 			Enabled: []string{},
@@ -359,6 +359,10 @@ func (s *Settings) Validate() error {
 
 	if s.Notifications.TimeoutSeconds < 0 {
 		return fmt.Errorf("notifications.timeout_seconds must be >= 0, got %d", s.Notifications.TimeoutSeconds)
+	}
+
+	if (s.Neovim.UseGlobalTheme || s.Qtile.UseGlobalTheme) && s.Appearance.Theme == "" {
+		return fmt.Errorf("appearance.theme must be non-empty when use_global_theme is true")
 	}
 
 	return nil
