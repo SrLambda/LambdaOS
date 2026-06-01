@@ -283,3 +283,73 @@ func TestValidateActiveProfileReference(t *testing.T) {
 		t.Fatalf("Validate valid profile: unexpected error: %v", err)
 	}
 }
+
+func TestValidateNeovimDefaults(t *testing.T) {
+	s := Defaults()
+	if err := s.Validate(); err != nil {
+		t.Fatalf("Validate neovim defaults: unexpected error: %v", err)
+	}
+	if !s.Neovim.EnableLSP {
+		t.Error("Neovim.EnableLSP = false, want true")
+	}
+	if !s.Neovim.EnableCopilot {
+		t.Error("Neovim.EnableCopilot = false, want true")
+	}
+	if !s.Neovim.EnableNeotree {
+		t.Error("Neovim.EnableNeotree = false, want true")
+	}
+	if len(s.Neovim.LspServers) != 2 {
+		t.Fatalf("Neovim.LspServers len = %d, want 2", len(s.Neovim.LspServers))
+	}
+	if s.Neovim.LspServers[0] != "gopls" || s.Neovim.LspServers[1] != "pyright" {
+		t.Errorf("Neovim.LspServers = %v, want [gopls, pyright]", s.Neovim.LspServers)
+	}
+}
+
+func TestValidateQtileDefaults(t *testing.T) {
+	s := Defaults()
+	if err := s.Validate(); err != nil {
+		t.Fatalf("Validate qtile defaults: unexpected error: %v", err)
+	}
+	if s.Qtile.Terminal != "kitty" {
+		t.Errorf("Qtile.Terminal = %q, want %q", s.Qtile.Terminal, "kitty")
+	}
+	if s.Qtile.Browser != "firefox" {
+		t.Errorf("Qtile.Browser = %q, want %q", s.Qtile.Browser, "firefox")
+	}
+	if s.Qtile.DefaultFileManager != "thunar" {
+		t.Errorf("Qtile.DefaultFileManager = %q, want %q", s.Qtile.DefaultFileManager, "thunar")
+	}
+	if len(s.Qtile.Groups) != 9 {
+		t.Fatalf("Qtile.Groups len = %d, want 9", len(s.Qtile.Groups))
+	}
+	for i := 0; i < 9; i++ {
+		if s.Qtile.Groups[i].Name != string(rune('1'+i)) {
+			t.Errorf("Qtile.Groups[%d].Name = %q, want %q", i, s.Qtile.Groups[i].Name, string(rune('1'+i)))
+		}
+	}
+}
+
+func TestValidateInvalidTerminal(t *testing.T) {
+	s := Defaults()
+	s.Qtile.Terminal = "gnome-terminal"
+	if err := s.Validate(); err == nil {
+		t.Fatal("Validate invalid terminal: expected error, got nil")
+	}
+}
+
+func TestValidateInvalidBrowser(t *testing.T) {
+	s := Defaults()
+	s.Qtile.Browser = "safari"
+	if err := s.Validate(); err == nil {
+		t.Fatal("Validate invalid browser: expected error, got nil")
+	}
+}
+
+func TestValidateEmptyTerminalSkipped(t *testing.T) {
+	s := Defaults()
+	s.Qtile.Terminal = ""
+	if err := s.Validate(); err != nil {
+		t.Fatalf("Validate empty terminal: unexpected error: %v", err)
+	}
+}

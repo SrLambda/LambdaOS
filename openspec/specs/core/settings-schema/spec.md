@@ -66,8 +66,8 @@ The system SHALL define the following top-level sections in the settings schema:
 - AND `network` contains: wifi_enabled, known_networks (array)
 - AND `bluetooth` contains: enabled, paired_devices (array)
 - AND `keyboard` contains: layout, variant, options
-- AND `neovim` contains: theme, font, lines, columns
-- AND `qtile` contains: bar_position, bar_size, layouts (array)
+- AND `neovim` contains: theme, font, lines, columns, enable_lsp, enable_copilot, enable_neotree, lsp_servers
+- AND `qtile` contains: bar_position, bar_size, layouts (array), default_terminal, default_browser, default_file_manager, groups
 - AND `services` contains: enabled (array of service names)
 
 ### Requirement 3: Atomic Writes
@@ -272,8 +272,8 @@ type AudioSettings struct {
   "network": { "wifi_enabled": true, "known_networks": [] },
   "bluetooth": { "enabled": true, "paired_devices": [] },
   "keyboard": { "layout": "us", "variant": "", "options": "" },
-  "neovim": { "theme": "tokyonight", "font": "JetBrainsMono", "lines": 40, "columns": 120 },
-  "qtile": { "bar_position": "top", "bar_size": 24, "layouts": [] },
+  "neovim": { "theme": "tokyonight", "font": "JetBrainsMono", "lines": 40, "columns": 120, "enable_lsp": true, "enable_copilot": true, "enable_neotree": true, "lsp_servers": ["gopls", "pyright"] },
+  "qtile": { "bar_position": "top", "bar_size": 24, "layouts": ["columns", "monadtall"], "default_terminal": "kitty", "default_browser": "firefox", "default_file_manager": "thunar", "groups": [{"name": "1"}, {"name": "2"}, {"name": "3"}, {"name": "4"}, {"name": "5"}, {"name": "6"}, {"name": "7"}, {"name": "8"}, {"name": "9"}] },
   "services": { "enabled": [] }
 }
 ```

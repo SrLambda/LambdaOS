@@ -1,0 +1,10 @@
+{
+  "name": "dotfiles",
+  "version": "0.1.0",
+  "description": "Manage dotfiles with GNU Stow: stow, unstow, detect conflicts, backup configs",
+  "description_es": "Gestionar dotfiles con GNU Stow: stow, unstow, detectar conflictos, backup configs",
+  "category": "ops",
+  "requires_root": false,
+  "dependencies": ["stow"],
+  "min_hub_version": "1.0.0"
+}

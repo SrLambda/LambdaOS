@@ -1,0 +1,16 @@
+pkgbase = lambdaos-tui
+	pkgdesc = TUI configuration suite for LambdaOS
+	pkgver = 0.2.0
+	pkgrel = 1
+	url = https://github.com/lambdaos/lambdaos
+	arch = x86_64
+	license = MIT
+	makedepends = go
+	depends = glibc
+	depends = stow
+	depends = qtile
+	depends = neovim
+	source = lambdaos-tui::git+file:///home/lambda/Projects/LambdaOS/packages/lambdaos-tui/../..#tag=v0.2.0
+	sha256sums = SKIP
+
+pkgname = lambdaos-tui

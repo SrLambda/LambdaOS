@@ -1,0 +1,10 @@
+{
+  "name": "qtile",
+  "version": "0.1.0",
+  "description": "Configure Qtile WM: default terminal, browser, file manager, and reload",
+  "description_es": "Configurar Qtile WM: terminal, navegador, gestor de archivos por defecto y recargar",
+  "category": "apps",
+  "requires_root": false,
+  "dependencies": ["qtile"],
+  "min_hub_version": "1.0.0"
+}

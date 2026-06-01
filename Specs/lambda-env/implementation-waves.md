@@ -76,21 +76,52 @@
 
 ---
 
-## Wave 3: Sistema visual + branding
+## Wave 3: TUI Interface + System Modules
 
-**Duración estimada**: 5-7 días
-**Specs**: 4
+**Duración estimada**: 7-10 días
+**Specs**: 18 (2 tracks paralelos)
+
+### Track A: TUI Interface Development (prioridad alta)
+Actualmente la TUI solo muestra categorías + módulos y ejecuta. Necesita vistas interactivas:
 
 | # | Spec | Qué valida |
 |---|---|---|
-| 12 | `system-09-appearance` | Cambiar tema → Qtile recarga colores |
-| 13 | `branding-01-motd` | MOTD propio al boot |
-| 14 | `branding-02-wallpaper` | Wallpaper de LambdaOS |
-| 15 | `branding-04-icons-cursor` | Iconos y cursor visibles |
+| 12 | `tui-01-interactive-views` | Forms con inputs, toggles visuales, listas con estado |
+| 13 | `tui-02-sub-navigation` | Sub-menus por módulo (Neovim → Toggles, Theme, Plugins) |
+| 14 | `tui-03-status-bar` | Status bar muestra estado actual de settings, no solo errores |
+| 15 | `tui-04-confirm-dialogs` | Confirmación antes de acciones destructivas (unstow, backup) |
+| 16 | `tui-05-help-overlay` | Help overlay con teclas disponibles por vista |
 
-**Criterio de salida**: Boot → MOTD + wallpaper de LambdaOS. TUI → cambiar tema → todo el sistema cambia colores.
+### Track B: System Modules
+| # | Spec | Qué valida |
+|---|---|---|
+| 17 | `system-09-appearance` | Tema global → sincroniza con neovim + qtile |
+| 18 | `system-01-screen` | Detectar monitores, cambiar resolución → xrandr |
+| 19 | `system-02-audio` | Volumen, sink default, mute → pipewire |
+| 20 | `system-03-network` | WiFi/Ethernet desde TUI → NetworkManager |
+| 21 | `system-04-bluetooth` | Bluetooth pairing → bluetoothctl |
+| 22 | `system-05-power` | Power profiles, suspend → systemd-logind |
+| 23 | `system-06-keyboard` | Layout, variant, options → setxkbmap |
+| 24 | `system-10-defaults` | Apps por defecto (terminal, browser, file manager) |
+| 25 | `system-11-autostart` | Servicios al inicio (picom, flameshot, etc.) |
+| 26 | `system-12-services` | Enable/disable systemd services |
+| 27 | `system-13-updates` | Updates disponibles, trigger upgrade |
+| 28 | `system-14-security` | Firewall, sudo rules, SSH keys |
+| 29 | `system-15-fonts` | Fuentes instaladas, font size global |
+| 30 | `system-16-notifications` | Notification daemon, rules |
 
-**Dependencias**: Wave 2 (settings schema + hub).
+### Wave 3 Open Questions (from Wave 2)
+- Neovim module: gestionar imports de plugins/ más allá de los 3 toggles
+- Qtile module: parameterizar keys.py más allá de terminal
+- Migración os_theme.json → settings.json (tema sincronizado appearance → neovim → qtile)
+
+**Criterio de salida**:
+- TUI tiene vistas interactivas con toggles, inputs, listas con estado visual
+- Al menos 4 módulos system funcionales con vistas dedicadas
+- Tema global sincronizado entre appearance → neovim → qtile
+- lambda-env muestra UI rica, no solo launcher de módulos
+
+**Dependencias**: Wave 2 completa + bug fix de package main.
 
 ---
 
@@ -108,7 +139,7 @@
 
 **Criterio de salida**: TUI gestiona pantalla, audio y energía. OBS disponible.
 
-**Dependencias**: Wave 1 (hub + settings schema).
+**Dependencias**: Wave 3 (system modules base + TUI interface).
 
 ---
 
@@ -127,7 +158,7 @@
 
 **Criterio de salida**: TUI gestiona toda la conectividad. Todos los paquetes de la Fase 1 listos.
 
-**Dependencias**: Wave 1 (hub + settings schema).
+**Dependencias**: Wave 3 (system modules base + TUI interface).
 
 ---
 
@@ -148,7 +179,7 @@
 
 **Criterio de salida**: TUI gestiona servicios, updates, defaults y autostart. Docs accesibles desde browser.
 
-**Dependencias**: Wave 1 (hub), Wave 3 (branding para docs).
+**Dependencias**: Wave 3 (system modules base + TUI interface).
 
 ---
 
@@ -193,7 +224,7 @@
 
 **Criterio de salida**: Se puede instalar LambdaOS en disco. Wizard de primer boot funcional.
 
-**Dependencias**: Wave 3 (branding), Wave 6 (services).
+**Dependencias**: Wave 8 (installer), Wave 9 (branding para Calamares).
 
 ---
 
@@ -216,7 +247,7 @@
 
 **Criterio de salida**: Push tag → ISO se buildea y publica automáticamente. Sistema optimizado. Demo interactiva en GitHub Pages navegable con todos los módulos.
 
-**Dependencias**: Wave 8 (installer), Wave 0 (CI base), Wave 3 (branding para la demo).
+**Dependencias**: Wave 8 (installer), Wave 0 (CI base), Wave 9 (branding para la demo).
 
 ---
 
@@ -227,14 +258,14 @@
 | **0** | 2-3 | 4 | CI buildea ISO, Flameshot, nombre correcto |
 | **1** | 3-5 | 3 | Framework decidido, hub abre, repo pacman |
 | **2** | 5-7 | 4 | TUI controla Neovim, Qtile, dotfiles |
-| **3** | 5-7 | 4 | Temas, MOTD, wallpaper, iconos |
+| **3** | 7-10 | 18 | TUI interactiva + 14 módulos system + tema sincronizado |
 | **4** | 5-7 | 4 | Pantalla, audio, energía, OBS |
 | **5** | 5-7 | 5 | Red, BT, teclado, todos los paquetes |
 | **6** | 5-7 | 7 | Servicios, updates, docs |
 | **7** | 5-7 | 9 | Todas las apps + ops |
 | **8** | 7-10 | 8 | Wizard + Installer |
 | **9** | 5-7 | 9 | Polish + CD automático + Demo pública |
-| **Total** | **47-67 días** | **58 specs** | **Distro v1.0** |
+| **Total** | **52-72 días** | **66 specs** | **Distro v1.0** |
 
 ---
 
@@ -247,21 +278,21 @@ Wave 0 (CI + pipeline)
   │     │
   │     ├─→ Wave 2 (módulos: neovim, qtile, dotfiles, empaquetado)
   │     │     │
-  │     │     └─→ Wave 3 (branding visual: temas, MOTD, wallpaper, iconos)
+  │     │     └─→ Wave 3 (TUI interface + system modules + tema sincronizado)
   │     │           │
-  │     │           └─→ Wave 8 (installer: Calamares + wizard)
+  │     │           ├─→ Wave 4 (hardware: screen, audio, power)
+  │     │           │     │
+  │     │           │     └─→ Wave 7 (apps + ops: screenshot, recording, monitor, etc.)
+  │     │           │
+  │     │           ├─→ Wave 5 (conectividad: network, BT, keyboard)
+  │     │           │     │
+  │     │           │     └─→ Wave 7 (apps + ops)
+  │     │           │
+  │     │           └─→ Wave 6 (sistema: services, updates, docs)
+  │     │                 │
+  │     │                 └─→ Wave 8 (installer: Calamares + wizard)
   │     │
-  │     ├─→ Wave 4 (hardware: screen, audio, power)
-  │     │     │
-  │     │     └─→ Wave 7 (apps + ops: screenshot, recording, monitor, etc.)
-  │     │
-  │     ├─→ Wave 5 (conectividad: network, BT, keyboard)
-  │     │     │
-  │     │     └─→ Wave 7 (apps + ops)
-  │     │
-  │     └─→ Wave 6 (sistema: services, updates, docs)
-  │           │
-  │           └─→ Wave 8 (installer)
+  │     └─→ Wave 8 (installer: Calamares + wizard)
   │
   └─→ Wave 9 (polish + CD + demo pública: depende de todo lo anterior)
 ```

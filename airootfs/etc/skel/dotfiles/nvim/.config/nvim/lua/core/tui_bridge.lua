@@ -2,17 +2,17 @@ local M = {}
 
 M.defaults = {
   enable_lsp = true,
-  enable_copilot = false,
+  enable_copilot = true,
   enable_neotree = true,
 }
 
-function M.parse_tui_settings()
-  local config_path = vim.fn.expand("~/.config/nvim/tui_settings.json")
+function M.parse_settings()
+  local config_path = vim.fn.expand("~/.config/lambdaos/settings.json")
   local flags = vim.deepcopy(M.defaults)
 
   local file = io.open(config_path, "r")
   if not file then
-    vim.notify("[tui_bridge] tui_settings.json not found, using defaults", vim.log.levels.WARN)
+    vim.notify("[tui_bridge] settings.json not found, using defaults", vim.log.levels.WARN)
     return flags
   end
 
@@ -21,21 +21,22 @@ function M.parse_tui_settings()
 
   local ok, decoded = pcall(vim.json.decode, content)
   if not ok then
-    vim.notify("[tui_bridge] Failed to parse tui_settings.json: " .. tostring(decoded), vim.log.levels.ERROR)
+    vim.notify("[tui_bridge] Failed to parse settings.json: " .. tostring(decoded), vim.log.levels.ERROR)
     return flags
   end
 
-  for k, v in pairs(decoded) do
-    if flags[k] ~= nil then
-      flags[k] = v
-    end
+  -- Extract neovim section
+  if decoded.neovim then
+    if decoded.neovim.enable_lsp ~= nil then flags.enable_lsp = decoded.neovim.enable_lsp end
+    if decoded.neovim.enable_copilot ~= nil then flags.enable_copilot = decoded.neovim.enable_copilot end
+    if decoded.neovim.enable_neotree ~= nil then flags.enable_neotree = decoded.neovim.enable_neotree end
   end
 
   return flags
 end
 
 function M.get_flags()
-  return M.parse_tui_settings()
+  return M.parse_settings()
 end
 
 return M

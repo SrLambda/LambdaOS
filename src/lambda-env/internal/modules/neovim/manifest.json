@@ -1,0 +1,10 @@
+{
+  "name": "neovim",
+  "version": "0.1.0",
+  "description": "Configure Neovim: toggles for LSP, Copilot, Neo-tree, and theme",
+  "description_es": "Configurar Neovim: toggles para LSP, Copilot, Neo-tree y tema",
+  "category": "apps",
+  "requires_root": false,
+  "dependencies": ["neovim"],
+  "min_hub_version": "1.0.0"
+}

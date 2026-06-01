@@ -371,9 +371,9 @@ src/lambda-env/prototypes/
 
 ### Phase 2: Public Demo (Wave 9 / vX.0 releases)
 
-**EN**: Before a vX.0 release (Wave 3 branding, Wave 9 polish), create an interactive public demo of the TUI using a lightweight framework (e.g., Alpine.js, HTMX, or vanilla JS with router). This demo lives in `src/lambda-env/demo/` and is deployed to GitHub Pages. It combines all prototypes into a navigable, interactive experience that showcases the full TUI in a browser.
+**EN**: Before a vX.0 release (Wave 9 branding + polish), create an interactive public demo of the TUI using a lightweight framework (e.g., Alpine.js, HTMX, or vanilla JS with router). This demo lives in `src/lambda-env/demo/` and is deployed to GitHub Pages. It combines all prototypes into a navigable, interactive experience that showcases the full TUI in a browser.
 
-**ES**: Antes de un release vX.0 (Wave 3 branding, Wave 9 polish), crear una demo pública interactiva de la TUI usando un framework liviano (ej: Alpine.js, HTMX, o vanilla JS con router). Esta demo vive en `src/lambda-env/demo/` y se despliega en GitHub Pages. Combina todos los prototipos en una experiencia navegable e interactiva que muestra la TUI completa en un browser.
+**ES**: Antes de un release vX.0 (Wave 9 branding + polish), crear una demo pública interactiva de la TUI usando un framework liviano (ej: Alpine.js, HTMX, o vanilla JS con router). Esta demo vive en `src/lambda-env/demo/` y se despliega en GitHub Pages. Combina todos los prototipos en una experiencia navegable e interactiva que muestra la TUI completa en un browser.
 
 #### Demo Requirements
 

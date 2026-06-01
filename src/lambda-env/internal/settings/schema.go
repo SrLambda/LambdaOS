@@ -75,19 +75,33 @@ type KeyboardSettings struct {
 	Options string `json:"options"`
 }
 
+// GroupConfig defines a Qtile workspace group.
+type GroupConfig struct {
+	Name string `json:"name"`
+	Icon string `json:"icon,omitempty"`
+}
+
 // NeovimSettings defines Neovim configuration.
 type NeovimSettings struct {
-	Theme   string `json:"theme"`
-	Font    string `json:"font"`
-	Lines   int    `json:"lines"`
-	Columns int    `json:"columns"`
+	Theme        string   `json:"theme"`
+	Font         string   `json:"font"`
+	Lines        int      `json:"lines"`
+	Columns      int      `json:"columns"`
+	EnableLSP    bool     `json:"enable_lsp"`
+	EnableCopilot bool    `json:"enable_copilot"`
+	EnableNeotree bool    `json:"enable_neotree"`
+	LspServers   []string `json:"lsp_servers"`
 }
 
 // QtileSettings defines Qtile window manager configuration.
 type QtileSettings struct {
-	BarPosition string   `json:"bar_position"`
-	BarSize     int      `json:"bar_size"`
-	Layouts     []string `json:"layouts"`
+	BarPosition        string        `json:"bar_position"`
+	BarSize            int           `json:"bar_size"`
+	Layouts            []string      `json:"layouts"`
+	Terminal           string        `json:"terminal"`
+	Browser            string        `json:"browser"`
+	DefaultFileManager string        `json:"default_file_manager"`
+	Groups             []GroupConfig `json:"groups"`
 }
 
 // ServicesSettings defines enabled/disabled services.
@@ -128,15 +142,27 @@ func Defaults() Settings {
 			Options: "",
 		},
 		Neovim: NeovimSettings{
-			Theme:   "tokyonight",
-			Font:    "JetBrainsMono",
-			Lines:   40,
-			Columns: 120,
+			Theme:         "tokyonight",
+			Font:          "JetBrainsMono",
+			Lines:         40,
+			Columns:       120,
+			EnableLSP:     true,
+			EnableCopilot: true,
+			EnableNeotree: true,
+			LspServers:    []string{"gopls", "pyright"},
 		},
 		Qtile: QtileSettings{
 			BarPosition: "top",
 			BarSize:     24,
 			Layouts:     []string{},
+			Terminal:    "kitty",
+			Browser:     "firefox",
+			DefaultFileManager: "thunar",
+			Groups: []GroupConfig{
+				{Name: "1"}, {Name: "2"}, {Name: "3"},
+				{Name: "4"}, {Name: "5"}, {Name: "6"},
+				{Name: "7"}, {Name: "8"}, {Name: "9"},
+			},
 		},
 		Services: ServicesSettings{
 			Enabled: []string{},
@@ -172,6 +198,31 @@ func (s *Settings) Validate() error {
 
 	if s.Qtile.BarSize < 1 {
 		return fmt.Errorf("qtile.bar_size must be > 0, got %d", s.Qtile.BarSize)
+	}
+
+	if s.Qtile.Terminal != "" {
+		validTerminals := map[string]bool{
+			"kitty":     true,
+			"foot":      true,
+			"alacritty": true,
+			"st":        true,
+			"xterm":     true,
+		}
+		if !validTerminals[s.Qtile.Terminal] {
+			return fmt.Errorf("qtile.terminal %q is not allowed, must be one of: kitty, foot, alacritty, st, xterm", s.Qtile.Terminal)
+		}
+	}
+
+	if s.Qtile.Browser != "" {
+		validBrowsers := map[string]bool{
+			"firefox":  true,
+			"chromium": true,
+			"brave":    true,
+			"chrome":   true,
+		}
+		if !validBrowsers[s.Qtile.Browser] {
+			return fmt.Errorf("qtile.browser %q is not allowed, must be one of: firefox, chromium, brave, chrome", s.Qtile.Browser)
+		}
 	}
 
 	if len(s.Display.Profiles) > 0 {
