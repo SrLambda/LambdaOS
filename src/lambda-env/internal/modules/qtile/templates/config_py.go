@@ -11,7 +11,8 @@ from libqtile.config import Key, Screen, Group
 from libqtile.layout import Columns, Max, MonadTall
 from theme import load_theme
 
-colors = load_theme()
+color_scheme = "{{.ColorScheme}}"
+colors = load_theme(color_scheme)
 
 # Default applications (managed by lambda-env TUI)
 terminal = "{{.Terminal}}"

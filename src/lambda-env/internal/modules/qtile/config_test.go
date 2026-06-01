@@ -212,3 +212,25 @@ func TestValidateConfigPyInvalid(t *testing.T) {
 		t.Error("ValidateConfigPy() expected error for invalid Python, got nil")
 	}
 }
+
+func TestResolveQtileColorSchemeGlobalEnabled(t *testing.T) {
+	s := settings.Settings{
+		Appearance: settings.AppearanceSettings{Theme: "dark"},
+		Qtile:      settings.QtileSettings{UseGlobalTheme: true, ColorScheme: "gruvbox"},
+	}
+	got := resolveQtileColorScheme(s)
+	if got != "tokyonight" {
+		t.Errorf("resolveQtileColorScheme = %q, want tokyonight", got)
+	}
+}
+
+func TestResolveQtileColorSchemeGlobalDisabled(t *testing.T) {
+	s := settings.Settings{
+		Appearance: settings.AppearanceSettings{Theme: "dark"},
+		Qtile:      settings.QtileSettings{UseGlobalTheme: false, ColorScheme: "custom"},
+	}
+	got := resolveQtileColorScheme(s)
+	if got != "custom" {
+		t.Errorf("resolveQtileColorScheme = %q, want custom", got)
+	}
+}

@@ -12,6 +12,22 @@ import (
 	"lambdaos.dev/lambda-env/internal/settings"
 )
 
+var qtileThemeMap = map[string]string{
+	"dark":       "tokyonight",
+	"light":      "tokyonight-light",
+	"nord":       "nord",
+	"catppuccin": "catppuccin-mocha",
+}
+
+func resolveQtileColorScheme(s settings.Settings) string {
+	if s.Qtile.UseGlobalTheme {
+		if t, ok := qtileThemeMap[s.Appearance.Theme]; ok {
+			return t
+		}
+	}
+	return s.Qtile.ColorScheme
+}
+
 func GenerateConfigPy(s settings.QtileSettings) (string, error) {
 	tmpl, err := template.New("config.py").Parse(templates.ConfigPyTemplate)
 	if err != nil {
@@ -61,6 +77,8 @@ func Apply(settingsPath string) error {
 			return fmt.Errorf("backup keys.py: %w", writeErr)
 		}
 	}
+
+	s.Qtile.ColorScheme = resolveQtileColorScheme(*s)
 
 	generated, err := GenerateConfigPy(s.Qtile)
 	if err != nil {
