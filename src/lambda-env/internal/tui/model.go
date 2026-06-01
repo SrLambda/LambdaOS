@@ -2,6 +2,8 @@ package tui
 
 import (
 	"lambdaos.dev/lambda-env/internal/hub"
+	"lambdaos.dev/lambda-env/internal/tui/components"
+	"lambdaos.dev/lambda-env/internal/tui/views"
 	"lambdaos.dev/lambda-env/pkg/module"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -35,9 +37,13 @@ type Model struct {
 	quitting        bool
 
 	// Sub-models
-	categoriesSub  *categoriesView
-	modulesSub   *modulesView
+	categoriesSub  *views.CategoriesView
+	modulesSub     *views.ModulesView
 	activeSubModel SubModel
+
+	// Components
+	statusBar   *components.StatusBar
+	helpOverlay *components.Help
 }
 
 // NewModel creates a Model from a Hub instance.
@@ -56,8 +62,19 @@ func NewModel(h *hub.Hub) Model {
 	}
 
 	// Initialize sub-models
-	m.categoriesSub = newCategoriesView(cats, h.BuildMenu())
+	m.categoriesSub = views.NewCategoriesView(cats, h.BuildMenu())
 	m.activeSubModel = m.categoriesSub
+
+	// Initialize components
+	m.statusBar = components.NewStatusBar().SetContext("categories")
+	m.helpOverlay = components.NewHelp([]components.KeyBinding{
+		{Key: "↑/↓", Desc: "Navigate"},
+		{Key: "enter", Desc: "Select"},
+		{Key: "esc", Desc: "Back"},
+		{Key: "?", Desc: "Toggle help"},
+		{Key: "q", Desc: "Quit"},
+	})
+	m.helpOverlay.Visible = false
 
 	return m
 }

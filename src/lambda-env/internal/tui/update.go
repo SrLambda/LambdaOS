@@ -2,6 +2,8 @@ package tui
 
 import (
 	"lambdaos.dev/lambda-env/internal/hub"
+	"lambdaos.dev/lambda-env/internal/tui/components"
+	"lambdaos.dev/lambda-env/internal/tui/views"
 	"lambdaos.dev/lambda-env/pkg/module"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,86 +18,142 @@ type execMsg struct {
 
 // Update handles incoming messages and user input.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			} else {
-				// wrap around
-				if m.view == viewCategories {
-					m.cursor = len(m.categories) - 1
-				} else {
-					m.cursor = len(m.modules) - 1
-				}
-			}
-		case "down", "j":
-			if m.view == viewCategories {
-				if m.cursor < len(m.categories)-1 {
-					m.cursor++
-				} else {
-					m.cursor = 0
-				}
-			} else {
-				if m.cursor < len(m.modules)-1 {
-					m.cursor++
-				} else {
-					m.cursor = 0
-				}
-			}
-		case "enter":
-			if m.view == viewCategories && len(m.categories) > 0 {
-				m.currentCategory = m.categories[m.cursor]
-				m.modules = filterByCategory(m.hub.Modules, m.currentCategory)
-				m.view = viewModules
-				m.cursor = 0
-				m.statusMsg = ""
-			} else if m.view == viewModules && len(m.modules) > 0 {
-				mod := m.modules[m.cursor]
-				return m, executeCmd(m.hub, mod)
-			}
-		case "esc":
-			if m.view == viewModules {
-				m.view = viewCategories
-				m.cursor = 0
-				m.modules = nil
-				m.currentCategory = ""
-				m.statusMsg = ""
-			}
-		case "q", "ctrl+c":
+	// Handle global quit keys first.
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		switch keyMsg.Type {
+		case tea.KeyCtrlC:
 			m.quitting = true
 			return m, tea.Quit
+		case tea.KeyRunes:
+			if len(keyMsg.Runes) == 1 {
+				switch keyMsg.Runes[0] {
+				case 'q':
+					m.quitting = true
+					return m, tea.Quit
+				case '?':
+					if m.helpOverlay != nil {
+						m.helpOverlay.Visible = !m.helpOverlay.Visible
+					}
+					return m, nil
+				}
+			}
 		}
+	}
+
+	// Handle view transition messages.
+	switch msg := msg.(type) {
+	case views.CategorySelectedMsg:
+		return m.handleCategorySelected(msg)
+
+	case views.ModuleSelectedMsg:
+		return m.handleModuleSelected(msg)
+
+	case views.BackMsg:
+		return m.handleBack()
 
 	case execMsg:
-		if msg.err != nil {
-			m.statusMsg = "Error: " + msg.err.Error()
-			m.statusType = "error"
-		} else if msg.response != nil {
-			switch msg.response.Status {
-			case "ok":
-				m.statusMsg = msg.response.Message
-				if m.statusMsg == "" {
-					m.statusMsg = "Module executed successfully"
-				}
-				m.statusType = "ok"
-			case "error":
-				m.statusMsg = msg.response.Message
-				if m.statusMsg == "" {
-					m.statusMsg = "Module reported an error"
-				}
-				m.statusType = "error"
-			case "warning":
-				m.statusMsg = msg.response.Message
-				if m.statusMsg == "" {
-					m.statusMsg = "Warning from module"
-				}
-				m.statusType = "warning"
-			default:
-				m.statusMsg = "Unknown response status"
-				m.statusType = "error"
+		return m.handleExecMsg(msg)
+	}
+
+	// If help overlay is visible, delegate to it first.
+	if m.helpOverlay != nil && m.helpOverlay.Visible {
+		updated, cmd := m.helpOverlay.Update(msg)
+		m.helpOverlay = updated
+		if !m.helpOverlay.Visible {
+			// Help was dismissed; return the dismiss message
+			return m, cmd
+		}
+		return m, cmd
+	}
+
+	// Delegate to active sub-model for everything else.
+	if m.activeSubModel != nil {
+		updated, cmd := m.activeSubModel.Update(msg)
+		m.activeSubModel = updated
+		return m, cmd
+	}
+
+	return m, nil
+}
+
+func (m Model) handleCategorySelected(msg views.CategorySelectedMsg) (tea.Model, tea.Cmd) {
+	m.currentCategory = msg.Category
+	if m.hub != nil {
+		m.modules = filterByCategory(m.hub.Modules, m.currentCategory)
+	}
+	m.view = viewModules
+	m.cursor = 0
+	m.statusMsg = ""
+
+	m.modulesSub = views.NewModulesView(m.modules, m.currentCategory)
+	m.activeSubModel = m.modulesSub
+
+	if m.statusBar != nil {
+		m.statusBar.SetContext("modules").SetModule(m.currentCategory)
+	}
+
+	return m, nil
+}
+
+func (m Model) handleModuleSelected(msg views.ModuleSelectedMsg) (tea.Model, tea.Cmd) {
+	// Wave 2 behavior: execute the module directly.
+	// Wave 3b will navigate to detail view instead.
+	if m.hub != nil {
+		return m, executeCmd(m.hub, msg.Module)
+	}
+	return m, nil
+}
+
+func (m Model) handleBack() (tea.Model, tea.Cmd) {
+	m.view = viewCategories
+	m.cursor = 0
+	m.modules = nil
+	m.currentCategory = ""
+	m.statusMsg = ""
+
+	m.activeSubModel = m.categoriesSub
+
+	if m.statusBar != nil {
+		m.statusBar.SetContext("categories").SetModule("")
+	}
+
+	return m, nil
+}
+
+func (m Model) handleExecMsg(msg execMsg) (tea.Model, tea.Cmd) {
+	if m.statusBar == nil {
+		m.statusBar = components.NewStatusBar()
+	}
+
+	if msg.err != nil {
+		m.statusBar.SetSettingsState("error: " + msg.err.Error())
+		m.statusType = "error"
+	} else if msg.response != nil {
+		switch msg.response.Status {
+		case "ok":
+			msgStr := msg.response.Message
+			if msgStr == "" {
+				msgStr = "Module executed successfully"
 			}
+			m.statusBar.SetSettingsState(msgStr)
+			m.statusType = "ok"
+		case "error":
+			msgStr := msg.response.Message
+			if msgStr == "" {
+				msgStr = "Module reported an error"
+			}
+			m.statusBar.SetSettingsState(msgStr)
+			m.statusType = "error"
+		case "warning":
+			msgStr := msg.response.Message
+			if msgStr == "" {
+				msgStr = "Warning from module"
+			}
+			m.statusBar.SetSettingsState(msgStr)
+			m.statusType = "warning"
+		default:
+			m.statusBar.SetSettingsState("Unknown response status")
+			m.statusType = "error"
 		}
 	}
 
