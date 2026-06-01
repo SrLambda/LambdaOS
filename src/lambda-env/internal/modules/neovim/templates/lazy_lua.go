@@ -14,7 +14,7 @@ require("lazy").setup({
 {{if .EnableNeotree}}    { "nvim-neo-tree/neo-tree.nvim", branch = "v3.x", config = function() require("neo-tree").setup({ close_if_last_window = true, window = { position = "left", width = 30 } }) end },{{end}}
   },
   defaults = { lazy = false, version = false },
-  install = { colorscheme = { vim.g.nvim_theme or "catppuccin" } },
+  install = { colorscheme = { "{{.Theme}}" } },
   checker = { enabled = true, notify = false },
   change_detection = { notify = false },
 })

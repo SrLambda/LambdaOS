@@ -138,3 +138,25 @@ func TestGenerateLazyLuaNeotreeOn(t *testing.T) {
 		t.Error("expected output to contain neo-tree when EnableNeotree=true")
 	}
 }
+
+func TestResolveNeovimThemeGlobalEnabled(t *testing.T) {
+	s := settings.Settings{
+		Appearance: settings.AppearanceSettings{Theme: "dark"},
+		Neovim:     settings.NeovimSettings{UseGlobalTheme: true, Theme: "gruvbox"},
+	}
+	got := resolveNeovimTheme(s)
+	if got != "tokyonight" {
+		t.Errorf("resolveNeovimTheme = %q, want tokyonight", got)
+	}
+}
+
+func TestResolveNeovimThemeGlobalDisabled(t *testing.T) {
+	s := settings.Settings{
+		Appearance: settings.AppearanceSettings{Theme: "dark"},
+		Neovim:     settings.NeovimSettings{UseGlobalTheme: false, Theme: "gruvbox"},
+	}
+	got := resolveNeovimTheme(s)
+	if got != "gruvbox" {
+		t.Errorf("resolveNeovimTheme = %q, want gruvbox", got)
+	}
+}

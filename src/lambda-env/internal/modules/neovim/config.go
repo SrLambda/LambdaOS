@@ -11,6 +11,22 @@ import (
 	"lambdaos.dev/lambda-env/internal/settings"
 )
 
+var neovimThemeMap = map[string]string{
+	"dark":       "tokyonight",
+	"light":      "tokyonight-light",
+	"nord":       "nord",
+	"catppuccin": "catppuccin-mocha",
+}
+
+func resolveNeovimTheme(s settings.Settings) string {
+	if s.Neovim.UseGlobalTheme {
+		if t, ok := neovimThemeMap[s.Appearance.Theme]; ok {
+			return t
+		}
+	}
+	return s.Neovim.Theme
+}
+
 func GenerateLazyLua(s settings.NeovimSettings) (string, error) {
 	tmpl, err := template.New("lazy.lua").Parse(templates.LazyLuaTemplate)
 	if err != nil {
@@ -48,6 +64,8 @@ func Apply(settingsPath string) error {
 			return fmt.Errorf("backup lazy.lua: %w", writeErr)
 		}
 	}
+
+	s.Neovim.Theme = resolveNeovimTheme(*s)
 
 	generated, err := GenerateLazyLua(s.Neovim)
 	if err != nil {
