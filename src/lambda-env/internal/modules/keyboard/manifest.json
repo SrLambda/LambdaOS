@@ -1,0 +1,30 @@
+{
+  "name": "keyboard",
+  "version": "0.1.0",
+  "description": "Configure keyboard layout and variant",
+  "description_es": "Configurar disposición y variante del teclado",
+  "category": "system",
+  "requires_root": false,
+  "dependencies": ["setxkbmap"],
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "run",
+      "label": "Refresh",
+      "type": "execute"
+    },
+    {
+      "name": "set-layout",
+      "label": "Layout",
+      "type": "select",
+      "field": "keyboard.layout",
+      "options": ["us"]
+    },
+    {
+      "name": "set-variant",
+      "label": "Variant",
+      "type": "text",
+      "field": "keyboard.variant"
+    }
+  ]
+}
