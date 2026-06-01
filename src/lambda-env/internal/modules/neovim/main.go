@@ -26,14 +26,14 @@ func main() {
 	switch action {
 	case "run":
 		handleRun(settingsPath)
-	case "toggle_lsp":
-		handleToggle(settingsPath, "enable_lsp", "LSP")
-	case "toggle_copilot":
-		handleToggle(settingsPath, "enable_copilot", "Copilot")
-	case "toggle_neotree":
-		handleToggle(settingsPath, "enable_neotree", "Neo-tree")
+	case "toggle-lsp":
+		handleToggle(settingsPath, "toggle-lsp", "enable_lsp", "LSP")
+	case "toggle-copilot":
+		handleToggle(settingsPath, "toggle-copilot", "enable_copilot", "Copilot")
+	case "toggle-neotree":
+		handleToggle(settingsPath, "toggle-neotree", "enable_neotree", "Neo-tree")
 	default:
-		emitError(action, "unknown action", "use run, toggle_lsp, toggle_copilot, or toggle_neotree")
+		emitError(action, "unknown action", "use run, toggle-lsp, toggle-copilot, or toggle-neotree")
 	}
 }
 
@@ -62,10 +62,10 @@ func handleRun(settingsPath string) {
 	emit(resp)
 }
 
-func handleToggle(settingsPath, field, label string) {
+func handleToggle(settingsPath, actionName, field, label string) {
 	s, err := settings.Load(settingsPath)
 	if err != nil {
-		emitError("toggle_"+field, fmt.Sprintf("load settings: %v", err), "")
+		emitError(actionName, fmt.Sprintf("load settings: %v", err), "")
 		return
 	}
 
@@ -88,20 +88,20 @@ func handleToggle(settingsPath, field, label string) {
 	}
 
 	if err := settings.SaveDelta(settingsPath, delta); err != nil {
-		emitError("toggle_"+field, fmt.Sprintf("save delta: %v", err), "")
+		emitError(actionName, fmt.Sprintf("save delta: %v", err), "")
 		return
 	}
 
 	if err := Apply(settingsPath); err != nil {
-		emitError("toggle_"+field, fmt.Sprintf("apply neovim config: %v", err), "")
+		emitError(actionName, fmt.Sprintf("apply neovim config: %v", err), "")
 		return
 	}
 
 	resp := module.Response{
-		Status: "ok",
-		Action: "toggle_" + field,
+		Status:        "ok",
+		Action:        actionName,
 		SettingsDelta: delta,
-		Message: fmt.Sprintf("%s %s", label, toggleLabel(newValue)),
+		Message:       fmt.Sprintf("%s %s", label, toggleLabel(newValue)),
 	}
 	emit(resp)
 }

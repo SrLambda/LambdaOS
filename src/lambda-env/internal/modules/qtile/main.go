@@ -51,16 +51,16 @@ func main() {
 	switch action {
 	case "run":
 		handleRun(settingsPath)
-	case "set_terminal":
-		handleSet(settingsPath, "terminal", terminalAllowlist)
-	case "set_browser":
-		handleSet(settingsPath, "browser", browserAllowlist)
-	case "set_file_manager":
-		handleSet(settingsPath, "default_file_manager", fileManagerAllowlist)
+	case "set-terminal":
+		handleSet(settingsPath, "set-terminal", "terminal", terminalAllowlist)
+	case "set-browser":
+		handleSet(settingsPath, "set-browser", "browser", browserAllowlist)
+	case "set-file-manager":
+		handleSet(settingsPath, "set-file-manager", "default_file_manager", fileManagerAllowlist)
 	case "reload":
 		handleReload(settingsPath)
 	default:
-		emitError(action, "unknown action", "use run, set_terminal, set_browser, set_file_manager, or reload")
+		emitError(action, "unknown action", "use run, set-terminal, set-browser, set-file-manager, or reload")
 	}
 }
 
@@ -89,10 +89,10 @@ func handleRun(settingsPath string) {
 	emit(resp)
 }
 
-func handleSet(settingsPath, field string, allowlist map[string]bool) {
+func handleSet(settingsPath, actionName, field string, allowlist map[string]bool) {
 	s, err := settings.Load(settingsPath)
 	if err != nil {
-		emitError("set_"+field, fmt.Sprintf("load settings: %v", err), "")
+		emitError(actionName, fmt.Sprintf("load settings: %v", err), "")
 		return
 	}
 
@@ -107,7 +107,7 @@ func handleSet(settingsPath, field string, allowlist map[string]bool) {
 	}
 
 	if !allowlist[newValue] {
-		emitError("set_"+field, fmt.Sprintf("value %q is not in allowlist", newValue), "")
+		emitError(actionName, fmt.Sprintf("value %q is not in allowlist", newValue), "")
 		return
 	}
 
@@ -118,18 +118,18 @@ func handleSet(settingsPath, field string, allowlist map[string]bool) {
 	}
 
 	if err := settings.SaveDelta(settingsPath, delta); err != nil {
-		emitError("set_"+field, fmt.Sprintf("save delta: %v", err), "")
+		emitError(actionName, fmt.Sprintf("save delta: %v", err), "")
 		return
 	}
 
 	if err := Apply(settingsPath); err != nil {
-		emitError("set_"+field, fmt.Sprintf("apply qtile config: %v", err), "")
+		emitError(actionName, fmt.Sprintf("apply qtile config: %v", err), "")
 		return
 	}
 
 	resp := module.Response{
 		Status:        "ok",
-		Action:        "set_" + field,
+		Action:        actionName,
 		SettingsDelta: delta,
 		Message:       fmt.Sprintf("%s set to %s", field, newValue),
 	}

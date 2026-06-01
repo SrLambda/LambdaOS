@@ -49,12 +49,12 @@ func main() {
 		handleStow(dotfilesDir)
 	case "unstow":
 		handleUnstow(dotfilesDir)
-	case "check_conflicts":
+	case "check-conflicts":
 		handleCheckConflicts(dotfilesDir, homeDir)
 	case "backup":
 		handleBackup(dotfilesDir, homeDir)
 	default:
-		emitError(action, "unknown action", "use run, list, stow, unstow, check_conflicts, or backup")
+		emitError(action, "unknown action", "use run, list, stow, unstow, check-conflicts, or backup")
 	}
 }
 
@@ -144,13 +144,13 @@ func handleUnstow(dotfilesDir string) {
 func handleCheckConflicts(dotfilesDir, homeDir string) {
 	name := os.Getenv("LAMBDA_ENV_MODULE")
 	if name == "" {
-		emitError("check_conflicts", "LAMBDA_ENV_MODULE not set", "set the module name to check")
+		emitError("check-conflicts", "LAMBDA_ENV_MODULE not set", "set the module name to check")
 		return
 	}
 
 	conflicts, err := DetectConflicts(dotfilesDir, name, homeDir)
 	if err != nil {
-		emitError("check_conflicts", fmt.Sprintf("detect conflicts: %v", err), "")
+		emitError("check-conflicts", fmt.Sprintf("detect conflicts: %v", err), "")
 		return
 	}
 
@@ -162,7 +162,7 @@ func handleCheckConflicts(dotfilesDir, homeDir string) {
 
 	resp := module.Response{
 		Status: "ok",
-		Action: "check_conflicts",
+		Action: "check-conflicts",
 		Data:   data,
 	}
 	emit(resp)
