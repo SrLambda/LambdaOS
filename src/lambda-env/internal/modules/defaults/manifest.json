@@ -18,28 +18,28 @@
       "label": "Default Browser",
       "type": "select",
       "field": "defaults.browser",
-      "options": []
+      "options": ["system-default"]
     },
     {
       "name": "set-terminal",
       "label": "Default Terminal",
       "type": "select",
       "field": "defaults.terminal",
-      "options": []
+      "options": ["system-default"]
     },
     {
       "name": "set-editor",
       "label": "Default Editor",
       "type": "select",
       "field": "defaults.editor",
-      "options": []
+      "options": ["system-default"]
     },
     {
       "name": "set-file-manager",
       "label": "Default File Manager",
       "type": "select",
       "field": "defaults.file_manager",
-      "options": []
+      "options": ["system-default"]
     },
     {
       "name": "apply",

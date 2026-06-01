@@ -23,6 +23,8 @@ func main() {
 		settingsPath = filepath.Join(home, ".config", "lambdaos", "settings.json")
 	}
 
+	params := readParams()
+
 	switch action {
 	case "run":
 		handleRun(settingsPath)
@@ -32,9 +34,31 @@ func main() {
 		handleToggle(settingsPath, "toggle-copilot", "enable_copilot", "Copilot")
 	case "toggle-neotree":
 		handleToggle(settingsPath, "toggle-neotree", "enable_neotree", "Neo-tree")
+	case "set-theme":
+		theme := ""
+		if params != nil {
+			if v, ok := params["value"].(string); ok {
+				theme = v
+			}
+		}
+		handleSetTheme(settingsPath, theme)
+	case "apply":
+		handleApply(settingsPath)
 	default:
-		emitError(action, "unknown action", "use run, toggle-lsp, toggle-copilot, or toggle-neotree")
+		emitError(action, "unknown action", "use run, toggle-lsp, toggle-copilot, toggle-neotree, set-theme, or apply")
 	}
+}
+
+func readParams() map[string]interface{} {
+	p := os.Getenv("LAMBDA_ENV_PARAMS")
+	if p == "" {
+		return nil
+	}
+	var params map[string]interface{}
+	if err := json.Unmarshal([]byte(p), &params); err != nil {
+		return nil
+	}
+	return params
 }
 
 func handleRun(settingsPath string) {
@@ -58,6 +82,68 @@ func handleRun(settingsPath string) {
 			"enable_neotree": s.Neovim.EnableNeotree,
 		},
 		Message: "Neovim configuration applied",
+	}
+	emit(resp)
+}
+
+func handleSetTheme(settingsPath, theme string) {
+	if theme == "" {
+		emitError("set-theme", "theme value is required", "")
+		return
+	}
+
+	_, err := settings.Load(settingsPath)
+	if err != nil {
+		emitError("set-theme", fmt.Sprintf("load settings: %v", err), "")
+		return
+	}
+
+	delta := map[string]interface{}{
+		"neovim": map[string]interface{}{
+			"theme": theme,
+		},
+	}
+	if err := settings.SaveDelta(settingsPath, delta); err != nil {
+		emitError("set-theme", fmt.Sprintf("save delta: %v", err), "")
+		return
+	}
+
+	if err := Apply(settingsPath); err != nil {
+		emitError("set-theme", fmt.Sprintf("apply neovim config: %v", err), "")
+		return
+	}
+
+	resp := module.Response{
+		Status:        "ok",
+		Action:        "set-theme",
+		SettingsDelta: delta,
+		Message:       fmt.Sprintf("Theme set to %s", theme),
+	}
+	emit(resp)
+}
+
+func handleApply(settingsPath string) {
+	s, err := settings.Load(settingsPath)
+	if err != nil {
+		emitError("apply", fmt.Sprintf("load settings: %v", err), "")
+		return
+	}
+
+	if err := Apply(settingsPath); err != nil {
+		emitError("apply", fmt.Sprintf("apply neovim config: %v", err), "")
+		return
+	}
+
+	resp := module.Response{
+		Status:  "ok",
+		Action:  "apply",
+		Message: "Neovim configuration applied",
+		Data: map[string]interface{}{
+			"theme":          s.Neovim.Theme,
+			"enable_lsp":     s.Neovim.EnableLSP,
+			"enable_copilot": s.Neovim.EnableCopilot,
+			"enable_neotree": s.Neovim.EnableNeotree,
+		},
 	}
 	emit(resp)
 }

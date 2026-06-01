@@ -29,7 +29,8 @@
       "name": "set-sink",
       "label": "Default Sink",
       "type": "select",
-      "field": "audio.default_sink"
+      "field": "audio.default_sink",
+      "options": ["auto"]
     }
   ]
 }
