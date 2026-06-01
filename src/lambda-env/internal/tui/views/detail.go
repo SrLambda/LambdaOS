@@ -129,7 +129,17 @@ func (d *DetailView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return d, nil
 		case tea.KeyRunes:
 			if len(msg.Runes) == 1 {
-				switch msg.Runes[0] {
+				r := msg.Runes[0]
+				// If text input is focused, delegate typing to it.
+				if d.cursor < len(d.states) && d.states[d.cursor].textFocused {
+					if d.textInputs[d.cursor] != nil {
+						updated, cmd := d.textInputs[d.cursor].Update(msg)
+						d.textInputs[d.cursor] = updated
+						d.states[d.cursor].textValue = updated.Value()
+						return d, cmd
+					}
+				}
+				switch r {
 				case 'k':
 					d.moveCursor(-1)
 					return d, nil
