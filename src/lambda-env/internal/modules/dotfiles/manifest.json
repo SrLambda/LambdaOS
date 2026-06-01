@@ -6,5 +6,22 @@
   "category": "ops",
   "requires_root": false,
   "dependencies": ["stow"],
-  "min_hub_version": "1.0.0"
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "stow",
+      "label": "Stow Dotfiles",
+      "type": "execute"
+    },
+    {
+      "name": "unstow",
+      "label": "Unstow Dotfiles",
+      "type": "confirm"
+    },
+    {
+      "name": "backup",
+      "label": "Backup Configs",
+      "type": "execute"
+    }
+  ]
 }

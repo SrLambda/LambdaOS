@@ -6,5 +6,37 @@
   "category": "apps",
   "requires_root": false,
   "dependencies": ["neovim"],
-  "min_hub_version": "1.0.0"
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "toggle-lsp",
+      "label": "Enable LSP",
+      "type": "toggle",
+      "field": "neovim.enable_lsp"
+    },
+    {
+      "name": "toggle-copilot",
+      "label": "Enable Copilot",
+      "type": "toggle",
+      "field": "neovim.enable_copilot"
+    },
+    {
+      "name": "toggle-neotree",
+      "label": "Enable Neo-tree",
+      "type": "toggle",
+      "field": "neovim.enable_neotree"
+    },
+    {
+      "name": "set-theme",
+      "label": "Theme",
+      "type": "select",
+      "field": "neovim.theme",
+      "options": ["tokyonight", "gruvbox", "catppuccin", "nord"]
+    },
+    {
+      "name": "apply",
+      "label": "Apply Configuration",
+      "type": "execute"
+    }
+  ]
 }
