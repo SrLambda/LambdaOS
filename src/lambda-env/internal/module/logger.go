@@ -3,28 +3,35 @@ package module
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
-// LogDir is the directory for module logs.
-const LogDir = "/var/log/lambda-env"
-
-// LogFile is the full path to the module log file.
-const LogFile = LogDir + "/modules.log"
+// SystemLogDir is the default log directory when running as root.
+const SystemLogDir = "/var/log/lambda-env"
 
 // Logger writes structured module execution logs.
 type Logger struct {
 	file *os.File
 }
 
-// logDir returns the effective log directory. It defaults to LogDir but can be
-// overridden at runtime via the LAMBDA_ENV_LOG_DIR environment variable.
+// logDir returns the effective log directory.
+// - Root: /var/log/lambda-env (system-wide logs)
+// - Non-root: ~/.local/share/lambda-env/logs (user-scoped logs)
+// - Override: LAMBDA_ENV_LOG_DIR env var takes precedence.
 func logDir() string {
 	if d := os.Getenv("LAMBDA_ENV_LOG_DIR"); d != "" {
 		return d
 	}
-	return LogDir
+	if os.Geteuid() == 0 {
+		return "/var/log/lambda-env"
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "/var/log/lambda-env" // fallback to system path
+	}
+	return filepath.Join(home, ".local", "share", "lambda-env", "logs")
 }
 
 // logFile returns the effective log file path.
