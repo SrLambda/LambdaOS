@@ -35,7 +35,7 @@ func (m *mockSubModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m *mockSubModel) Update(msg tea.Msg) (SubModel, tea.Cmd) {
+func (m *mockSubModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 

@@ -27,7 +27,7 @@ func (c *categoriesView) Init() tea.Cmd {
 	return nil
 }
 
-func (c *categoriesView) Update(msg tea.Msg) (SubModel, tea.Cmd) {
+func (c *categoriesView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return c, nil
 }
 
@@ -55,7 +55,7 @@ func (m *modulesView) Init() tea.Cmd {
 	return nil
 }
 
-func (m *modulesView) Update(msg tea.Msg) (SubModel, tea.Cmd) {
+func (m *modulesView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 

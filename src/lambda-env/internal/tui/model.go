@@ -19,9 +19,7 @@ const (
 
 // SubModel is a sub-model that the parent Model can delegate to.
 type SubModel interface {
-	Init() tea.Cmd
-	Update(msg tea.Msg) (SubModel, tea.Cmd)
-	View() string
+	tea.Model
 }
 
 // Model is the bubbletea model for the LambdaOS settings TUI.
