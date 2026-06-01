@@ -30,12 +30,12 @@ Chain strategy: feature-branch-chain
 
 ## Phase 1: Foundation (Infrastructure)
 
-- [ ] 1.1 Add `go get github.com/charmbracelet/bubbles` to go.mod (+1)
-- [ ] 1.2 Add `Action` struct + `Actions []Action` to `pkg/module/manifest.go` with type validation
-- [ ] 1.3 Bump `CurrentVersion` to "1.1.0" in `internal/settings/schema.go`; add 7 section structs (Power, Defaults, Autostart, Updates, Security, Fonts, Notifications)
-- [ ] 1.4 Add `UseGlobalTheme bool` to NeovimSettings + QtileSettings; add defaults in `Defaults()`
-- [ ] 1.5 Create `internal/modules/system/executor.go` — CLIExecutor interface + RealExecutor + MockExecutor
-- [ ] 1.6 Tests: schema v1.0.0→1.1.0 migration preserves existing values; manifest action parsing validates types
+- [x] 1.1 Add `go get github.com/charmbracelet/bubbles` to go.mod (+1)
+- [x] 1.2 Add `Action` struct + `Actions []Action` to `pkg/module/manifest.go` with type validation
+- [x] 1.3 Bump `CurrentVersion` to "1.1.0" in `internal/settings/schema.go`; add 7 section structs (Power, Defaults, Autostart, Updates, Security, Fonts, Notifications)
+- [x] 1.4 Add `UseGlobalTheme bool` to NeovimSettings + QtileSettings; add defaults in `Defaults()`
+- [x] 1.5 Create `internal/modules/system/executor.go` — CLIExecutor interface + RealExecutor + MockExecutor
+- [x] 1.6 Tests: schema v1.0.0→1.1.0 migration preserves existing values; manifest action parsing validates types
 
 ## Phase 2: TUI Components (Reusable Widgets)
 
