@@ -58,11 +58,11 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3b: Module Detail View + ExecuteAction
 
-- [ ] 3b.1 Create `internal/tui/views/detail.go` — reads manifest.actions, renders widgets per type (toggle/select/text/confirm/execute)
-- [ ] 3b.2 Add `ExecuteAction(name, action, params)` to `internal/hub/execution.go` — passes LAMBDA_ENV_ACTION env var; backward-compatible with existing `run` action
-- [ ] 3b.3 Wire detail widget actions → hub.ExecuteAction → execMsg → widget state update + status bar
-- [ ] 3b.4 **Option C**: Detail view executes module "run" on enter, merges `data.available_options` into widget options (static manifest options → dynamic system options)
-- [ ] 3b.5 Tests: detail view renders all 5 action types; ExecuteAction sets correct env; widget state syncs with response; dynamic options merge
+- [x] 3b.1 Create `internal/tui/views/detail.go` — reads manifest.actions, renders widgets per type (toggle/select/text/confirm/execute)
+- [x] 3b.2 Add `ExecuteAction(name, action, params)` to `internal/hub/execution.go` — passes LAMBDA_ENV_ACTION env var; backward-compatible with existing `run` action
+- [x] 3b.3 Wire detail widget actions → hub.ExecuteAction → execMsg → widget state update + status bar
+- [x] 3b.4 **Option C**: Detail view executes module "run" on enter, merges `data.available_options` into widget options (static manifest options → dynamic system options)
+- [x] 3b.5 Tests: detail view renders all 5 action types; ExecuteAction sets correct env; widget state syncs with response; dynamic options merge
 
 ## Phase 4a: Keyboard + Appearance Modules
 
