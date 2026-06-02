@@ -18,6 +18,13 @@
       "label": "Default Browser",
       "type": "select",
       "field": "defaults.browser",
+      "options": ["firefox", "chromium", "brave", "chrome"]
+    },
+    {
+      "name": "set-terminal",
+      "label": "Default Terminal",
+      "type": "select",
+      "field": "defaults.terminal",
       "options": ["kitty", "foot", "alacritty", "st", "xterm"]
     },
     {

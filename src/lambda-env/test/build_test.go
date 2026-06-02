@@ -23,7 +23,7 @@ func TestBinaryCompiles(t *testing.T) {
 
 	// go build -o <tmp> lambdaos.dev/lambda-env/cmd/lambda-env
 	cmd := exec.Command("go", "build", "-o", binaryPath, "lambdaos.dev/lambda-env/cmd/lambda-env")
-	cmd.Dir = filepath.Join(wd, "..", "..") // navigate from src/lambda-env/test/ to src/lambda-env/
+	cmd.Dir = filepath.Join(wd, "..") // navigate from src/lambda-env/test/ to src/lambda-env/
 	cmd.Env = os.Environ()
 
 	out, err := cmd.CombinedOutput()
