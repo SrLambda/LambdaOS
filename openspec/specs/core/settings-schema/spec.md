@@ -8,7 +8,7 @@ Define a unified settings schema at `~/.config/lambdaos/settings.json` with a Go
 
 ### In Scope
 - JSON schema definition with `version` field at root level
-- Schema sections: appearance, display, audio, network, bluetooth, keyboard, neovim, qtile, services
+- Schema sections: appearance, display, audio, network, bluetooth, keyboard, neovim, qtile, services, power, defaults, autostart, updates, security, fonts, notifications
 - Atomic write pattern (temp file + rename in same directory)
 - Default values when file doesn't exist or fields are missing
 - Settings reader returning typed Go structs
@@ -48,13 +48,13 @@ The system SHALL store all settings in a single JSON file at `~/.config/lambdaos
 
 ### Requirement 2: Schema Sections
 
-The system SHALL define the following top-level sections in the settings schema: `appearance`, `display`, `audio`, `network`, `bluetooth`, `keyboard`, `neovim`, `qtile`, `services`.
+The system SHALL define the following top-level sections in the settings schema: `appearance`, `display`, `audio`, `network`, `bluetooth`, `keyboard`, `neovim`, `qtile`, `services`, `power`, `defaults`, `autostart`, `updates`, `security`, `fonts`, `notifications`.
 
 #### Scenario: All sections are present in default settings
 
 - GIVEN no settings.json exists
 - WHEN the hub loads settings (returns defaults)
-- THEN the settings object contains all nine sections as empty or default objects
+- THEN the settings object contains all sixteen sections as empty or default objects
 
 #### Scenario: Section structure matches defined schema
 
@@ -66,9 +66,16 @@ The system SHALL define the following top-level sections in the settings schema:
 - AND `network` contains: wifi_enabled, known_networks (array)
 - AND `bluetooth` contains: enabled, paired_devices (array)
 - AND `keyboard` contains: layout, variant, options
-- AND `neovim` contains: theme, font, lines, columns, enable_lsp, enable_copilot, enable_neotree, lsp_servers
-- AND `qtile` contains: bar_position, bar_size, layouts (array), default_terminal, default_browser, default_file_manager, groups
+- AND `neovim` contains: theme, font, lines, columns, enable_lsp, enable_copilot, enable_neotree, lsp_servers, use_global_theme
+- AND `qtile` contains: bar_position, bar_size, layouts (array), default_terminal, default_browser, default_file_manager, groups, use_global_theme
 - AND `services` contains: enabled (array of service names)
+- AND `power` contains: screen_timeout, sleep_timeout, lid_close_action
+- AND `defaults` contains: browser, terminal, editor, file_manager
+- AND `autostart` contains: enabled (array of app names)
+- AND `updates` contains: auto_update, check_interval, exclude_packages
+- AND `security` contains: firewall_enabled, sudo_timeout, screen_lock_timeout
+- AND `fonts` contains: monospace, sans_serif, serif, font_size
+- AND `notifications` contains: enabled, do_not_disturb, timeout_seconds
 
 ### Requirement 3: Atomic Writes
 
@@ -233,21 +240,230 @@ The system SHALL detect version mismatches between the loaded settings file and 
 - THEN no migration is performed
 - AND settings are loaded as-is
 
+#### Scenario: v1.0.0 to v1.1.0 adds use_global_theme
+
+- GIVEN settings.json has `"version": "1.0.0"` with neovim and qtile sections
+- WHEN migration to v1.1.0 runs
+- THEN `neovim.use_global_theme` is added with default value `true`
+- AND `qtile.use_global_theme` is added with default value `true`
+- AND existing neovim/qtile fields are preserved
+
+### Requirement 9: Schema Version 1.1.0
+
+The system SHALL bump the schema version from `1.0.0` to `1.1.0` and support migration from v1.0.0 to v1.1.0 with all new sections added as optional fields with defaults.
+
+#### Scenario: Migration from v1.0.0 to v1.1.0
+
+- GIVEN settings.json has `"version": "1.0.0"` with existing sections populated
+- WHEN the hub loads settings with schema v1.1.0
+- THEN all 7 new sections are added with default values
+- AND existing section values are preserved unchanged
+
+#### Scenario: Migration is atomic
+
+- GIVEN settings.json has v1.0.0 content
+- WHEN migration to v1.1.0 runs
+- THEN the migration writes to a temp file first
+- AND renames to settings.json only after successful validation
+- AND the original file is preserved if migration fails
+
+#### Scenario: Already at v1.1.0 requires no migration
+
+- GIVEN settings.json has `"version": "1.1.0"`
+- WHEN the hub loads settings
+- THEN no migration is performed
+- AND settings are loaded as-is
+
+### Requirement 10: Power Section
+
+The system SHALL define a `power` section in the settings schema with fields for power management configuration.
+
+#### Scenario: Power section is present in defaults
+
+- GIVEN no settings.json exists
+- WHEN the hub loads default settings
+- THEN the `power` section is present with default values
+- AND includes fields for screen timeout, sleep timeout, and lid close action
+
+#### Scenario: Power section delta is merged
+
+- GIVEN settings.json exists with v1.1.0 schema
+- WHEN a module emits a settings_delta with `power.screen_timeout: 300`
+- THEN the delta is merged into the power section
+- AND other power fields are preserved
+
+### Requirement 11: Defaults Section
+
+The system SHALL define a `defaults` section for default application assignments (browser, terminal, editor, file manager).
+
+#### Scenario: Defaults section is present in defaults
+
+- GIVEN no settings.json exists
+- WHEN the hub loads default settings
+- THEN the `defaults` section is present with empty or default values
+- AND includes fields for browser, terminal, editor, and file_manager
+
+#### Scenario: Defaults section stores app assignments
+
+- GIVEN the defaults module sets browser to "firefox"
+- WHEN the settings_delta is merged
+- THEN `defaults.browser` is set to "firefox"
+- AND the value persists across hub restarts
+
+### Requirement 12: Autostart Section
+
+The system SHALL define an `autostart` section for managing applications that start on login.
+
+#### Scenario: Autostart section is present in defaults
+
+- GIVEN no settings.json exists
+- WHEN the hub loads default settings
+- THEN the `autostart` section is present with an empty enabled list
+- AND includes fields for `enabled` (array of service/app names)
+
+#### Scenario: Autostart entries are added
+
+- GIVEN the autostart section exists
+- WHEN a module adds an entry to the enabled list
+- THEN the entry is appended to the `enabled` array
+- AND duplicate entries are not added
+
+### Requirement 13: Updates Section
+
+The system SHALL define an `updates` section for system update configuration.
+
+#### Scenario: Updates section is present in defaults
+
+- GIVEN no settings.json exists
+- WHEN the hub loads default settings
+- THEN the `updates` section is present with default values
+- AND includes fields for auto_update (bool), check_interval, and exclude_packages (array)
+
+#### Scenario: Updates settings are persisted
+
+- GIVEN the user configures update preferences
+- WHEN the settings_delta is applied
+- THEN the updates section reflects the new configuration
+- AND the values are validated against allowed types
+
+### Requirement 14: Security Section
+
+The system SHALL define a `security` section for security-related configuration.
+
+#### Scenario: Security section is present in defaults
+
+- GIVEN no settings.json exists
+- WHEN the hub loads default settings
+- THEN the `security` section is present with default values
+- AND includes fields for firewall_enabled, sudo_timeout, and screen_lock_timeout
+
+#### Scenario: Security settings are validated
+
+- GIVEN a module attempts to set an invalid security value
+- WHEN the settings_delta is validated
+- THEN the invalid value is rejected
+- AND an error is returned to the caller
+
+### Requirement 15: Fonts Section
+
+The system SHALL define a `fonts` section for font configuration beyond the appearance section.
+
+#### Scenario: Fonts section is present in defaults
+
+- GIVEN no settings.json exists
+- WHEN the hub loads default settings
+- THEN the `fonts` section is present with default values
+- AND includes fields for monospace, sans_serif, serif, and font_size
+
+#### Scenario: Font settings are merged with appearance
+
+- GIVEN the appearance module sets a font
+- WHEN the settings_delta is applied
+- THEN the fonts section is updated accordingly
+- AND the appearance.font_size is synchronized if applicable
+
+### Requirement 16: Notifications Section
+
+The system SHALL define a `notifications` section for notification daemon configuration.
+
+#### Scenario: Notifications section is present in defaults
+
+- GIVEN no settings.json exists
+- WHEN the hub loads default settings
+- THEN the `notifications` section is present with default values
+- AND includes fields for enabled (bool), do_not_disturb (bool), and timeout_seconds
+
+#### Scenario: Notification settings are persisted
+
+- GIVEN the user toggles do_not_disturb mode
+- WHEN the settings_delta is applied
+- THEN `notifications.do_not_disturb` is set to true
+- AND the value persists across restarts
+
+### Requirement 17: use_global_theme in Neovim and Qtile Settings
+
+The system SHALL add a `use_global_theme` boolean field to both `NeovimSettings` and `QtileSettings` structs. When true, the module SHALL derive its theme from `appearance.theme`; when false, it SHALL use its own `theme` field.
+
+#### Scenario: Neovim uses global theme
+
+- GIVEN `neovim.use_global_theme` is true
+- AND `appearance.theme` is "dark"
+- WHEN the Neovim module loads settings
+- THEN it maps "dark" to the equivalent Neovim theme (e.g., "tokyonight-night")
+- AND the module's own `theme` field is ignored
+
+#### Scenario: Neovim uses independent theme
+
+- GIVEN `neovim.use_global_theme` is false
+- AND `neovim.theme` is "catppuccin"
+- WHEN the Neovim module loads settings
+- THEN it uses "catppuccin" regardless of appearance.theme
+- AND appearance.theme changes do not affect Neovim
+
+#### Scenario: Qtile uses global theme
+
+- GIVEN `qtile.use_global_theme` is true
+- AND `appearance.theme` is "light"
+- WHEN the Qtile module loads settings
+- THEN it maps "light" to the equivalent Qtile theme
+- AND the module's own `theme` field is ignored
+
+#### Scenario: Qtile uses independent theme
+
+- GIVEN `qtile.use_global_theme` is false
+- WHEN the Qtile module loads settings
+- THEN it uses its own `theme` field value
+- AND appearance.theme changes do not affect Qtile
+
+#### Scenario: use_global_theme defaults to true
+
+- GIVEN no settings.json exists
+- WHEN the hub loads default settings
+- THEN `neovim.use_global_theme` defaults to true
+- AND `qtile.use_global_theme` defaults to true
+
 ## Technical Details
 
 ### Go Struct Definitions (simplified)
 ```go
 type Settings struct {
-    Version    string            `json:"version"`
-    Appearance AppearanceSettings `json:"appearance"`
-    Display    DisplaySettings    `json:"display"`
-    Audio      AudioSettings      `json:"audio"`
-    Network    NetworkSettings    `json:"network"`
-    Bluetooth  BluetoothSettings  `json:"bluetooth"`
-    Keyboard   KeyboardSettings   `json:"keyboard"`
-    Neovim     NeovimSettings     `json:"neovim"`
-    Qtile      QtileSettings      `json:"qtile"`
-    Services   ServicesSettings   `json:"services"`
+    Version       string              `json:"version"`
+    Appearance    AppearanceSettings  `json:"appearance"`
+    Display       DisplaySettings     `json:"display"`
+    Audio         AudioSettings       `json:"audio"`
+    Network       NetworkSettings     `json:"network"`
+    Bluetooth     BluetoothSettings   `json:"bluetooth"`
+    Keyboard      KeyboardSettings    `json:"keyboard"`
+    Neovim        NeovimSettings      `json:"neovim"`
+    Qtile         QtileSettings       `json:"qtile"`
+    Services      ServicesSettings    `json:"services"`
+    Power         PowerSettings       `json:"power"`
+    Defaults      DefaultsSettings    `json:"defaults"`
+    Autostart     AutostartSettings   `json:"autostart"`
+    Updates       UpdatesSettings     `json:"updates"`
+    Security      SecuritySettings    `json:"security"`
+    Fonts         FontsSettings       `json:"fonts"`
+    Notifications NotificationsSettings `json:"notifications"`
 }
 
 type DisplaySettings struct {
@@ -260,21 +476,70 @@ type AudioSettings struct {
     Volume      int    `json:"volume"`      // 0-100
     Muted       bool   `json:"muted"`
 }
+
+type PowerSettings struct {
+    ScreenTimeout  int    `json:"screen_timeout"`   // seconds
+    SleepTimeout   int    `json:"sleep_timeout"`    // seconds
+    LidCloseAction string `json:"lid_close_action"` // "suspend"|"hibernate"|"ignore"
+}
+
+type DefaultsSettings struct {
+    Browser     string `json:"browser"`
+    Terminal    string `json:"terminal"`
+    Editor      string `json:"editor"`
+    FileManager string `json:"file_manager"`
+}
+
+type AutostartSettings struct {
+    Enabled []string `json:"enabled"`
+}
+
+type UpdatesSettings struct {
+    AutoUpdate      bool     `json:"auto_update"`
+    CheckInterval   int      `json:"check_interval"`    // hours
+    ExcludePackages []string `json:"exclude_packages"`
+}
+
+type SecuritySettings struct {
+    FirewallEnabled   bool `json:"firewall_enabled"`
+    SudoTimeout       int  `json:"sudo_timeout"`        // minutes
+    ScreenLockTimeout int  `json:"screen_lock_timeout"` // seconds
+}
+
+type FontsSettings struct {
+    Monospace string `json:"monospace"`
+    SansSerif string `json:"sans_serif"`
+    Serif     string `json:"serif"`
+    FontSize  int    `json:"font_size"`
+}
+
+type NotificationsSettings struct {
+    Enabled        bool `json:"enabled"`
+    DoNotDisturb   bool `json:"do_not_disturb"`
+    TimeoutSeconds int  `json:"timeout_seconds"`
+}
 ```
 
-### Default Settings (v1.0.0)
+### Default Settings (v1.1.0)
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "appearance": { "theme": "dark", "font_size": 14, "opacity": 100, "wallpaper": "" },
   "display": { "active_profile": "default", "profiles": [] },
   "audio": { "default_sink": "", "volume": 75, "muted": false },
   "network": { "wifi_enabled": true, "known_networks": [] },
   "bluetooth": { "enabled": true, "paired_devices": [] },
   "keyboard": { "layout": "us", "variant": "", "options": "" },
-  "neovim": { "theme": "tokyonight", "font": "JetBrainsMono", "lines": 40, "columns": 120, "enable_lsp": true, "enable_copilot": true, "enable_neotree": true, "lsp_servers": ["gopls", "pyright"] },
-  "qtile": { "bar_position": "top", "bar_size": 24, "layouts": ["columns", "monadtall"], "default_terminal": "kitty", "default_browser": "firefox", "default_file_manager": "thunar", "groups": [{"name": "1"}, {"name": "2"}, {"name": "3"}, {"name": "4"}, {"name": "5"}, {"name": "6"}, {"name": "7"}, {"name": "8"}, {"name": "9"}] },
-  "services": { "enabled": [] }
+  "neovim": { "theme": "tokyonight", "font": "JetBrainsMono", "lines": 40, "columns": 120, "enable_lsp": true, "enable_copilot": true, "enable_neotree": true, "lsp_servers": ["gopls", "pyright"], "use_global_theme": true },
+  "qtile": { "bar_position": "top", "bar_size": 24, "layouts": ["columns", "monadtall"], "default_terminal": "kitty", "default_browser": "firefox", "default_file_manager": "thunar", "groups": [{"name": "1"}, {"name": "2"}, {"name": "3"}, {"name": "4"}, {"name": "5"}, {"name": "6"}, {"name": "7"}, {"name": "8"}, {"name": "9"}], "use_global_theme": true },
+  "services": { "enabled": [] },
+  "power": { "screen_timeout": 300, "sleep_timeout": 1800, "lid_close_action": "suspend" },
+  "defaults": { "browser": "", "terminal": "", "editor": "", "file_manager": "" },
+  "autostart": { "enabled": [] },
+  "updates": { "auto_update": true, "check_interval": 24, "exclude_packages": [] },
+  "security": { "firewall_enabled": true, "sudo_timeout": 5, "screen_lock_timeout": 300 },
+  "fonts": { "monospace": "JetBrainsMono Nerd Font", "sans_serif": "Inter", "serif": "Noto Serif", "font_size": 11 },
+  "notifications": { "enabled": true, "do_not_disturb": false, "timeout_seconds": 5 }
 }
 ```
 

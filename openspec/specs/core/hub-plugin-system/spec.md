@@ -7,20 +7,23 @@ Establish the `lambda-env` Go binary as the TUI hub with a plugin system that di
 ## Scope
 
 ### In Scope
-- Go module initialization at `src/lambda-env/` with bubbletea dependencies
+- Go module initialization at `src/lambda-env/` with bubbletea and bubbles dependencies
 - Module discovery from system and user paths (`/usr/share/lambda-env/modules/`, `~/.local/share/lambda-env/modules/`)
-- `manifest.json` parsing and validation against required fields
-- Menu rendering with categories: System, Apps, Ops, Setup
-- Keyboard navigation: arrows, Enter, Esc, q
-- Module execution with environment variables (`LAMBDA_ENV_ACTION`, `LAMBDA_ENV_SETTINGS`, `LAMBDA_ENV_HUB_VERSION`, `LAMBDA_ENV_LOCALE`)
-- JSON stdout parsing from module responses (ok/error/warning)
+- `manifest.json` parsing and validation against required fields, including the `actions` array for interactive widgets
+- Menu rendering with categories: System, Apps, Ops, Setup (3-level navigation: categories → modules → module detail)
+- Keyboard navigation: arrows, Enter, Esc, q (context-sensitive based on view state)
+- Module execution with environment variables (`LAMBDA_ENV_ACTION` per-action, `LAMBDA_ENV_SETTINGS`, `LAMBDA_ENV_HUB_VERSION`, `LAMBDA_ENV_LOCALE`)
+- JSON stdout parsing from module responses (ok/error/warning), with settings_delta merge for interactive modules
 - Error handling with logging to `/var/log/lambda-env/modules.log`
 - Dependency checking before module execution (`pacman -Q`)
 - Root detection for modules requiring sudo
 - Settings delta merging from module responses
+- Component-based TUI architecture with sub-model delegation (categories, modules, detail, confirm views)
+- Dynamic widget rendering from manifest actions (toggle, select, text, confirm, execute types)
+- CLIExecutor interface for module testing (RealExecutor wraps os/exec, MockExecutor returns fixtures)
 
 ### Out of Scope
-- Module implementations (screen, audio, network, etc.) — Wave 2+
+- Module implementations (screen, audio, network, etc.) — Wave 2+; system modules (keyboard, appearance, audio, defaults) are Wave 3
 - PKGBUILD for `lambdaos-tui` — Wave 2
 - HTML/GUI prototypes — Wave 1 is infrastructure only
 
@@ -104,7 +107,7 @@ The hub SHALL validate every `manifest.json` against required fields: `name`, `v
 
 ### Requirement 4: Menu Rendering by Category
 
-The hub SHALL render a navigable menu grouping modules by category: System, Apps, Ops, Setup. Modules within each category are sorted alphabetically by name.
+The hub SHALL render a navigable menu grouping modules by category: System, Apps, Ops, Setup. Modules within each category are sorted alphabetically by name. The menu SHALL support 3-level navigation with category selection as the first level.
 
 #### Scenario: Menu displays all categories with modules
 
@@ -125,9 +128,16 @@ The hub SHALL render a navigable menu grouping modules by category: System, Apps
 - WHEN the hub renders the menu
 - THEN the system category header shows "(3)" or equivalent count indicator
 
+#### Scenario: Category selection navigates to module list
+
+- GIVEN the category list is displayed
+- WHEN the user presses Enter on a category
+- THEN the hub navigates to the module list for that category
+- AND the category name is shown as the current context
+
 ### Requirement 5: Keyboard Navigation
 
-The hub SHALL support navigation via arrow keys (up/down), Enter (select), Esc (back), and q (quit).
+The hub SHALL support navigation via arrow keys (up/down), Enter (select/confirm), Esc (back/quit current view), and q (quit application). Key bindings SHALL be context-sensitive based on the current view state.
 
 #### Scenario: Arrow keys move selection
 
@@ -135,11 +145,11 @@ The hub SHALL support navigation via arrow keys (up/down), Enter (select), Esc (
 - WHEN the user presses down arrow 3 times
 - THEN the selection highlight moves to the 4th item
 
-#### Scenario: Enter selects a module
+#### Scenario: Enter selects or confirms based on context
 
-- GIVEN a module is highlighted in the menu
+- GIVEN a module is highlighted in the module list
 - WHEN the user presses Enter
-- THEN the selected module begins execution
+- THEN the hub navigates to the module detail view
 
 #### Scenario: Esc returns to previous view
 
@@ -153,9 +163,24 @@ The hub SHALL support navigation via arrow keys (up/down), Enter (select), Esc (
 - WHEN the user presses q
 - THEN the application exits with code 0
 
+#### Scenario: Context-specific key bindings shown in help
+
+- GIVEN the user is on the module detail view with toggle widgets
+- WHEN the user presses `?` for help
+- THEN the help overlay shows Space/Enter for toggling, not just navigation
+
 ### Requirement 6: Module Execution Protocol
 
-The hub SHALL execute the selected module's `module` executable with environment variables: `LAMBDA_ENV_ACTION=run`, `LAMBDA_ENV_SETTINGS` (path to settings.json), `LAMBDA_ENV_HUB_VERSION`, `LAMBDA_ENV_LOCALE`.
+The hub SHALL execute module actions by passing the action name via `LAMBDA_ENV_ACTION` environment variable. For interactive modules, the hub SHALL execute actions individually as the user triggers them, rather than executing a single `run` action.
+
+The hub SHALL execute the selected module's `module` executable with environment variables: `LAMBDA_ENV_ACTION=<action-name>`, `LAMBDA_ENV_SETTINGS` (path to settings.json), `LAMBDA_ENV_HUB_VERSION`, `LAMBDA_ENV_LOCALE`.
+
+#### Scenario: Module executes with specific action
+
+- GIVEN a module `keyboard` has actions `set-layout` and `set-variant`
+- WHEN the user triggers the `set-layout` action
+- THEN the hub executes the module with `LAMBDA_ENV_ACTION=set-layout`
+- AND the module receives the action-specific context
 
 #### Scenario: Module executes with correct environment
 
@@ -180,7 +205,7 @@ The hub SHALL execute the selected module's `module` executable with environment
 
 ### Requirement 7: JSON Response Parsing
 
-The hub SHALL parse JSON from module stdout and handle three response types: `ok` (exit 0), `error` (exit 1), `warning` (exit 2).
+The hub SHALL parse JSON from module stdout and handle three response types: `ok` (exit 0), `error` (exit 1), `warning` (exit 2). For interactive modules, the response MAY include `settings_delta` that the hub merges immediately.
 
 #### Scenario: Success response is rendered
 
@@ -208,6 +233,13 @@ The hub SHALL parse JSON from module stdout and handle three response types: `ok
 - WHEN the hub attempts to parse
 - THEN the hub displays a parse error
 - AND logs the raw stdout content
+
+#### Scenario: Interactive action response updates widget state
+
+- GIVEN a toggle action returns `{"status":"ok","action":"toggle-setting","settings_delta":{"keyboard":{"layout":"us"}}}`
+- WHEN the hub processes the response
+- THEN the settings_delta is merged into settings.json
+- AND the toggle widget state updates to reflect the new value
 
 ### Requirement 8: Error Logging
 
@@ -296,6 +328,87 @@ The hub SHALL extract `settings_delta` from successful module responses and merg
 - WHEN the hub processes the response
 - THEN settings.json is not modified
 
+### Requirement 12: Three-Level Navigation Support
+
+The hub SHALL support navigation across 3+ levels: categories → modules → module detail view. The viewState enum SHALL expand to include `categories`, `modules`, `moduleDetail`, and `confirmDialog` states.
+
+#### Scenario: Hub transitions to module detail view
+
+- GIVEN a module is selected from the module list
+- WHEN the user presses Enter
+- THEN the hub transitions to `moduleDetail` viewState
+- AND the module detail is rendered from the module's manifest actions
+
+#### Scenario: Hub displays confirm dialog state
+
+- GIVEN a module action is marked as requiring confirmation
+- WHEN the user triggers that action
+- THEN the hub transitions to `confirmDialog` viewState
+- AND the confirm dialog is rendered with action details
+
+#### Scenario: Hub maintains view stack for back navigation
+
+- GIVEN the user has navigated: categories → modules → moduleDetail
+- WHEN the user presses Esc at moduleDetail
+- THEN the hub returns to modules view
+- AND the module list selection is preserved
+
+### Requirement 13: Manifest Actions Field
+
+The manifest.json SHALL support an `actions` field that declares supported actions with their types, labels, and metadata for dynamic widget rendering.
+
+#### Scenario: Manifest with actions is parsed
+
+- GIVEN a manifest.json contains an `actions` array with typed entries
+- WHEN the hub parses the manifest
+- THEN each action is validated for required fields (name, type, label)
+- AND the actions are stored in the module registry
+
+#### Scenario: Action types are validated
+
+- GIVEN a manifest action has an invalid type (not one of: toggle, select, text, confirm, execute)
+- WHEN the hub validates the manifest
+- THEN validation fails with an error about invalid action type
+- AND the module is not registered
+
+#### Scenario: Manifest without actions field is backward compatible
+
+- GIVEN a manifest.json does not include the `actions` field
+- WHEN the hub parses the manifest
+- THEN the module is still registered (backward compatible)
+- AND the module detail view shows a "no interactive actions" message
+
+### Requirement 14: Dynamic Widget Rendering from Actions
+
+The hub SHALL render appropriate TUI widgets based on the action types declared in the module manifest.
+
+#### Scenario: Toggle widget rendered for boolean action
+
+- GIVEN a module action has `type: "toggle"`
+- WHEN the module detail view is rendered
+- THEN a toggle widget is displayed for that action
+- AND the current value is shown (on/off)
+
+#### Scenario: Select list rendered for enum action
+
+- GIVEN a module action has `type: "select"` with an `options` array
+- WHEN the module detail view is rendered
+- THEN a selectable list is displayed with the options
+- AND the current value is highlighted
+
+#### Scenario: Text input rendered for string action
+
+- GIVEN a module action has `type: "text"`
+- WHEN the module detail view is rendered
+- THEN a text input widget is displayed
+- AND the current value is pre-filled
+
+#### Scenario: Confirm button rendered for confirm action
+
+- GIVEN a module action has `type: "confirm"`
+- WHEN the module detail view is rendered
+- THEN a button/trigger is displayed that opens a confirm dialog when activated
+
 ## Technical Details
 
 ### Package Structure
@@ -310,19 +423,34 @@ src/lambda-env/
 │   ├── hub/
 │   │   ├── hub.go               # Hub struct, main loop
 │   │   ├── discovery.go         # Module scanning, manifest parsing
-│   │   └── execution.go         # Module execution, JSON parsing, logging
+│   │   ├── execution.go         # Module execution, ExecuteAction, JSON parsing, logging
+│   │   └── version.go           # Hub version constant
 │   ├── tui/
-│   │   ├── menu.go              # Bubbletea main menu model
-│   │   └── module_view.go       # Module execution view
+│   │   ├── model.go             # Parent model with sub-model delegation
+│   │   ├── update.go            # Parent update dispatches to active sub-model
+│   │   ├── view.go              # Parent view renders active sub-model + status bar
+│   │   ├── components/
+│   │   │   ├── toggle.go        # Boolean toggle widget
+│   │   │   ├── textinput.go     # Text input widget (wraps bubbles/textinput)
+│   │   │   ├── confirm.go       # Confirm dialog widget
+│   │   │   ├── help.go          # Full-screen help overlay (custom)
+│   │   │   └── statusbar.go     # Persistent status bar widget
+│   │   └── views/
+│   │       ├── categories.go    # Category list sub-model
+│   │       ├── modules.go       # Module list sub-model
+│   │       └── detail.go        # Module detail sub-model (dynamic widgets from manifest.actions)
 │   └── module/
 │       ├── types.go             # JSON protocol types (Manifest, Response)
 │       └── logger.go            # Module log writer
 └── pkg/
+    ├── module/
+    │   ├── manifest.go          # Manifest + ActionConfig structs, validation
+    │   └── executor.go          # CLIExecutor interface, RealExecutor, MockExecutor
     └── version/
-        └── version.go           # Hub version constant
+        └── version.go           # Hub version constant (moved from internal/)
 ```
 
-### Manifest JSON Schema (required fields)
+### Manifest JSON Schema
 ```json
 {
   "name": "string (lowercase, hyphens)",
@@ -332,7 +460,17 @@ src/lambda-env/
   "category": "enum: system|apps|ops|setup",
   "requires_root": "boolean",
   "dependencies": "string[]",
-  "min_hub_version": "string (semver)"
+  "min_hub_version": "string (semver)",
+  "actions": [
+    {
+      "name": "string (hyphenated action name)",
+      "label": "string (display label for TUI)",
+      "type": "enum: toggle|select|text|confirm|execute",
+      "field": "string (settings field path)",
+      "options": ["string[] (optional, for select type)"],
+      "requires_root": "boolean (optional)"
+    }
+  ]
 }
 ```
 
