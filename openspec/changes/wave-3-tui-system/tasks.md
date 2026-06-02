@@ -66,21 +66,22 @@ Chain strategy: feature-branch-chain
 
 ## Phase 4a: Keyboard + Appearance Modules
 
-- [ ] 4a.1 Create `internal/modules/keyboard/main.go` — setxkbmap layout/variant/options via CLIExecutor; emit `data.available_layouts` from `setxkbmap -layout` query
-- [ ] 4a.2 Create `internal/modules/appearance/main.go` — gsettings theme/wallpaper, feh wallpaper, icon/cursor/font via CLIExecutor; emit `data.available_themes` from filesystem scan
-- [ ] 4a.3 Add theme sync: `use_global_theme` mapping in appearance module; themeMap lookup table (dark→tokyonight, light→tokyonight-light, nord→nord, catppuccin→catppuccin-mocha)
-- [ ] 4a.4 Add `use_global_theme` support to `internal/modules/neovim/config.go` — map appearance.theme → neovim theme when `use_global_theme: true`
-- [ ] 4a.5 Add `use_global_theme` support to `internal/modules/qtile/config.go` — map appearance.theme → qtile color scheme when `use_global_theme: true`
-- [ ] 4a.6 Tests: keyboard layout apply, invalid layout error, theme mapping for all 4 presets, use_global_theme toggle, dynamic options discovery
+- [x] 4a.1 Create `internal/modules/keyboard/main.go` — setxkbmap layout/variant/options via CLIExecutor; emit `data.available_layouts` from `setxkbmap -layout` query
+- [x] 4a.2 Create `internal/modules/appearance/main.go` — gsettings theme/wallpaper, feh wallpaper, icon/cursor/font via CLIExecutor; emit `data.available_themes` from filesystem scan
+- [x] 4a.3 Add theme sync: `use_global_theme` mapping in appearance module; themeMap lookup table (dark→tokyonight, light→tokyonight-light, nord→nord, catppuccin→catppuccin-mocha)
+- [x] 4a.4 Add `use_global_theme` support to `internal/modules/neovim/config.go` — map appearance.theme → neovim theme when `use_global_theme: true`
+- [x] 4a.5 Add `use_global_theme` support to `internal/modules/qtile/config.go` — map appearance.theme → qtile color scheme when `use_global_theme: true`
+- [x] 4a.6 Tests: keyboard layout apply, invalid layout error, theme mapping for all 4 presets, use_global_theme toggle, dynamic options discovery
 
-## Phase 4b: Audio + Defaults Modules
+## Phase 4b: Audio + Defaults Modules + Debt Fix
 
 - [ ] 4b.1 Create `internal/modules/audio/main.go` — pactl/wpctl volume 0–100, 5% steps, mute toggle, sink selection; emit `data.available_sinks` from `pactl list short sinks`; detect pipewire vs pulseaudio
 - [ ] 4b.2 Create `internal/modules/defaults/main.go` — xdg-mime browser/terminal/editor/file-manager; emit `data.available_apps` from `/usr/share/applications/` scan; batch apply with confirm
 - [ ] 4b.3 Tests: audio backend detection (pipewire/pulse), volume capping, mute state, dynamic sink discovery; defaults desktop file validation, batch partial failure, dynamic app discovery
+- [ ] 4b.4 **Debt fix**: Fix hyphen mismatch — update neovim/qtile/dotfiles `main.go` to accept hyphenated action names (e.g., `toggle-lsp` not `toggle_lsp`), matching their `manifest.json` actions. New standard: hyphens everywhere.
 
 ## Phase 5: Integration + E2E Tests
 
-- [ ] 5.1 Integration tests: settings_delta flow — write settings, execute module action via MockExecutor, verify delta merge
-- [ ] 5.2 Integration tests: manifest action parsing — parse manifest with all 5 action types, assert widget rendering
-- [ ] 5.3 E2E tests: TUI navigation — programmatic tea.NewProgram key sequences through all 3 levels + confirm dialog
+- [x] 5.1 Integration tests: settings_delta flow — write settings, execute module action via MockExecutor, verify delta merge
+- [x] 5.2 Integration tests: manifest action parsing — parse manifest with all 5 action types, assert widget rendering
+- [x] 5.3 E2E tests: TUI navigation — programmatic tea.NewProgram key sequences through all 3 levels + confirm dialog

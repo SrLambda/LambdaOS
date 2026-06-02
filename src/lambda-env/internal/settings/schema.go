@@ -111,6 +111,7 @@ type QtileSettings struct {
 	DefaultFileManager string        `json:"default_file_manager"`
 	Groups             []GroupConfig `json:"groups"`
 	UseGlobalTheme     bool          `json:"use_global_theme"`
+	ColorScheme        string        `json:"color_scheme"`
 }
 
 // ServicesSettings defines enabled/disabled services.
@@ -223,6 +224,7 @@ func Defaults() Settings {
 				{Name: "7"}, {Name: "8"}, {Name: "9"},
 			},
 			UseGlobalTheme: true,
+			ColorScheme:    "tokyonight",
 		},
 		Services: ServicesSettings{
 			Enabled: []string{},

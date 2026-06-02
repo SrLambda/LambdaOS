@@ -32,8 +32,9 @@ User presses Space → moduleDetail.Update → toggle widget flips local value
 User selects "nord" → appearance module sets theme → delta: {appearance.theme: "nord"}
   → hub merges delta → (later) user opens neovim detail
   → neovim module loads settings → sees use_global_theme=true
-  → maps "nord" → "nordic" via lookup table → returns effective theme in response
+  → maps "nord" → "nord" via lookup table → returns effective theme in response
 ```
+This push-based sync also sets `qtile.color_scheme` (added to `QtileSettings` during implementation) when `use_global_theme` is true on the Qtile module.
 
 ### Text Input (e.g., keyboard variant)
 
@@ -95,10 +96,10 @@ type CLIExecutor interface {
 
 ```go
 var themeMap = map[string]struct{ Neovim, Qtile string }{
-    "dark":       {"tokyonight-night", "dracula"},
-    "light":      {"tokyonight-day",   "nord-light"},
-    "nord":       {"nord",             "nord"},
-    "catppuccin": {"catppuccin",       "catppuccin"},
+    "dark":       {"tokyonight",         "dracula"},
+    "light":      {"tokyonight-light",   "nord-light"},
+    "nord":       {"nord",               "nord"},
+    "catppuccin": {"catppuccin-mocha",   "catppuccin"},
 }
 ```
 
@@ -130,6 +131,10 @@ The following conventions were established during implementation and override ea
 | `use_global_theme` default | `false` | `true` |
 | Help overlay | Wrapping `bubbles/help` | Custom implementation (`internal/tui/components/help.go`) — full-screen overlay, NOT bottom-bar wrapper |
 | TextInput receiver | Value receiver | Pointer receiver required because `bubbles/textinput.Model.SetValue` mutates internal state |
+| Action name convention | Mixed hyphens/underscores | **Hyphens everywhere** — `toggle-lsp`, `set-terminal`, `check-conflicts`. Fix applied in PR #4b, verified in PR #5 |
+| Qtile theme field | Not specified | `ColorScheme string` added to `QtileSettings` for theme mapping support |
+| Widget detail key handling | Unrestricted | `k`/`j` navigation intercepted when text input has focus (PR #5 bug fix) |
+| Module action handler completeness | Assumed complete | neovim `set-theme`/`apply` handlers added in PR #5 (missing from earlier implementation) |
 
 ## Open Questions
 

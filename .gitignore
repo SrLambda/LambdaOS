@@ -5,3 +5,5 @@ tmp/
 __pycache__/
 .pytest_cache/
 *.pyc
+# Local Pi runtime state
+.atl/
