@@ -75,10 +75,10 @@ Chain strategy: feature-branch-chain
 
 ## Phase 4b: Audio + Defaults Modules + Debt Fix
 
-- [ ] 4b.1 Create `internal/modules/audio/main.go` — pactl/wpctl volume 0–100, 5% steps, mute toggle, sink selection; emit `data.available_sinks` from `pactl list short sinks`; detect pipewire vs pulseaudio
-- [ ] 4b.2 Create `internal/modules/defaults/main.go` — xdg-mime browser/terminal/editor/file-manager; emit `data.available_apps` from `/usr/share/applications/` scan; batch apply with confirm
-- [ ] 4b.3 Tests: audio backend detection (pipewire/pulse), volume capping, mute state, dynamic sink discovery; defaults desktop file validation, batch partial failure, dynamic app discovery
-- [ ] 4b.4 **Debt fix**: Fix hyphen mismatch — update neovim/qtile/dotfiles `main.go` to accept hyphenated action names (e.g., `toggle-lsp` not `toggle_lsp`), matching their `manifest.json` actions. New standard: hyphens everywhere.
+- [x] 4b.1 Create `internal/modules/audio/main.go` — pactl/wpctl volume 0–100, 5% steps, mute toggle, sink selection; emit `data.available_sinks` from `pactl list short sinks`; detect pipewire vs pulseaudio
+- [x] 4b.2 Create `internal/modules/defaults/main.go` — xdg-mime browser/terminal/editor/file-manager; emit `data.available_apps` from `/usr/share/applications/` scan; batch apply with confirm
+- [x] 4b.3 Tests: audio backend detection (pipewire/pulse), volume capping, mute state, dynamic sink discovery; defaults desktop file validation, batch partial failure, dynamic app discovery
+- [x] 4b.4 **Debt fix**: Fix hyphen mismatch — update neovim/qtile/dotfiles `main.go` to accept hyphenated action names (e.g., `toggle-lsp` not `toggle_lsp`), matching their `manifest.json` actions. New standard: hyphens everywhere.
 
 ## Phase 5: Integration + E2E Tests
 
