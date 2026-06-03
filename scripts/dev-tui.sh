@@ -25,7 +25,7 @@ MODULES=(neovim qtile dotfiles keyboard appearance audio defaults)
 for mod in "${MODULES[@]}"; do
     mkdir -p "$MODULES_DIR/$mod"
     cd "$LAMBDA_ENV/internal/modules/$mod"
-    go build -o module . 2>/dev/null || {
+    go build -o module . 2> /dev/null || {
         echo "      WARNING: $mod module build failed (may need dependencies)"
         continue
     }
