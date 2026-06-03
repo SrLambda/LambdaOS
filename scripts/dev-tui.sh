@@ -20,7 +20,7 @@ echo "      OK ($(du -h lambda-env | cut -f1))"
 
 # --- Build all 7 module binaries ---
 echo "[2/3] Building modules..."
-MODULES=(neovim qtile dotfiles keyboard appearance audio defaults)
+MODULES=(neovim qtile dotfiles keyboard appearance audio defaults power display hardware-dashboard)
 
 for mod in "${MODULES[@]}"; do
     mkdir -p "$MODULES_DIR/$mod"
