@@ -48,6 +48,10 @@ func TestHandleRunReturnsCurrentVolumeAndSinks(t *testing.T) {
 				Stdout:   "0\talsa_output.pci-0000_00_1f.3.analog-stereo\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n",
 				ExitCode: 0,
 			},
+			"pactl list short sources": {
+				Stdout:   "0\talsa_input.pci-0000_00_1f.3.analog-stereo\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n",
+				ExitCode: 0,
+			},
 		},
 	}
 	defer func() { executor = oldExecutor }()
@@ -75,6 +79,9 @@ func TestHandleRunReturnsCurrentVolumeAndSinks(t *testing.T) {
 	if resp.Data["default_sink"] != "alsa_output.pci-0000_00_1f.3.analog-stereo" {
 		t.Errorf("default_sink = %v, want alsa_output.pci-0000_00_1f.3.analog-stereo", resp.Data["default_sink"])
 	}
+	if resp.Data["backend"] != "pulseaudio" {
+		t.Errorf("backend = %v, want pulseaudio", resp.Data["backend"])
+	}
 	opts, ok := resp.Data["available_options"].(map[string]interface{})
 	if !ok {
 		t.Fatalf("expected available_options map")
@@ -85,6 +92,17 @@ func TestHandleRunReturnsCurrentVolumeAndSinks(t *testing.T) {
 	}
 	if sinks[0] != "alsa_output.pci-0000_00_1f.3.analog-stereo" {
 		t.Errorf("sink[0] = %v, want alsa_output.pci-0000_00_1f.3.analog-stereo", sinks[0])
+	}
+	sources, ok := opts["set-source"].([]interface{})
+	if !ok || len(sources) != 1 {
+		t.Fatalf("expected 1 source, got %v", opts["set-source"])
+	}
+	if sources[0] != "alsa_input.pci-0000_00_1f.3.analog-stereo" {
+		t.Errorf("source[0] = %v, want alsa_input.pci-0000_00_1f.3.analog-stereo", sources[0])
+	}
+	// Per-app should show warning for pulseaudio
+	if resp.Data["per_app_warning"] != "per-app volume requires PipeWire" {
+		t.Errorf("per_app_warning = %v", resp.Data["per_app_warning"])
 	}
 }
 
@@ -389,5 +407,303 @@ func TestBackendDetectionFailure(t *testing.T) {
 	}
 	if backend != "" {
 		t.Errorf("backend = %q, want empty string on error", backend)
+	}
+}
+
+func TestDiscoverSources(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"pactl list short sources": {
+				Stdout: "0\talsa_input.usb\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n" +
+					"1\talsa_input.pci\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tIDLE\n",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	sources, err := discoverSources(executor)
+	if err != nil {
+		t.Fatalf("discoverSources error: %v", err)
+	}
+	if len(sources) != 2 {
+		t.Fatalf("expected 2 sources, got %d: %v", len(sources), sources)
+	}
+	if sources[0] != "alsa_input.usb" {
+		t.Errorf("sources[0] = %q, want alsa_input.usb", sources[0])
+	}
+	if sources[1] != "alsa_input.pci" {
+		t.Errorf("sources[1] = %q, want alsa_input.pci", sources[1])
+	}
+}
+
+func TestSetSourceValid(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"pactl list short sources": {
+				Stdout:   "0\talsa_input.usb\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n",
+				ExitCode: 0,
+			},
+			"pactl set-default-source alsa_input.usb": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureAudioResponse(t, "set-source", `{"value":"alsa_input.usb"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	delta, ok := resp.SettingsDelta["audio"].(map[string]interface{})
+	if !ok || delta["default_source"] != "alsa_input.usb" {
+		t.Errorf("settings delta default_source = %v", delta["default_source"])
+	}
+
+	loaded, err := settings.Load(settingsPath)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if loaded.Audio.DefaultSource != "alsa_input.usb" {
+		t.Errorf("Audio.DefaultSource = %q", loaded.Audio.DefaultSource)
+	}
+}
+
+func TestSetSourceInvalid(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"pactl list short sources": {
+				Stdout:   "0\talsa_input.usb\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureAudioResponse(t, "set-source", `{"value":"nonexistent"}`, settingsPath)
+	if resp.Status != "error" {
+		t.Fatalf("expected status error, got %s", resp.Status)
+	}
+}
+
+func TestSetProfileValid(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	s.Audio.Profiles = []settings.AudioProfile{
+		{Name: "Headphones", DefaultSink: "alsa_output.usb", DefaultSource: "alsa_input.usb", Volume: 80},
+	}
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureAudioResponse(t, "set-profile", `{"value":"Headphones"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	delta, ok := resp.SettingsDelta["audio"].(map[string]interface{})
+	if !ok || delta["profile"] != "Headphones" {
+		t.Errorf("settings delta profile = %v", delta["profile"])
+	}
+}
+
+func TestSetProfileInvalid(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureAudioResponse(t, "set-profile", `{"value":"NonExistent"}`, settingsPath)
+	if resp.Status != "error" {
+		t.Fatalf("expected status error, got %s", resp.Status)
+	}
+}
+
+func TestSetProfileClear(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	s.Audio.Profile = "Headphones"
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureAudioResponse(t, "set-profile", `{"value":""}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	delta, ok := resp.SettingsDelta["audio"].(map[string]interface{})
+	if !ok || delta["profile"] != "" {
+		t.Errorf("settings delta profile = %v, want empty", delta["profile"])
+	}
+}
+
+func TestPerAppVolumesPipewire(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"pactl info": {
+				Stdout:   "Server Name: PulseAudio (on PipeWire 0.3.48)\n",
+				ExitCode: 0,
+			},
+			"pactl list short sinks": {
+				Stdout:   "0\talsa_output.pci\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n",
+				ExitCode: 0,
+			},
+			"pactl list short sources": {
+				Stdout:   "0\talsa_input.pci\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n",
+				ExitCode: 0,
+			},
+			"wpctl status": {
+				Stdout: "PipeWire 'pipewire-0' [0.3.48]\n" +
+					" └─ Clients:\n" +
+					" └─ Sinks:\n" +
+					" └─ Sources:\n" +
+					" └─ Streams:\n" +
+					"        55. firefox       [Stream/Output/Audio]\n" +
+					"        56. spotify       [Stream/Output/Audio]\n",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureAudioResponse(t, "run", "", settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	perApp, ok := resp.Data["per_app_volumes"].([]interface{})
+	if !ok || len(perApp) != 2 {
+		t.Fatalf("expected 2 per-app volumes, got %v", resp.Data["per_app_volumes"])
+	}
+	if _, hasWarning := resp.Data["per_app_warning"]; hasWarning {
+		t.Errorf("unexpected per_app_warning in response")
+	}
+}
+
+func TestPerAppVolumesGracefulDegradation(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"pactl info": {
+				Stdout:   "Server Name: PulseAudio (on PipeWire 0.3.48)\n",
+				ExitCode: 0,
+			},
+			"pactl list short sinks": {
+				Stdout:   "0\talsa_output.pci\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n",
+				ExitCode: 0,
+			},
+			"pactl list short sources": {
+				Stdout:   "0\talsa_input.pci\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n",
+				ExitCode: 0,
+			},
+			"wpctl status": {
+				Stdout:   "",
+				ExitCode: 1,
+				Stderr:   "wpctl: command not found",
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureAudioResponse(t, "run", "", settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	if resp.Data["per_app_warning"] != "wpctl not available or PipeWire not running" {
+		t.Errorf("per_app_warning = %v", resp.Data["per_app_warning"])
+	}
+}
+
+func TestSetAppVolumeValid(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"wpctl set-volume 55 0.80": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureAudioResponse(t, "set-app-volume", `{"value":"55:0.80"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	// No settings delta for per-app volume.
+	if resp.SettingsDelta != nil {
+		t.Errorf("expected nil SettingsDelta, got %v", resp.SettingsDelta)
+	}
+}
+
+func TestSetAppVolumeInvalidFormat(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureAudioResponse(t, "set-app-volume", `{"value":"invalid"}`, settingsPath)
+	if resp.Status != "error" {
+		t.Fatalf("expected status error, got %s", resp.Status)
 	}
 }

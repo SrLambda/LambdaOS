@@ -1,11 +1,11 @@
 {
   "name": "audio",
-  "version": "0.1.0",
-  "description": "Configure audio: volume, mute, and default sink",
-  "description_es": "Configurar audio: volumen, silencio y salida por defecto",
+  "version": "0.2.0",
+  "description": "Configure audio: volume, mute, default sink, default source, profiles, and per-app volume",
+  "description_es": "Configurar audio: volumen, silencio, salida, entrada, perfiles y volumen por aplicación",
   "category": "system",
   "requires_root": false,
-  "dependencies": ["pactl"],
+  "dependencies": ["pactl", "wpctl"],
   "min_hub_version": "1.0.0",
   "actions": [
     {
@@ -31,6 +31,26 @@
       "type": "select",
       "field": "audio.default_sink",
       "options": ["auto"]
+    },
+    {
+      "name": "set-source",
+      "label": "Default Source",
+      "type": "select",
+      "field": "audio.default_source",
+      "options": ["auto"]
+    },
+    {
+      "name": "set-profile",
+      "label": "Profile",
+      "type": "select",
+      "field": "audio.profile",
+      "options": [""]
+    },
+    {
+      "name": "set-app-volume",
+      "label": "App Volume",
+      "type": "select",
+      "options": [""]
     }
   ]
 }

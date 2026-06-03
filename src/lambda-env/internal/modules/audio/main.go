@@ -71,8 +71,32 @@ func main() {
 			}
 		}
 		handleSetSink(settingsPath, sink)
+	case "set-source":
+		source := ""
+		if params != nil {
+			if v, ok := params["value"].(string); ok {
+				source = v
+			}
+		}
+		handleSetSource(settingsPath, source)
+	case "set-profile":
+		profile := ""
+		if params != nil {
+			if v, ok := params["value"].(string); ok {
+				profile = v
+			}
+		}
+		handleSetProfile(settingsPath, profile)
+	case "set-app-volume":
+		appVolume := ""
+		if params != nil {
+			if v, ok := params["value"].(string); ok {
+				appVolume = v
+			}
+		}
+		handleSetAppVolume(settingsPath, appVolume)
 	default:
-		emitError(action, "unknown action", "use run, set-volume, set-mute, or set-sink")
+		emitError(action, "unknown action", "use run, set-volume, set-mute, set-sink, set-source, set-profile, or set-app-volume")
 	}
 }
 
@@ -120,6 +144,82 @@ func discoverSinks(exe module.CLIExecutor) ([]string, error) {
 	return sinks, nil
 }
 
+func discoverSources(exe module.CLIExecutor) ([]string, error) {
+	stdout, _, exitCode, err := exe.Run("pactl", "list", "short", "sources")
+	if exitCode != 0 || err != nil {
+		return nil, fmt.Errorf("pactl list short sources failed: %v", err)
+	}
+	var sources []string
+	for _, line := range strings.Split(stdout, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		fields := strings.Split(line, "\t")
+		if len(fields) >= 2 {
+			sources = append(sources, fields[1])
+		}
+	}
+	return sources, nil
+}
+
+// perAppVolume represents a single application stream volume entry.
+type perAppVolume struct {
+	ID     string  `json:"id"`
+	Name   string  `json:"name"`
+	Volume float64 `json:"volume"`
+}
+
+// discoverPerAppVolumes attempts to list per-application volumes using wpctl.
+// This is best-effort and only works when PipeWire is the backend.
+func discoverPerAppVolumes(exe module.CLIExecutor) ([]perAppVolume, string, error) {
+	stdout, _, exitCode, err := exe.Run("wpctl", "status")
+	if exitCode != 0 || err != nil {
+		return nil, "wpctl not available or PipeWire not running", nil
+	}
+
+	var apps []perAppVolume
+	inStreams := false
+	for _, line := range strings.Split(stdout, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.Contains(line, "Streams:") {
+			inStreams = true
+			continue
+		}
+		if inStreams && strings.HasSuffix(line, ":") {
+			// Next section header ends the streams block.
+			break
+		}
+		if inStreams && line != "" {
+			// Try to parse lines like: "  55. firefox       [Stream/Output/Audio]"
+			// We extract the ID and name.
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				idStr := strings.TrimSuffix(parts[0], ".")
+				name := parts[1]
+				if idStr != "" && name != "" {
+					apps = append(apps, perAppVolume{
+						ID:     idStr,
+						Name:   name,
+						Volume: 0, // wpctl status doesn't show volume; we'd need inspect
+					})
+				}
+			}
+		}
+	}
+	return apps, "", nil
+}
+
+func getProfileNames(profiles []settings.AudioProfile) []string {
+	names := make([]string, 0, len(profiles))
+	for _, p := range profiles {
+		if p.Name != "" {
+			names = append(names, p.Name)
+		}
+	}
+	return names
+}
+
 func handleRun(settingsPath string) {
 	s, err := settings.Load(settingsPath)
 	if err != nil {
@@ -139,23 +239,52 @@ func handleRun(settingsPath string) {
 		return
 	}
 
-	resp := module.Response{
-		Status: "ok",
-		Action: "run",
-		Data: map[string]interface{}{
-			"volume":       s.Audio.Volume,
-			"muted":        s.Audio.Muted,
-			"default_sink": s.Audio.DefaultSink,
-			"backend":      backend,
-			"available_options": map[string]interface{}{
-				"set-sink": sinks,
-			},
-			"current_value": map[string]interface{}{
-				"set-volume": s.Audio.Volume,
-				"set-mute":   s.Audio.Muted,
-				"set-sink":   s.Audio.DefaultSink,
-			},
+	sources, err := discoverSources(executor)
+	if err != nil {
+		emitError("run", fmt.Sprintf("discover sources: %v", err), "")
+		return
+	}
+
+	var perApp []perAppVolume
+	var perAppWarning string
+	if backend == "pipewire" {
+		perApp, perAppWarning, _ = discoverPerAppVolumes(executor)
+	} else {
+		perAppWarning = "per-app volume requires PipeWire"
+	}
+
+	profileNames := getProfileNames(s.Audio.Profiles)
+
+	data := map[string]interface{}{
+		"volume":          s.Audio.Volume,
+		"muted":           s.Audio.Muted,
+		"default_sink":    s.Audio.DefaultSink,
+		"default_source":  s.Audio.DefaultSource,
+		"backend":         backend,
+		"profile":         s.Audio.Profile,
+		"profiles":        profileNames,
+		"per_app_volumes": perApp,
+		"available_options": map[string]interface{}{
+			"set-sink":    sinks,
+			"set-source":  sources,
+			"set-profile": profileNames,
 		},
+		"current_value": map[string]interface{}{
+			"set-volume":   s.Audio.Volume,
+			"set-mute":     s.Audio.Muted,
+			"set-sink":     s.Audio.DefaultSink,
+			"set-source":   s.Audio.DefaultSource,
+			"set-profile":  s.Audio.Profile,
+		},
+	}
+	if perAppWarning != "" {
+		data["per_app_warning"] = perAppWarning
+	}
+
+	resp := module.Response{
+		Status:  "ok",
+		Action:  "run",
+		Data:    data,
 		Message: "Audio configuration loaded",
 	}
 	emit(resp)
@@ -294,6 +423,138 @@ func handleSetSink(settingsPath, sink string) {
 		Action:        "set-sink",
 		SettingsDelta: delta,
 		Message:       fmt.Sprintf("Default sink set to %s", sink),
+	}
+	emit(resp)
+}
+
+func handleSetSource(settingsPath, source string) {
+	if _, err := settings.Load(settingsPath); err != nil {
+		emitError("set-source", fmt.Sprintf("load settings: %v", err), "")
+		return
+	}
+
+	sources, err := discoverSources(executor)
+	if err != nil {
+		emitError("set-source", fmt.Sprintf("discover sources: %v", err), "")
+		return
+	}
+
+	valid := false
+	for _, src := range sources {
+		if src == source {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		emitError("set-source", fmt.Sprintf("source %q is not available", source), "")
+		return
+	}
+
+	_, _, exitCode, err := executor.Run("pactl", "set-default-source", source)
+	if exitCode != 0 || err != nil {
+		emitError("set-source", fmt.Sprintf("pactl failed: %v", err), "")
+		return
+	}
+
+	delta := map[string]interface{}{
+		"audio": map[string]interface{}{
+			"default_source": source,
+		},
+	}
+	if err := settings.SaveDelta(settingsPath, delta); err != nil {
+		emitError("set-source", fmt.Sprintf("save delta: %v", err), "")
+		return
+	}
+
+	resp := module.Response{
+		Status:        "ok",
+		Action:        "set-source",
+		SettingsDelta: delta,
+		Message:       fmt.Sprintf("Default source set to %s", source),
+	}
+	emit(resp)
+}
+
+func handleSetProfile(settingsPath, profile string) {
+	s, err := settings.Load(settingsPath)
+	if err != nil {
+		emitError("set-profile", fmt.Sprintf("load settings: %v", err), "")
+		return
+	}
+
+	// Validate profile exists (empty means clear profile).
+	if profile != "" {
+		found := false
+		for _, p := range s.Audio.Profiles {
+			if p.Name == profile {
+				found = true
+				break
+			}
+		}
+		if !found {
+			emitError("set-profile", fmt.Sprintf("profile %q does not exist", profile), "")
+			return
+		}
+	}
+
+	delta := map[string]interface{}{
+		"audio": map[string]interface{}{
+			"profile": profile,
+		},
+	}
+	if err := settings.SaveDelta(settingsPath, delta); err != nil {
+		emitError("set-profile", fmt.Sprintf("save delta: %v", err), "")
+		return
+	}
+
+	resp := module.Response{
+		Status:        "ok",
+		Action:        "set-profile",
+		SettingsDelta: delta,
+		Message:       fmt.Sprintf("Profile set to %s", profile),
+	}
+	emit(resp)
+}
+
+func handleSetAppVolume(settingsPath, appVolume string) {
+	if appVolume == "" {
+		emitError("set-app-volume", "app volume value is required (format: id:volume)", "")
+		return
+	}
+
+	parts := strings.SplitN(appVolume, ":", 2)
+	if len(parts) != 2 {
+		emitError("set-app-volume", "invalid app volume format", "expected id:volume")
+		return
+	}
+	streamID := parts[0]
+	volumeStr := parts[1]
+
+	// Validate volume is a valid number.
+	volume, err := strconv.ParseFloat(volumeStr, 64)
+	if err != nil {
+		emitError("set-app-volume", fmt.Sprintf("invalid volume: %v", err), "")
+		return
+	}
+	if volume < 0 {
+		volume = 0
+	}
+	if volume > 1.5 {
+		volume = 1.5
+	}
+
+	_, _, exitCode, err := executor.Run("wpctl", "set-volume", streamID, volumeStr)
+	if exitCode != 0 || err != nil {
+		emitError("set-app-volume", fmt.Sprintf("wpctl failed: %v", err), "")
+		return
+	}
+
+	// No settings delta for per-app volume (runtime-only).
+	resp := module.Response{
+		Status:  "ok",
+		Action:  "set-app-volume",
+		Message: fmt.Sprintf("App volume for %s set to %s", streamID, volumeStr),
 	}
 	emit(resp)
 }

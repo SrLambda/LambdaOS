@@ -20,6 +20,10 @@ func TestIntegrationAudioFullFlow(t *testing.T) {
 				Stdout:   "0\tsink1\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n1\tsink2\tmodule-bluez5-device.c\ts16le 2ch 44100Hz\tIDLE\n",
 				ExitCode: 0,
 			},
+			"pactl list short sources": {
+				Stdout:   "0\tsource1\tmodule-alsa-card.c\ts16le 2ch 44100Hz\tRUNNING\n",
+				ExitCode: 0,
+			},
 			"pactl set-sink-volume sink1 30%": {
 				Stdout:   "",
 				ExitCode: 0,
