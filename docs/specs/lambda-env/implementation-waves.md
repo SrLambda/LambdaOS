@@ -76,230 +76,254 @@
 
 ---
 
-## Wave 3: TUI Interface + System Modules
+## Wave 3: TUI Interface + System Modules ✅ COMPLETADO
+
+**Estado**: Completado (junio 2026)
+**Duración real**: ~10 días
+**Resultado**: 7 módulos funcionales, TUI interactiva con sub-modelos Bubble Tea
+
+### Lo que se construyó
+
+| Categoría | Módulo | Acciones |
+|-----------|--------|----------|
+| system | **appearance** | set-theme (dark/light/nord/catppuccin), set-wallpaper, set-font-size |
+| system | **audio** | set-volume, set-mute, set-sink |
+| system | **keyboard** | set-layout (us), set-variant |
+| system | **defaults** | set-browser, set-terminal, set-editor, set-file-manager, apply |
+| apps | **neovim** | toggle-lsp, toggle-copilot, toggle-neotree, set-theme, apply |
+| apps | **qtile** | set-terminal, set-browser, set-file-manager, reload |
+| ops | **dotfiles** | stow, unstow, backup |
+
+### TUI interface construida
+- **3 vistas jerárquicas**: Categories → Modules → ModuleDetail
+- **Sub-modelos Bubble Tea**: cada vista es un `tea.Model` independiente
+- **5 tipos de widgets**: toggle, select, text, confirm, execute
+- **Help overlay**: `?` muestra teclas disponibles
+- **Status bar**: contexto + nombre de módulo + estado
+- **Confirm dialogs**: para acciones destructivas (unstow, backup)
+
+### Settings schema (v1.1.0)
+17 categorías definidas en `settings.json` — solo 7 tienen módulo implementado.
+
+### Lo que quedó PENDIENTE de la Wave 3 original
+Los siguientes specs del Track B original NO se implementaron y se redistribuyen en Waves 4-6:
+`system-01-screen`, `system-03-network`, `system-04-bluetooth`, `system-05-power`, `system-11-autostart`, `system-12-services`, `system-13-updates`, `system-14-security`, `system-15-fonts`, `system-16-notifications`
+
+**Dependencias**: Wave 2 completa.
+
+---
+
+## Wave 4: Hardware Management
 
 **Duración estimada**: 7-10 días
-**Specs**: 18 (2 tracks paralelos)
-
-### Track A: TUI Interface Development (prioridad alta)
-Actualmente la TUI solo muestra categorías + módulos y ejecuta. Necesita vistas interactivas:
-
-| # | Spec | Qué valida |
-|---|---|---|
-| 12 | `tui-01-interactive-views` | Forms con inputs, toggles visuales, listas con estado |
-| 13 | `tui-02-sub-navigation` | Sub-menus por módulo (Neovim → Toggles, Theme, Plugins) |
-| 14 | `tui-03-status-bar` | Status bar muestra estado actual de settings, no solo errores |
-| 15 | `tui-04-confirm-dialogs` | Confirmación antes de acciones destructivas (unstow, backup) |
-| 16 | `tui-05-help-overlay` | Help overlay con teclas disponibles por vista |
-
-### Track B: System Modules
-| # | Spec | Qué valida |
-|---|---|---|
-| 17 | `system-09-appearance` | Tema global → sincroniza con neovim + qtile |
-| 18 | `system-01-screen` | Detectar monitores, cambiar resolución → xrandr |
-| 19 | `system-02-audio` | Volumen, sink default, mute → pipewire |
-| 20 | `system-03-network` | WiFi/Ethernet desde TUI → NetworkManager |
-| 21 | `system-04-bluetooth` | Bluetooth pairing → bluetoothctl |
-| 22 | `system-05-power` | Power profiles, suspend → systemd-logind |
-| 23 | `system-06-keyboard` | Layout, variant, options → setxkbmap |
-| 24 | `system-10-defaults` | Apps por defecto (terminal, browser, file manager) |
-| 25 | `system-11-autostart` | Servicios al inicio (picom, flameshot, etc.) |
-| 26 | `system-12-services` | Enable/disable systemd services |
-| 27 | `system-13-updates` | Updates disponibles, trigger upgrade |
-| 28 | `system-14-security` | Firewall, sudo rules, SSH keys |
-| 29 | `system-15-fonts` | Fuentes instaladas, font size global |
-| 30 | `system-16-notifications` | Notification daemon, rules |
-
-### Wave 3 Open Questions (from Wave 2)
-- Neovim module: gestionar imports de plugins/ más allá de los 3 toggles
-- Qtile module: parameterizar keys.py más allá de terminal
-- Migración os_theme.json → settings.json (tema sincronizado appearance → neovim → qtile)
-
-**Criterio de salida**:
-- TUI tiene vistas interactivas con toggles, inputs, listas con estado visual
-- Al menos 4 módulos system funcionales con vistas dedicadas
-- Tema global sincronizado entre appearance → neovim → qtile
-- lambda-env muestra UI rica, no solo launcher de módulos
-
-**Dependencias**: Wave 2 completa + bug fix de package main.
-
----
-
-## Wave 4: Hardware esencial
-
-**Duración estimada**: 5-7 días
-**Specs**: 4
-
-| # | Spec | Qué valida |
-|---|---|---|
-| 16 | `system-01-screen` | Detectar monitores, cambiar resolución |
-| 17 | `system-02-audio` | Volumen, dispositivos de audio |
-| 18 | `system-05-power` | Brillo, batería |
-| 19 | `pkg-02-obs-studio` | OBS instalado |
-
-**Criterio de salida**: TUI gestiona pantalla, audio y energía. OBS disponible.
-
-**Dependencias**: Wave 3 (system modules base + TUI interface).
-
----
-
-## Wave 5: Conectividad
-
-**Duración estimada**: 5-7 días
 **Specs**: 5
 
-| # | Spec | Qué valida |
-|---|---|---|
-| 20 | `system-03-network` | WiFi/Ethernet desde TUI |
-| 21 | `system-04-bluetooth` | Bluetooth pairing desde TUI |
-| 22 | `system-06-keyboard` | Layout de teclado |
-| 23 | `pkg-03-davinci-resolve` | Resolve en script AUR |
-| 24 | `pkg-04-opencode` | OpenCode disponible |
+| # | Spec | Qué valida | Tipo |
+|---|---|---|---|
+| 12 | `display-module` | Detectar monitores, cambiar resolución, refresh rate, perfiles → xrandr/wlr-randr | system |
+| 13 | `power-module` | Sleep timeout, lid close action, battery status → systemd-logind + upower | system |
+| 14 | `keyboard-enhanced` | Ampliar layouts (es, la, de, fr), variants, compose key, options → setxkbmap + localectl | system |
+| 15 | `audio-enhanced` | Sink/source selection dinámica, perfiles de audio, volume per-app | system |
+| 16 | `hardware-dashboard` | Vista resumen de hardware: CPU, RAM, disk, temp, battery — solo lectura, actualizable | system |
 
-**Criterio de salida**: TUI gestiona toda la conectividad. Todos los paquetes de la Fase 1 listos.
+**Criterio de salida**: TUI gestiona pantalla (resolución, monitores), energía (sleep, batería), teclado (10+ layouts), audio (selección de sinks). Dashboard muestra estado del hardware en tiempo real.
 
-**Dependencias**: Wave 3 (system modules base + TUI interface).
-
----
-
-## Wave 6: Sistema + Docs
-
-**Duración estimada**: 5-7 días
-**Specs**: 7
-
-| # | Spec | Qué valida |
-|---|---|---|
-| 25 | `system-12-services` | Habilitar/deshabilitar servicios |
-| 26 | `system-13-updates` | Ver e instalar updates |
-| 27 | `system-10-defaults` | Apps por defecto |
-| 28 | `system-11-autostart` | Apps al inicio |
-| 29 | `infra-03-repo-package-configs` | Configs empaquetadas |
-| 30 | `infra-04-docs-local` | Docs en localhost:8080 |
-| 31 | `infra-05-docs-content` | Contenido de docs |
-
-**Criterio de salida**: TUI gestiona servicios, updates, defaults y autostart. Docs accesibles desde browser.
-
-**Dependencias**: Wave 3 (system modules base + TUI interface).
+**Dependencias**: Wave 3 (hub + settings schema + TUI interface).
 
 ---
 
-## Wave 7: Apps + Ops
-
-**Duración estimada**: 5-7 días
-**Specs**: 9
-
-| # | Spec | Qué valida |
-|---|---|---|
-| 32 | `apps-03-screenshot` | Config Flameshot desde TUI |
-| 33 | `apps-04-recording` | Config OBS desde TUI |
-| 34 | `apps-05-terminal` | Config Kitty desde TUI |
-| 35 | `apps-06-filemanager` | Config Yazi desde TUI |
-| 36 | `apps-07-ai` | Config OpenCode desde TUI |
-| 37 | `ops-01-monitor` | Monitor de sistema |
-| 38 | `ops-02-storage` | Discos y particiones |
-| 39 | `ops-03-logs` | Logs del sistema |
-| 40 | `ops-04-backup` | Snapshots y backups |
-
-**Criterio de salida**: Todas las apps configurables desde TUI. Monitor, storage, logs y backup funcionales.
-
-**Dependencias**: Wave 4 (OBS), Wave 5 (OpenCode), Wave 1 (hub).
-
----
-
-## Wave 8: Setup + Installer
+## Wave 5: Connectivity
 
 **Duración estimada**: 7-10 días
-**Specs**: 8
+**Specs**: 5
 
-| # | Spec | Qué valida |
-|---|---|---|
-| 41 | `setup-01-wizard` | Primer boot wizard |
-| 42 | `setup-03-profiles` | Perfiles dev/gaming/rescue |
-| 43 | `installer-01-calamares-scaffold` | Calamares instalado |
-| 44 | `installer-02-calamares-modules` | Instalación funcional |
-| 45 | `installer-03-calamares-branding` | Calamares con branding |
-| 46 | `installer-04-launcher` | Lanzable desde TUI |
-| 47 | `system-07-users` | Gestión de usuarios |
-| 48 | `system-08-datetime` | Fecha, hora, timezone |
+| # | Spec | Qué valida | Tipo |
+|---|---|---|---|
+| 17 | `network-module` | WiFi scan/connect/disconnect, Ethernet status, IP info → NetworkManager/nmcli | system |
+| 18 | `bluetooth-module` | Scan, pair, trust, connect, disconnect devices → bluez/bluetoothctl | system |
+| 19 | `known-networks` | Lista de redes conocidas, forget, auto-connect toggle → nmcli connection | system |
+| 20 | `vpn-stubs` | Placeholder para VPN (WireGuard/OpenVPN) — detectar configuraciones existentes | system |
+| 21 | `connection-status` | Widget en status bar: WiFi/BT íconos con estado (connected/disconnected/scanning) | tui |
 
-**Criterio de salida**: Se puede instalar LambdaOS en disco. Wizard de primer boot funcional.
+**Criterio de salida**: TUI gestiona WiFi y Bluetooth completamente desde la terminal. Conectarse a una red o pair-ear un dispositivo sin salir de la TUI.
 
-**Dependencias**: Wave 8 (installer), Wave 9 (branding para Calamares).
+**Dependencias**: Wave 3 (hub + TUI interface).
 
 ---
 
-## Wave 9: Polish + CD + Demo Pública
+## Wave 6: System Management
 
-**Duración estimada**: 5-7 días
+**Duración estimada**: 7-10 días
+**Specs**: 7
+
+| # | Spec | Qué valida | Tipo |
+|---|---|---|---|
+| 22 | `services-module` | Listar, enable, disable, start, stop systemd units → systemctl | system |
+| 23 | `autostart-module` | Gestionar apps que arrancan con sesión → XDG autostart .desktop files | system |
+| 24 | `updates-module` | Check updates disponibles, trigger pacman -Syu, mostrar changelog → pacman + checkupdates | system |
+| 25 | `security-module` | Firewall (ufw enable/disable, allow/deny ports), sudo timeout, screen lock timeout | system |
+| 26 | `fonts-module` | Listar fuentes instaladas, cambiar monospace/sans/serif defaults → fc-list + fontconfig | system |
+| 27 | `notifications-module` | Do not disturb toggle, timeout, per-app rules → dunst config | system |
+| 28 | `system-health` | Dashboard extendido: servicios running, temp, disk usage, últimas actualizaciones | ops |
+
+**Criterio de salida**: TUI gestiona systemd, autostart, paquetes, firewall, fuentes y notificaciones. Dashboard de salud del sistema funcional.
+
+**Dependencias**: Wave 3 (hub + TUI interface). Puede correr en paralelo con Waves 4 y 5.
+
+---
+
+## Wave 7: TUI UX Enhancement — Cross-cutting
+
+**Duración estimada**: 10-14 días
+**Specs**: 7
+
+Esta wave no agrega módulos nuevos. Mejora la experiencia de uso de TODOS los módulos existentes.
+
+| # | Spec | Qué valida | Impacto |
+|---|---|---|---|
+| 29 | `global-search` | `Ctrl+F` busca a través de TODOS los settings de todos los módulos. Resultados navegables con Enter para ir directo al setting. | 🔴 Crítico |
+| 30 | `breadcrumbs` | Ruta de navegación visible y clickeable: `Sistema → Teclado → Layout`. Cada segmento es navegable. | 🟡 Alto |
+| 31 | `restore-defaults` | "Reset to default" por módulo y global. Diálogo de confirmación. Defaults definidos en el schema. | 🟡 Alto |
+| 32 | `import-export` | Exportar `settings.json` completo a un archivo. Importar desde archivo con validación + merge. Soporte para profiles. | 🟡 Alto |
+| 33 | `real-time-preview` | Cambios de tema, fuente, wallpaper se aplican en tiempo real sin "Apply" explícito. Acciones no destructivas son instantáneas. | 🟢 Medio |
+| 34 | `theme-sync` | `use_global_theme` conectado: cambiar tema en appearance → neovim y qtile reflejan el cambio automáticamente. Resuelve el open question de Wave 3. | 🟡 Alto |
+| 35 | `settings-diff` | Antes de aplicar cambios, mostrar diff de qué cambió. Opción de undo por sesión. | 🟢 Medio |
+
+**Criterio de salida**: La TUI se siente como una app de settings profesional. Buscar "wifi" te lleva al módulo de red. Los breadcrumbs te dicen dónde estás. Restaurar defaults es un comando. Exportás tu config y la importás en otra máquina.
+
+**Dependencias**: Waves 3-6 completas (necesita todos los módulos para search y theme-sync).
+
+---
+
+## Wave 8: Apps & Operations
+
+**Duración estimada**: 7-10 días
 **Specs**: 9
 
-| # | Spec | Qué valida |
-|---|---|---|
-| 49 | `polish-01-sysctl-tweaks` | Optimizaciones sysctl |
-| 50 | `polish-02-services-default` | Servicios por defecto |
-| 51 | `polish-03-mkinitcpio-custom` | Initramfs optimizado |
-| 52 | `system-14-security` | Firewall, SSH, GPG |
-| 53 | `system-15-fonts` | Gestión de fuentes |
-| 54 | `system-16-notifications` | Config Dunst |
-| 55 | `ci-02-cd-workflow` | Releases automáticos con tags |
-| 56 | `ci-03-nightly-builds` | Builds nocturnos |
-| 57 | `infra-06-tui-demo` | Demo interactiva de la TUI en GitHub Pages |
+| # | Spec | Qué valida | Tipo |
+|---|---|---|---|
+| 36 | `apps-screenshot` | Configurar Flameshot: tecla, formato, destino → flameshot config | apps |
+| 37 | `apps-recording` | Configurar OBS: escenas, fuentes, calidad → obs-websocket | apps |
+| 38 | `apps-terminal` | Configurar Kitty: fuente, tema, opacidad → kitty.conf | apps |
+| 39 | `apps-filemanager` | Configurar Yazi: tema, preview, plugins → yazi.toml | apps |
+| 40 | `apps-ai` | Configurar OpenCode: modelo, API key, contexto → opencode.json | apps |
+| 41 | `ops-monitor` | htop-like dentro de la TUI: procesos, CPU, memoria, red | ops |
+| 42 | `ops-storage` | Discos, particiones, espacio libre → lsblk + df | ops |
+| 43 | `ops-logs` | Viewer de journalctl con filtros (service, priority, time) | ops |
+| 44 | `ops-backup` | Snapshots BTRFS + snapper: list, create, rollback | ops |
 
-**Criterio de salida**: Push tag → ISO se buildea y publica automáticamente. Sistema optimizado. Demo interactiva en GitHub Pages navegable con todos los módulos.
+**Criterio de salida**: Todas las apps del ecosistema LambdaOS son configurables desde la TUI. Monitor, storage, logs y backup funcionales.
 
-**Dependencias**: Wave 8 (installer), Wave 0 (CI base), Wave 9 (branding para la demo).
+**Dependencias**: Wave 4 (OBS), Wave 5 (OpenCode), Wave 3 (hub).
 
 ---
 
-## Resumen
+## Wave 9: Setup, Users & Regional
 
-| Wave | Días | Specs | Entregable clave |
+**Duración estimada**: 10-14 días
+**Specs**: 9
+
+| # | Spec | Qué valida | Tipo |
 |---|---|---|---|
-| **0** | 2-3 | 4 | CI buildea ISO, Flameshot, nombre correcto |
-| **1** | 3-5 | 3 | Framework decidido, hub abre, repo pacman |
-| **2** | 5-7 | 4 | TUI controla Neovim, Qtile, dotfiles |
-| **3** | 7-10 | 18 | TUI interactiva + 14 módulos system + tema sincronizado |
-| **4** | 5-7 | 4 | Pantalla, audio, energía, OBS |
-| **5** | 5-7 | 5 | Red, BT, teclado, todos los paquetes |
-| **6** | 5-7 | 7 | Servicios, updates, docs |
-| **7** | 5-7 | 9 | Todas las apps + ops |
-| **8** | 7-10 | 8 | Wizard + Installer |
-| **9** | 5-7 | 9 | Polish + CD automático + Demo pública |
-| **Total** | **52-72 días** | **66 specs** | **Distro v1.0** |
+| 45 | `setup-wizard` | Wizard de primer boot: idioma, teclado, timezone, usuario, tema, apps default | setup |
+| 46 | `setup-profiles` | Perfiles predefinidos: dev (gcc, go, rust, docker), gaming (steam, lutris, wine), rescue (herramientas de sistema) | setup |
+| 47 | `users-module` | Crear/eliminar usuarios, grupos, cambiar contraseña, auto-login → useradd + passwd | system |
+| 48 | `datetime-module` | Timezone, NTP toggle, formato 12/24h → timedatectl | system |
+| 49 | `regional-module` | Locale, idioma del sistema, formato de números/moneda → localectl + locale.conf | system |
+| 50 | `accessibility-basic` | Alto contraste, texto grande, sticky keys → gsettings + config files | system |
+| 51 | `installer-calamares` | Integración Calamares: scaffolding, módulos, branding LambdaOS, launcher desde TUI | installer |
+| 52 | `installer-disk` | Particionado guiado: automático, manual simple, LUKS opcional | installer |
+| 53 | `system-advanced-dashboard` | Vista integrada de Users + Datetime + Regional + Accessibility | system |
+
+**Criterio de salida**: Primer boot wizard funcional. Usuario creado con wizard. ISO instalable en disco con Calamares. Timezone y locale configurables desde TUI.
+
+**Dependencias**: Waves 3-6 (system modules), Wave 8 (apps), Wave 0 (CI).
+
+---
+
+## Wave 10: Advanced & Release
+
+**Duración estimada**: 10-14 días
+**Specs**: 9
+
+| # | Spec | Qué valida | Tipo |
+|---|---|---|---|
+| 54 | `printers-module` | Detectar impresoras, añadir, cola de trabajos → CUPS + system-config-printer | system |
+| 55 | `online-accounts` | Conectar Google, Nextcloud (stubs con OAuth2 placeholder) → GNOME Online Accounts o similar | system |
+| 56 | `sharing-module` | Compartir pantalla (VNC), archivos (Samba stubs) | system |
+| 57 | `accessibility-advanced` | Lector de pantalla (Orca), teclado en pantalla, opciones de contraste avanzadas | system |
+| 58 | `polish-sysctl` | Optimizaciones sysctl (swappiness, cache pressure, network buffers) | polish |
+| 59 | `polish-services` | Servicios por defecto auditados y optimizados (mask/unmask innecesarios) | polish |
+| 60 | `polish-mkinitcpio` | Initramfs optimizado (hook systemd, compresión zstd, early KMS) | polish |
+| 61 | `cd-automation` | Push tag → CI buildea ISO, corre smoke + feature + install tests, crea GitHub Release | ci-cd |
+| 62 | `public-demo` | Demo interactiva en GitHub Pages: TUI navegable via terminal emulator WASM | demo |
+
+**Criterio de salida**: Distro completa. Push tag → release automático. Demo pública navegable. Sistema optimizado.
+**Versión**: `v1.0.0` — Release público.
+
+**Dependencias**: Todo lo anterior. Esta es la wave de salida.
+
+---
+
+## Resumen Actualizado
+
+| Wave | Estado | Días | Specs | Entregable clave |
+|---|---|---|---|---|
+| **0** | ✅ | 2-3 | 4 | CI buildea ISO |
+| **1** | ✅ | 3-5 | 3 | Hub + settings schema + repo pacman |
+| **2** | ✅ | 5-7 | 4 | Neovim, Qtile, Dotfiles configurables |
+| **3** | ✅ | 10 | 7 módulos | TUI interactiva, 7 módulos system/apps/ops |
+| **4** | 🔲 | 7-10 | 5 | Display, power, keyboard+, audio+, dashboard |
+| **5** | 🔲 | 7-10 | 5 | WiFi, Bluetooth, known networks, VPN stubs |
+| **6** | 🔲 | 7-10 | 7 | Services, autostart, updates, security, fonts, notifications |
+| **7** | 🔲 | 10-14 | 7 | Search global, breadcrumbs, restore defaults, import/export, preview, theme sync |
+| **8** | 🔲 | 7-10 | 9 | Apps (screenshot, recording, terminal, fm, AI) + Ops (monitor, storage, logs, backup) |
+| **9** | 🔲 | 10-14 | 9 | Wizard, perfiles, users, datetime, regional, accessibility, Calamares |
+| **10** | 🔲 | 10-14 | 9 | Printers, online accounts, sharing, polish, CD auto, demo, v1.0.0 |
+| **Total** | | **80-109 días** | **62 specs** | **LambdaOS v1.0.0** |
 
 ---
 
 ## Mapa de Dependencias entre Waves
 
 ```
-Wave 0 (CI + pipeline)
+Wave 0 (CI + pipeline) ✅
   │
-  ├─→ Wave 1 (core TUI: hub + settings + repo)
-  │     │
-  │     ├─→ Wave 2 (módulos: neovim, qtile, dotfiles, empaquetado)
-  │     │     │
-  │     │     └─→ Wave 3 (TUI interface + system modules + tema sincronizado)
-  │     │           │
-  │     │           ├─→ Wave 4 (hardware: screen, audio, power)
-  │     │           │     │
-  │     │           │     └─→ Wave 7 (apps + ops: screenshot, recording, monitor, etc.)
-  │     │           │
-  │     │           ├─→ Wave 5 (conectividad: network, BT, keyboard)
-  │     │           │     │
-  │     │           │     └─→ Wave 7 (apps + ops)
-  │     │           │
-  │     │           └─→ Wave 6 (sistema: services, updates, docs)
-  │     │                 │
-  │     │                 └─→ Wave 8 (installer: Calamares + wizard)
-  │     │
-  │     └─→ Wave 8 (installer: Calamares + wizard)
-  │
-  └─→ Wave 9 (polish + CD + demo pública: depende de todo lo anterior)
+  └─→ Wave 1 (core TUI: hub + settings + repo) ✅
+        │
+        └─→ Wave 2 (módulos: neovim, qtile, dotfiles) ✅
+              │
+              └─→ Wave 3 (TUI interface + 7 system modules) ✅
+                    │
+                    ├─→ Wave 4 (hardware: display, power, keyboard, audio)
+                    │     │
+                    │     └─→ Wave 8 (apps + ops)
+                    │
+                    ├─→ Wave 5 (connectivity: network, bluetooth)
+                    │     │
+                    │     └─→ Wave 8 (apps + ops)
+                    │
+                    └─→ Wave 6 (system: services, autostart, updates, security, fonts, notifications)
+                          │
+                          ├─→ Wave 7 (UX: search, breadcrumbs, restore, import/export, preview, sync)
+                          │     │
+                          │     └─→ Wave 9 (setup, users, regional, installer)
+                          │           │
+                          │           └─→ Wave 10 (advanced, polish, CD, demo → v1.0.0)
+                          │
+                          └─→ Wave 9 (setup, users, regional, installer)
 ```
+
+**Nota**: Waves 4, 5 y 6 pueden desarrollarse en paralelo (no dependen entre sí, solo de Wave 3).
+
+---
 
 ## Reglas de Progreso
 
 1. No avanzar a la siguiente wave sin que la ISO de la wave actual buildea y bootea en QEMU.
-2. Cada spec dentro de una wave es un commit independiente.
-3. Si una wave se bloquea por una decisión arquitectónica (ej: framework de la TUI en Wave 1), documentar la decisión y continuar.
-4. Las waves 4, 5 y 6 pueden desarrollarse en paralelo entre sí (no dependen unas de otras, solo de Wave 1).
+2. Cada spec dentro de una wave es un commit independiente (o PR encadenado si excede 400 líneas).
+3. Si una wave se bloquea por una decisión arquitectónica, documentar la decisión y continuar.
+4. Las waves 4, 5 y 6 pueden desarrollarse en paralelo entre sí (solo dependen de Wave 3).
+5. La Wave 7 (UX) requiere Waves 4-6 completas para indexar todos los módulos en el search global.
+6. A partir de Wave 4, cada módulo nuevo usa el patrón establecido en Wave 3: `manifest.json` + binario Go en `internal/modules/<name>/`.
+7. Las especificaciones vivas están en `openspec/specs/`. Las specs de planning histórico están en `docs/specs/lambda-env/`.

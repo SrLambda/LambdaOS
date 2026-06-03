@@ -28,22 +28,29 @@ Este esquema es simple, trazable, y mapea directamente al plan de implementació
 
 | Wave | Version | Release Name | Key Deliverable |
 |---|---|---|---|
-| 0 | `v0.0.1` | Pipeline | CI buildea ISO, Flameshot, nombre correcto |
-| 1 | `v0.1.0` | Foundation | Framework decidido, hub abre, repo pacman |
-| 2 | `v0.2.0` | First Modules | TUI controla Neovim, Qtile, dotfiles |
-| 3 | `v0.3.0` | Identity | Temas, MOTD, wallpaper, iconos |
-| 4 | `v0.4.0` | Hardware | Pantalla, audio, energía, OBS |
-| 5 | `v0.5.0` | Connectivity | Red, BT, teclado, todos los paquetes |
-| 6 | `v0.6.0` | System | Servicios, updates, docs |
-| 7 | `v0.7.0` | Complete Apps | Todas las apps + ops |
-| 8 | `v0.9.0` | Installer | Wizard + Calamares funcional |
-| 9 | `v1.0.0` | **RELEASE** | Distro completa con CD automático |
+| 0 | `v0.0.1` | Pipeline | CI buildea ISO, Flameshot, nombre correcto ✅ |
+| 1 | `v0.1.0` | Foundation | Framework decidido, hub abre, repo pacman ✅ |
+| 2 | `v0.2.0` | First Modules | TUI controla Neovim, Qtile, dotfiles ✅ |
+| 3 | `v0.3.0` | TUI Interface | TUI interactiva (3 vistas, 5 tipos de widgets), 7 módulos (appearance, audio, keyboard, defaults, neovim, qtile, dotfiles) ✅ |
+| 4 | `v0.4.0` | Hardware | Display (monitores, resolución), power (sleep, batería), keyboard+, audio+, dashboard |
+| 5 | `v0.5.0` | Connectivity | WiFi, Bluetooth, known networks, VPN stubs, connection status |
+| 6 | `v0.6.0` | System | Services (systemd), autostart (XDG), updates (pacman), security (ufw), fonts, notifications |
+| 7 | `v0.7.0` | UX | Búsqueda global, breadcrumbs, restore defaults, import/export, real-time preview, theme sync |
+| 8 | `v0.8.0` | Apps + Ops | Config apps (screenshot, recording, terminal, fm, AI) + ops (monitor, storage, logs, backup) |
+| 9 | `v0.9.0` | Setup + Users | Wizard, perfiles, users, datetime, regional, accessibility, Calamares installer |
+| 10 | `v1.0.0` | **RELEASE** | Printers, online accounts, sharing, polish, CD automático, demo pública. Distro completa. |
 
-### Why v0.9.0 for Wave 8 (not v0.8.0)?
+### Why 10 waves (not 9)?
 
-**EN**: Wave 8 is the installer — it's the last major feature before v1.0.0. Using v0.9.0 signals "almost there" and creates a natural progression: v0.9.0 (installer) → v1.0.0 (release).
+**EN**: The original plan had 9 waves but Wave 3 was overambitious (18 specs). After completing Wave 3 with 7 modules, the remaining work was redistributed into focused, buildable waves. Wave 7 (UX) is new — it addresses cross-cutting features (search, breadcrumbs, restore defaults, theme sync) that make the TUI feel like a professional settings app. Wave 10 absorbs the advanced modules (printers, online accounts, sharing) that are expected in a complete distro.
 
-**ES**: Wave 8 es el installer — es la última feature mayor antes de v1.0.0. Usar v0.9.0 señala "casi listo" y crea una progresión natural: v0.9.0 (installer) → v1.0.0 (release).
+**ES**: El plan original tenía 9 waves pero Wave 3 era demasiado ambiciosa (18 specs). Al completar Wave 3 con 7 módulos, el trabajo restante se redistribuyó en waves más chicas y buildables. Wave 7 (UX) es nueva — cubre features cross-cutting (búsqueda, breadcrumbs, restore defaults, theme sync) que hacen que la TUI se sienta como una app de settings profesional. Wave 10 absorbe los módulos avanzados (impresoras, online accounts, sharing) que se esperan en una distro completa.
+
+### Progression signal: v0.9.0 → v1.0.0
+
+**EN**: Wave 9 (Setup + Users + Installer) maps to v0.9.0 — the last pre-release. It signals "almost there": the system can be installed, users can be managed, and the first-boot wizard works. Wave 10 is the release.
+
+**ES**: Wave 9 (Setup + Users + Installer) mapea a v0.9.0 — el último pre-release. Señala "casi listo": el sistema se puede instalar, los usuarios se pueden gestionar, y el wizard de primer boot funciona. Wave 10 es el release.
 
 ---
 
@@ -55,12 +62,12 @@ Este esquema es simple, trazable, y mapea directamente al plan de implementació
 
 **ES**: Cada wave genera un tag de release automático cuando todas las specs de la wave están completas y la ISO pasa todos los tests. El pipeline CI/CD (wave 9) automatiza esto. Hasta entonces, los tags se crean manualmente.
 
-### Manual Release Process (Waves 0-8)
+### Manual Release Process (Waves 0-9)
 
 ```bash
 # 1. Complete all specs in the wave
 # 2. Verify ISO builds and passes tests
-./build_and_test.sh
+./scripts/build_and_test.sh
 
 # 3. Run QEMU tests
 pytest tests/qemu/ -v
@@ -120,6 +127,7 @@ LambdaOS-<version>-x86_64.iso
 Examples:
 - `LambdaOS-0.0.1-x86_64.iso` (Wave 0)
 - `LambdaOS-0.1.0-x86_64.iso` (Wave 1)
+- `LambdaOS-0.3.0-x86_64.iso` (Wave 3, current)
 - `LambdaOS-1.0.0-x86_64.iso` (Release)
 
 This is configured in `profiledef.sh`:
