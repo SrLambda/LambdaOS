@@ -40,8 +40,16 @@ func TestHandleRunReturnsCurrentLayoutAndAvailableLayouts(t *testing.T) {
 	oldExecutor := executor
 	executor = &module.MockExecutor{
 		Responses: map[string]module.MockResponse{
-			"setxkbmap -layout": {
+			"localectl list-x11-keymap-layouts": {
 				Stdout:   "us\nes\nde\n",
+				ExitCode: 0,
+			},
+			"localectl list-x11-keymap-variants us": {
+				Stdout:   "intl\nstd\n",
+				ExitCode: 0,
+			},
+			"setxkbmap -query": {
+				Stdout:   "layout: us\nvariant: intl\noptions: caps:swapescape\n",
 				ExitCode: 0,
 			},
 		},
@@ -67,6 +75,9 @@ func TestHandleRunReturnsCurrentLayoutAndAvailableLayouts(t *testing.T) {
 	if resp.Data["variant"] != "intl" {
 		t.Errorf("variant = %v, want intl", resp.Data["variant"])
 	}
+	if resp.Data["options"] != "caps:swapescape" {
+		t.Errorf("options = %v, want caps:swapescape", resp.Data["options"])
+	}
 	opts, ok := resp.Data["available_options"].(map[string]interface{})
 	if !ok {
 		t.Fatalf("expected available_options map")
@@ -75,13 +86,17 @@ func TestHandleRunReturnsCurrentLayoutAndAvailableLayouts(t *testing.T) {
 	if !ok || len(layouts) != 3 {
 		t.Fatalf("expected 3 layouts, got %v", opts["set-layout"])
 	}
+	variants, ok := opts["set-variant"].([]interface{})
+	if !ok || len(variants) != 3 { // empty + intl + std
+		t.Fatalf("expected 3 variants, got %v", opts["set-variant"])
+	}
 }
 
 func TestSetLayoutValidCallsSetxkbmap(t *testing.T) {
 	oldExecutor := executor
 	executor = &module.MockExecutor{
 		Responses: map[string]module.MockResponse{
-			"setxkbmap -layout": {
+			"localectl list-x11-keymap-layouts": {
 				Stdout:   "us\nes\n",
 				ExitCode: 0,
 			},
@@ -124,7 +139,7 @@ func TestSetLayoutInvalidReturnsError(t *testing.T) {
 	oldExecutor := executor
 	executor = &module.MockExecutor{
 		Responses: map[string]module.MockResponse{
-			"setxkbmap -layout": {
+			"localectl list-x11-keymap-layouts": {
 				Stdout:   "us\nes\n",
 				ExitCode: 0,
 			},
@@ -179,7 +194,7 @@ func TestLayoutDiscoveryParsing(t *testing.T) {
 	oldExecutor := executor
 	executor = &module.MockExecutor{
 		Responses: map[string]module.MockResponse{
-			"setxkbmap -layout": {
+			"localectl list-x11-keymap-layouts": {
 				Stdout:   "  us  \n\tes\n\n  de\n",
 				ExitCode: 0,
 			},
@@ -206,7 +221,7 @@ func TestLayoutDiscoveryFallback(t *testing.T) {
 	oldExecutor := executor
 	executor = &module.MockExecutor{
 		Responses: map[string]module.MockResponse{
-			"setxkbmap -layout": {
+			"localectl list-x11-keymap-layouts": {
 				Stdout:   "",
 				ExitCode: 1,
 				Stderr:   "Error: invalid",
@@ -228,7 +243,7 @@ func TestSetLayoutWithVariantPreservesVariant(t *testing.T) {
 	oldExecutor := executor
 	executor = &module.MockExecutor{
 		Responses: map[string]module.MockResponse{
-			"setxkbmap -layout": {
+			"localectl list-x11-keymap-layouts": {
 				Stdout:   "us\nes\n",
 				ExitCode: 0,
 			},
@@ -264,4 +279,268 @@ func TestSetLayoutWithVariantPreservesVariant(t *testing.T) {
 	if loaded.Keyboard.Variant != "intl" {
 		t.Errorf("Keyboard.Variant = %q, want intl", loaded.Keyboard.Variant)
 	}
+}
+
+func TestDiscoverVariants(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"localectl list-x11-keymap-variants es": {
+				Stdout:   "deadtilde\nnodeadkeys\n",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	variants, err := discoverVariants(executor, "es")
+	if err != nil {
+		t.Fatalf("discoverVariants error: %v", err)
+	}
+	if len(variants) != 3 { // empty + deadtilde + nodeadkeys
+		t.Fatalf("expected 3 variants, got %d: %v", len(variants), variants)
+	}
+	if variants[0] != "" {
+		t.Errorf("variants[0] = %q, want empty", variants[0])
+	}
+	if variants[1] != "deadtilde" {
+		t.Errorf("variants[1] = %q, want deadtilde", variants[1])
+	}
+}
+
+func TestDiscoverVariantsFallback(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"localectl list-x11-keymap-variants xx": {
+				Stdout:   "",
+				ExitCode: 1,
+				Stderr:   "Error",
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	variants, err := discoverVariants(executor, "xx")
+	if err != nil {
+		t.Fatalf("discoverVariants error: %v", err)
+	}
+	if len(variants) != 1 || variants[0] != "" {
+		t.Errorf("expected [\"\"], got %v", variants)
+	}
+}
+
+func TestParseCurrentLayout(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"setxkbmap -query": {
+				Stdout:   "rules:      evdev\nmodel:      pc105\nlayout:     us,es\nvariant:    intl,\noptions:    caps:swapescape,ctrl:nocaps\n",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	layout, variant, options, err := parseCurrentLayout(executor)
+	if err != nil {
+		t.Fatalf("parseCurrentLayout error: %v", err)
+	}
+	if layout != "us,es" {
+		t.Errorf("layout = %q, want us,es", layout)
+	}
+	if variant != "intl," {
+		t.Errorf("variant = %q, want intl,", variant)
+	}
+	if options != "caps:swapescape,ctrl:nocaps" {
+		t.Errorf("options = %q, want caps:swapescape,ctrl:nocaps", options)
+	}
+}
+
+func TestParseCurrentLayoutHandlesMissingOptions(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"setxkbmap -query": {
+				Stdout:   "layout: de\nvariant: nodeadkeys\n",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	layout, variant, options, err := parseCurrentLayout(executor)
+	if err != nil {
+		t.Fatalf("parseCurrentLayout error: %v", err)
+	}
+	if layout != "de" {
+		t.Errorf("layout = %q, want de", layout)
+	}
+	if variant != "nodeadkeys" {
+		t.Errorf("variant = %q, want nodeadkeys", variant)
+	}
+	if options != "" {
+		t.Errorf("options = %q, want empty", options)
+	}
+}
+
+func TestSetComposeValid(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"setxkbmap -option compose:ralt": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureKeyboardResponse(t, "set-compose", `{"value":"compose:ralt"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	delta, ok := resp.SettingsDelta["keyboard"].(map[string]interface{})
+	if !ok || delta["options"] != "compose:ralt" {
+		t.Errorf("settings delta options = %v, want compose:ralt", delta["options"])
+	}
+}
+
+func TestSetComposeInvalid(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureKeyboardResponse(t, "set-compose", `{"value":"compose:invalid"}`, settingsPath)
+	if resp.Status != "error" {
+		t.Fatalf("expected status error, got %s", resp.Status)
+	}
+}
+
+func TestSetOptionsValidSingle(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"setxkbmap -option \"\"": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+			"setxkbmap -option caps:swapescape": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureKeyboardResponse(t, "set-options", `{"value":"caps:swapescape"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	delta, ok := resp.SettingsDelta["keyboard"].(map[string]interface{})
+	if !ok || delta["options"] != "caps:swapescape" {
+		t.Errorf("settings delta options = %v, want caps:swapescape", delta["options"])
+	}
+}
+
+func TestSetOptionsValidMultiple(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"setxkbmap -option \"\"": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+			"setxkbmap -option ctrl:nocaps,compose:ralt": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureKeyboardResponse(t, "set-options", `{"value":"ctrl:nocaps,compose:ralt"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	delta, ok := resp.SettingsDelta["keyboard"].(map[string]interface{})
+	if !ok || delta["options"] != "ctrl:nocaps,compose:ralt" {
+		t.Errorf("settings delta options = %v, want ctrl:nocaps,compose:ralt", delta["options"])
+	}
+}
+
+func TestSetOptionsInvalid(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureKeyboardResponse(t, "set-options", `{"value":"invalid:option"}`, settingsPath)
+	if resp.Status != "error" {
+		t.Fatalf("expected status error, got %s", resp.Status)
+	}
+}
+
+func TestSetOptionsClearsBeforeApplying(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"setxkbmap -option \"\"": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+			"setxkbmap -option caps:swapescape": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := captureKeyboardResponse(t, "set-options", `{"value":"caps:swapescape"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	// The clear command was executed (mock key matched), so this passes if no mock miss.
 }

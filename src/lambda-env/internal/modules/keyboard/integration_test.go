@@ -12,8 +12,16 @@ func TestIntegrationKeyboardFullFlow(t *testing.T) {
 	oldExecutor := executor
 	executor = &module.MockExecutor{
 		Responses: map[string]module.MockResponse{
-			"setxkbmap -layout": {
+			"localectl list-x11-keymap-layouts": {
 				Stdout:   "us\nes\nde\n",
+				ExitCode: 0,
+			},
+			"localectl list-x11-keymap-variants us": {
+				Stdout:   "\n",
+				ExitCode: 0,
+			},
+			"setxkbmap -query": {
+				Stdout:   "layout: us\nvariant: \n",
 				ExitCode: 0,
 			},
 			"setxkbmap -layout es": {

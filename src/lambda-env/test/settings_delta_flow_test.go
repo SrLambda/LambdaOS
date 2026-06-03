@@ -99,8 +99,8 @@ func TestSchemaMigrationV1_0_0ToV1_1_0PreservesValues(t *testing.T) {
 	}
 
 	// Migration should bump version.
-	if loaded.Version != "1.1.0" {
-		t.Errorf("version = %q, want %q", loaded.Version, "1.1.0")
+	if loaded.Version != "1.2.0" {
+		t.Errorf("version = %q, want %q", loaded.Version, "1.2.0")
 	}
 
 	// Existing values should be preserved.
@@ -256,8 +256,8 @@ func TestSettingsDeltaFlowAudioVolume(t *testing.T) {
 		t.Errorf("audio.muted = %v, want false", loaded.Audio.Muted)
 	}
 	// Migration should have happened too.
-	if loaded.Version != "1.1.0" {
-		t.Errorf("version = %q, want 1.1.0", loaded.Version)
+	if loaded.Version != "1.2.0" {
+		t.Errorf("version = %q, want 1.2.0", loaded.Version)
 	}
 	if !loaded.Neovim.UseGlobalTheme {
 		t.Errorf("neovim.use_global_theme should be true after migration")

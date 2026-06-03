@@ -22,11 +22,16 @@ var moduleActionExpectations = map[string][]struct {
 		{Name: "set-volume", Type: "text"},
 		{Name: "set-mute", Type: "toggle"},
 		{Name: "set-sink", Type: "select"},
+		{Name: "set-source", Type: "select"},
+		{Name: "set-profile", Type: "select"},
+		{Name: "set-app-volume", Type: "select"},
 	},
 	"keyboard": {
 		{Name: "run", Type: "execute"},
 		{Name: "set-layout", Type: "select"},
-		{Name: "set-variant", Type: "text"},
+		{Name: "set-variant", Type: "select"},
+		{Name: "set-compose", Type: "select"},
+		{Name: "set-options", Type: "select"},
 	},
 	"appearance": {
 		{Name: "run", Type: "execute"},

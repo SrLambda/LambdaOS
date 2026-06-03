@@ -1,11 +1,11 @@
 {
   "name": "keyboard",
-  "version": "0.1.0",
-  "description": "Configure keyboard layout and variant",
-  "description_es": "Configurar disposición y variante del teclado",
+  "version": "0.2.0",
+  "description": "Configure keyboard layout, variant, compose key, and XKB options",
+  "description_es": "Configurar disposición, variante, tecla compose y opciones XKB del teclado",
   "category": "system",
   "requires_root": false,
-  "dependencies": ["setxkbmap"],
+  "dependencies": ["setxkbmap", "localectl"],
   "min_hub_version": "1.0.0",
   "actions": [
     {
@@ -18,13 +18,28 @@
       "label": "Layout",
       "type": "select",
       "field": "keyboard.layout",
-      "options": ["us"]
+      "options": ["us", "es", "de", "fr", "gb", "it", "jp", "ru"]
     },
     {
       "name": "set-variant",
       "label": "Variant",
-      "type": "text",
-      "field": "keyboard.variant"
+      "type": "select",
+      "field": "keyboard.variant",
+      "options": [""]
+    },
+    {
+      "name": "set-compose",
+      "label": "Compose Key",
+      "type": "select",
+      "field": "keyboard.options",
+      "options": ["compose:ralt", "compose:lwin", "compose:menu", "compose:caps"]
+    },
+    {
+      "name": "set-options",
+      "label": "XKB Options",
+      "type": "select",
+      "field": "keyboard.options",
+      "options": ["caps:swapescape", "ctrl:nocaps", "compose:ralt", "compose:lwin", "compose:menu", "compose:caps", "terminate:ctrl_alt_bksp", "altwin:swap_alt_win"]
     }
   ]
 }
