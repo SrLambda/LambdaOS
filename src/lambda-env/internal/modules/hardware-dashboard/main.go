@@ -180,7 +180,7 @@ func collectRAM(exe module.CLIExecutor) map[string]interface{} {
 
 				totalNum, tErr := strconv.ParseFloat(total, 64)
 				usedNum, uErr := strconv.ParseFloat(used, 64)
-				if tErr == nil && uErr != nil && totalNum > 0 {
+				if tErr == nil && uErr == nil && totalNum > 0 {
 					pct := (usedNum / totalNum) * 100
 					result["percentage"] = fmt.Sprintf("%.1f", pct)
 				}
