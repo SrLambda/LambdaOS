@@ -1,6 +1,6 @@
 # Estado Actual — LambdaOS
 
-Documento generado el 2026-05-19. Resume el progreso del proyecto hasta la Fase 6 (build + test E2E).
+> ⚠️ **Documento histórico** — generado el 2026-05-19. La TUI Python (Textual) fue reemplazada por una TUI en Go (Wave 3, junio 2026). Las secciones de archiso, dotfiles y QEMU siguen vigentes.
 
 ---
 
@@ -11,24 +11,16 @@ Documento generado el 2026-05-19. Resume el progreso del proyecto hasta la Fase 
 | **Fase 1** | Testing First — Pruebas QEMU con pytest + pexpect | qa_tester | `tests/qemu/test_live_boot.py` (3 tests) |
 | **Fase 2** | Infraestructura Archiso — autologin getty TTY1, stow en skel | sysadmin_stow | — |
 | **Fase 3** | Configuración Neovim — lazy.nvim, WBS Iteración 1 (22 archivos) | dev_nvim + sysadmin_stow | — |
-| **Fase 4** | TUI "System Preferences" — Panel de Control en Textual | dev_tui + qa_tester | `tests/unit/test_tui_config.py` (18 tests) |
+| **Fase 4** | TUI "System Preferences" — Panel de Control en Textual (REEMPLAZADO por TUI Go en Wave 3) | dev_tui + qa_tester | ~~`tests/unit/test_tui_config.py`~~ (eliminado) |
 | **Fase 5** | Qtile modular + servicios systemd + tema unificado os_theme.json | dev_tui + sysadmin_stow + qa_tester | `tests/unit/test_qtile_config.py` (12 tests) |
 | **Fase 6** | Script build_and_test.sh — compilación ISO y test E2E | sysadmin_stow | Pendiente de pasar |
 
-**Total tests unitarios: 30/30 pasando** (18 TUI + 12 Qtile).
+**Total tests unitarios: 12/12 pasando** (12 Qtile). Tests de TUI Python eliminados tras migración a Go.
 **Tests QEMU E2E: 0/3 pasando** (bloqueados por bug en curso).
 
 ---
 
 ## Ubicación de Archivos Clave
-
-### TUI (`src/os_tui_configurator/`)
-| Archivo | Función |
-|---------|---------|
-| `app.py` | `OsTuiConfigurator` — Header, Sidebar (ListView Neovim/Qtile), Content (Select tema + 3 Switches), Footer, Ctrl+S |
-| `config_manager.py` | `ConfigManager` — I/O de `tui_settings.json`, `.nvim_theme`, `os_theme.json` usando `OS_CONFIG_DIR` |
-| `style.tcss` | CSS externo de Textual (sidebar 24 cols, content 1fr, switch-rows) |
-| `main.py` | Entry point: `python -m src.os_tui_configurator.main` |
 
 ### Dotfiles Stow — Neovim (`airootfs/etc/skel/dotfiles/nvim/.config/nvim/`)
 | Archivo | Función |
@@ -77,11 +69,10 @@ Documento generado el 2026-05-19. Resume el progreso del proyecto hasta la Fase 
 ### Build & Test
 | Archivo | Función |
 |---------|---------|
-| `build_and_test.sh` | Script: clean → pacman.conf check → mkarchiso → symlink ISO → pytest QEMU |
+| `scripts/build_and_test.sh` | Script: clean → pacman.conf check → mkarchiso → pytest QEMU |
 | `profiledef.sh` | Configuración mkarchiso: `iso_name="LambdaOS"`, bootmodes bios+uefi, squashfs |
 | `packages.x86_64` | 172 paquetes (neovim, qtile, pipewire, ly, kitty, etc.) |
 | `pacman.conf` | Configuración de pacman para el entorno archiso |
-| `tests/unit/test_tui_config.py` | 18 tests (11 ConfigManager + 7 App UI) |
 | `tests/unit/test_qtile_config.py` | 12 tests (sintaxis AST, imports, temas, barra) |
 | `tests/qemu/test_live_boot.py` | 3 tests E2E (boot, stow symlinks, init.lua) |
 | `tests/qemu/conftest.py` | Fixtures session-scoped: qemu_booted, qemu_logged_in |
@@ -119,15 +110,15 @@ El test `test_iso_boots_to_shell_prompt` en `tests/qemu/test_live_boot.py` falla
 ## Comandos de Prueba
 
 ```bash
-# Tests unitarios (30 tests, pasan todos)
+# Tests unitarios (12 tests Qtile)
 python -m pytest tests/unit/ -v
 
 # Tests QEMU E2E (requiere ISO compilada)
 python -m pytest tests/qemu/test_live_boot.py -v
 
 # Build + test completo (requiere sudo para mkarchiso)
-./build_and_test.sh
+./scripts/build_and_test.sh
 
-# Previsualizar TUI
-OS_CONFIG_DIR=/tmp/test_tui_config python -m src.os_tui_configurator.main
+# TUI Go (reemplazo de la TUI Python)
+./scripts/dev-tui.sh
 ```

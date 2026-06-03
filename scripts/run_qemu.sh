@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "$0")/.."
+
 # 1. Define la ruta a tu ISO
 ISO_PATH=$(find out/ -maxdepth 1 -name 'LambdaOS-*-x86_64.iso' -print | tail -n 1)
 echo "Usando ISO: $ISO_PATH"
