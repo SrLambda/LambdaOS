@@ -1,0 +1,11 @@
+{
+  "name": "audio",
+  "version": "0.1.0",
+  "description": "Manage audio configuration",
+  "description_es": "Gestionar configuracion de audio",
+  "category": "system",
+  "requires_root": false,
+  "dependencies": [],
+  "min_hub_version": "0.1.0",
+  "timeout": 5
+}
