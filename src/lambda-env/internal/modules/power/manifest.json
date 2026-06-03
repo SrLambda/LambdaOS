@@ -1,0 +1,36 @@
+{
+  "name": "power",
+  "version": "0.1.0",
+  "description": "Configure power management: screen timeout, sleep timeout, lid close action, and read battery status",
+  "description_es": "Configurar gestión de energía: tiempo de pantalla, suspensión, acción de tapa y estado de batería",
+  "category": "system",
+  "requires_root": false,
+  "dependencies": ["upower", "systemd"],
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "run",
+      "label": "Refresh",
+      "type": "execute"
+    },
+    {
+      "name": "set-screen-timeout",
+      "label": "Screen Timeout",
+      "type": "text",
+      "field": "power.screen_timeout"
+    },
+    {
+      "name": "set-sleep-timeout",
+      "label": "Sleep Timeout",
+      "type": "text",
+      "field": "power.sleep_timeout"
+    },
+    {
+      "name": "set-lid-close-action",
+      "label": "Lid Close Action",
+      "type": "select",
+      "field": "power.lid_close_action",
+      "options": ["suspend", "hibernate", "ignore", "poweroff"]
+    }
+  ]
+}

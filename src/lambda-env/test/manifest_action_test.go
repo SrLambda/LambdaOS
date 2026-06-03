@@ -65,6 +65,20 @@ var moduleActionExpectations = map[string][]struct {
 		{Name: "set-file-manager", Type: "select"},
 		{Name: "reload", Type: "execute"},
 	},
+	"power": {
+		{Name: "run", Type: "execute"},
+		{Name: "set-screen-timeout", Type: "text"},
+		{Name: "set-sleep-timeout", Type: "text"},
+		{Name: "set-lid-close-action", Type: "select"},
+	},
+	"display": {
+		{Name: "run", Type: "execute"},
+		{Name: "set-mode", Type: "select"},
+		{Name: "set-position", Type: "text"},
+		{Name: "set-primary", Type: "toggle"},
+		{Name: "save-profile", Type: "text"},
+		{Name: "load-profile", Type: "select"},
+	},
 }
 
 func loadModuleManifest(t *testing.T, name string) module.Manifest {
