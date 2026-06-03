@@ -5,7 +5,7 @@ import (
 )
 
 // CurrentVersion is the schema version supported by this build.
-const CurrentVersion = "1.1.0"
+const CurrentVersion = "1.2.0"
 
 // Settings is the root settings struct.
 type Settings struct {
@@ -56,11 +56,22 @@ type DisplaySettings struct {
 	Profiles      []OutputProfile `json:"profiles"`
 }
 
+// AudioProfile defines a named audio preset.
+type AudioProfile struct {
+	Name          string `json:"name"`
+	DefaultSink   string `json:"default_sink"`
+	DefaultSource string `json:"default_source"`
+	Volume        int    `json:"volume"`
+}
+
 // AudioSettings defines audio configuration.
 type AudioSettings struct {
-	DefaultSink string `json:"default_sink"`
-	Volume      int    `json:"volume"`
-	Muted       bool   `json:"muted"`
+	DefaultSink   string         `json:"default_sink"`
+	Volume        int            `json:"volume"`
+	Muted         bool           `json:"muted"`
+	DefaultSource string         `json:"default_source"`
+	Profile       string         `json:"profile"`
+	Profiles      []AudioProfile `json:"profiles"`
 }
 
 // NetworkSettings defines network configuration.
@@ -183,9 +194,12 @@ func Defaults() Settings {
 			Profiles:      []OutputProfile{},
 		},
 		Audio: AudioSettings{
-			DefaultSink: "",
-			Volume:      75,
-			Muted:       false,
+			DefaultSink:   "",
+			Volume:        75,
+			Muted:         false,
+			DefaultSource: "",
+			Profile:       "",
+			Profiles:      []AudioProfile{},
 		},
 		Network: NetworkSettings{
 			WifiEnabled:   true,

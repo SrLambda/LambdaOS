@@ -530,6 +530,77 @@ func TestMigrationV100ToV110NoOverwrite(t *testing.T) {
 	}
 }
 
+func TestAudioDefaults(t *testing.T) {
+	s := Defaults()
+	if s.Audio.DefaultSource != "" {
+		t.Errorf("Audio.DefaultSource = %q, want empty", s.Audio.DefaultSource)
+	}
+	if s.Audio.Profile != "" {
+		t.Errorf("Audio.Profile = %q, want empty", s.Audio.Profile)
+	}
+	if len(s.Audio.Profiles) != 0 {
+		t.Errorf("Audio.Profiles len = %d, want 0", len(s.Audio.Profiles))
+	}
+}
+
+func TestAudioProfileSerialization(t *testing.T) {
+	s := Defaults()
+	s.Audio.Profiles = []AudioProfile{
+		{Name: "Headphones", DefaultSink: "alsa_output.usb", DefaultSource: "alsa_input.usb", Volume: 80},
+	}
+
+	data, err := json.Marshal(s)
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+
+	var loaded Settings
+	if err := json.Unmarshal(data, &loaded); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if len(loaded.Audio.Profiles) != 1 {
+		t.Fatalf("Audio.Profiles len = %d, want 1", len(loaded.Audio.Profiles))
+	}
+	if loaded.Audio.Profiles[0].Name != "Headphones" {
+		t.Errorf("Profiles[0].Name = %q, want %q", loaded.Audio.Profiles[0].Name, "Headphones")
+	}
+	if loaded.Audio.Profiles[0].Volume != 80 {
+		t.Errorf("Profiles[0].Volume = %d, want 80", loaded.Audio.Profiles[0].Volume)
+	}
+}
+
+func TestMigrationV110ToV120AddsAudioFields(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "settings.json")
+
+	// v1.1.0 settings without new audio fields.
+	old := `{"version":"1.1.0","audio":{"default_sink":"alsa_output","volume":60,"muted":false}}`
+	if err := os.WriteFile(path, []byte(old), 0644); err != nil {
+		t.Fatalf("write old settings: %v", err)
+	}
+
+	s, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load v1.1.0: unexpected error: %v", err)
+	}
+
+	if s.Version != CurrentVersion {
+		t.Errorf("Version = %q, want %q", s.Version, CurrentVersion)
+	}
+	if s.Audio.Volume != 60 {
+		t.Errorf("Audio.Volume = %d, want 60", s.Audio.Volume)
+	}
+	if s.Audio.DefaultSource != "" {
+		t.Errorf("Audio.DefaultSource = %q, want empty", s.Audio.DefaultSource)
+	}
+	if s.Audio.Profile != "" {
+		t.Errorf("Audio.Profile = %q, want empty", s.Audio.Profile)
+	}
+	if len(s.Audio.Profiles) != 0 {
+		t.Errorf("Audio.Profiles len = %d, want 0", len(s.Audio.Profiles))
+	}
+}
+
 func TestValidateNewSections(t *testing.T) {
 	// Power validation.
 	s := Defaults()
