@@ -79,6 +79,9 @@ var moduleActionExpectations = map[string][]struct {
 		{Name: "save-profile", Type: "text"},
 		{Name: "load-profile", Type: "select"},
 	},
+	"hardware-dashboard": {
+		{Name: "run", Type: "execute"},
+	},
 }
 
 func loadModuleManifest(t *testing.T, name string) module.Manifest {
