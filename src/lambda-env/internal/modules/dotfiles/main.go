@@ -112,9 +112,9 @@ func handleStow(dotfilesDir string) {
 	}
 
 	resp := module.Response{
-		Status: "ok",
-		Action: "stow",
-		Data:   map[string]interface{}{"module": name},
+		Status:  "ok",
+		Action:  "stow",
+		Data:    map[string]interface{}{"module": name},
 		Message: fmt.Sprintf("Stowed %s", name),
 	}
 	emit(resp)
@@ -133,9 +133,9 @@ func handleUnstow(dotfilesDir string) {
 	}
 
 	resp := module.Response{
-		Status: "ok",
-		Action: "unstow",
-		Data:   map[string]interface{}{"module": name},
+		Status:  "ok",
+		Action:  "unstow",
+		Data:    map[string]interface{}{"module": name},
 		Message: fmt.Sprintf("Unstowed %s", name),
 	}
 	emit(resp)

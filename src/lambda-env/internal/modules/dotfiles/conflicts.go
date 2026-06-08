@@ -10,9 +10,9 @@ import (
 
 // Conflict represents a file that exists in both the repo and home with different content.
 type Conflict struct {
-	Path        string `json:"path"`
-	RepoChecksum  string `json:"repo_checksum"`
-	HomeChecksum  string `json:"home_checksum"`
+	Path         string `json:"path"`
+	RepoChecksum string `json:"repo_checksum"`
+	HomeChecksum string `json:"home_checksum"`
 }
 
 // SHA256File reads a file and returns its hex-encoded SHA-256 checksum.

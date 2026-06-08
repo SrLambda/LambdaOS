@@ -27,11 +27,11 @@ var (
 	}
 
 	fileManagerAllowlist = map[string]bool{
-		"thunar": true,
-		"yazi":   true,
-		"nemo":   true,
+		"thunar":   true,
+		"yazi":     true,
+		"nemo":     true,
 		"nautilus": true,
-		"ranger": true,
+		"ranger":   true,
 	}
 )
 
@@ -80,8 +80,8 @@ func handleRun(settingsPath string) {
 		Status: "ok",
 		Action: "run",
 		Data: map[string]interface{}{
-			"terminal":           s.Qtile.Terminal,
-			"browser":            s.Qtile.Browser,
+			"terminal":             s.Qtile.Terminal,
+			"browser":              s.Qtile.Browser,
 			"default_file_manager": s.Qtile.DefaultFileManager,
 		},
 		Message: "Qtile configuration applied",

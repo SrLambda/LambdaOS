@@ -126,10 +126,10 @@ func handleRun(settingsPath string) {
 		Status: "ok",
 		Action: "run",
 		Data: map[string]interface{}{
-			"browser":      s.Defaults.Browser,
-			"terminal":     s.Defaults.Terminal,
-			"editor":       s.Defaults.Editor,
-			"file_manager": s.Defaults.FileManager,
+			"browser":        s.Defaults.Browser,
+			"terminal":       s.Defaults.Terminal,
+			"editor":         s.Defaults.Editor,
+			"file_manager":   s.Defaults.FileManager,
 			"available_apps": apps,
 			"available_options": map[string]interface{}{
 				"set-browser":      apps,

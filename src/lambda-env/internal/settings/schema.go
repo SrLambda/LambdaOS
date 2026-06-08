@@ -9,22 +9,22 @@ const CurrentVersion = "1.2.0"
 
 // Settings is the root settings struct.
 type Settings struct {
-	Version       string               `json:"version"`
-	Appearance    AppearanceSettings   `json:"appearance"`
-	Display       DisplaySettings      `json:"display"`
-	Audio         AudioSettings        `json:"audio"`
-	Network       NetworkSettings      `json:"network"`
-	Bluetooth     BluetoothSettings    `json:"bluetooth"`
-	Keyboard      KeyboardSettings     `json:"keyboard"`
-	Neovim        NeovimSettings       `json:"neovim"`
-	Qtile         QtileSettings        `json:"qtile"`
-	Services      ServicesSettings     `json:"services"`
-	Power         PowerSettings        `json:"power"`
-	Defaults      DefaultsSettings     `json:"defaults"`
-	Autostart     AutostartSettings    `json:"autostart"`
-	Updates       UpdatesSettings      `json:"updates"`
-	Security      SecuritySettings     `json:"security"`
-	Fonts         FontsSettings        `json:"fonts"`
+	Version       string                `json:"version"`
+	Appearance    AppearanceSettings    `json:"appearance"`
+	Display       DisplaySettings       `json:"display"`
+	Audio         AudioSettings         `json:"audio"`
+	Network       NetworkSettings       `json:"network"`
+	Bluetooth     BluetoothSettings     `json:"bluetooth"`
+	Keyboard      KeyboardSettings      `json:"keyboard"`
+	Neovim        NeovimSettings        `json:"neovim"`
+	Qtile         QtileSettings         `json:"qtile"`
+	Services      ServicesSettings      `json:"services"`
+	Power         PowerSettings         `json:"power"`
+	Defaults      DefaultsSettings      `json:"defaults"`
+	Autostart     AutostartSettings     `json:"autostart"`
+	Updates       UpdatesSettings       `json:"updates"`
+	Security      SecuritySettings      `json:"security"`
+	Fonts         FontsSettings         `json:"fonts"`
 	Notifications NotificationsSettings `json:"notifications"`
 }
 
@@ -101,15 +101,15 @@ type GroupConfig struct {
 
 // NeovimSettings defines Neovim configuration.
 type NeovimSettings struct {
-	Theme         string   `json:"theme"`
-	Font          string   `json:"font"`
-	Lines         int      `json:"lines"`
-	Columns       int      `json:"columns"`
-	EnableLSP     bool     `json:"enable_lsp"`
-	EnableCopilot bool     `json:"enable_copilot"`
-	EnableNeotree bool     `json:"enable_neotree"`
-	LspServers    []string `json:"lsp_servers"`
-	UseGlobalTheme bool    `json:"use_global_theme"`
+	Theme          string   `json:"theme"`
+	Font           string   `json:"font"`
+	Lines          int      `json:"lines"`
+	Columns        int      `json:"columns"`
+	EnableLSP      bool     `json:"enable_lsp"`
+	EnableCopilot  bool     `json:"enable_copilot"`
+	EnableNeotree  bool     `json:"enable_neotree"`
+	LspServers     []string `json:"lsp_servers"`
+	UseGlobalTheme bool     `json:"use_global_theme"`
 }
 
 // QtileSettings defines Qtile window manager configuration.
@@ -166,17 +166,17 @@ type SecuritySettings struct {
 
 // FontsSettings defines font configuration.
 type FontsSettings struct {
-	Monospace  string `json:"monospace"`
-	SansSerif  string `json:"sans_serif"`
-	Serif      string `json:"serif"`
-	FontSize   int    `json:"font_size"`
+	Monospace string `json:"monospace"`
+	SansSerif string `json:"sans_serif"`
+	Serif     string `json:"serif"`
+	FontSize  int    `json:"font_size"`
 }
 
 // NotificationsSettings defines notification daemon configuration.
 type NotificationsSettings struct {
-	Enabled         bool `json:"enabled"`
-	DoNotDisturb    bool `json:"do_not_disturb"`
-	TimeoutSeconds  int  `json:"timeout_seconds"`
+	Enabled        bool `json:"enabled"`
+	DoNotDisturb   bool `json:"do_not_disturb"`
+	TimeoutSeconds int  `json:"timeout_seconds"`
 }
 
 // Defaults returns a fully populated Settings with default values.

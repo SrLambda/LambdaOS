@@ -1,7 +1,7 @@
 # Makefile — LambdaOS CI/CD local parity
 # Mirrors CI commands for lint, test, and build
 
-.PHONY: lint lint-go test test-go build build-go release clean clean-go validate-specs
+.PHONY: lint lint-go test test-go build build-go release clean clean-go validate-specs sync-icons
 
 lint:
 	black --check . && isort --check . && shellcheck **/*.sh && shfmt -d **/*.sh && luacheck .
@@ -35,3 +35,10 @@ clean:
 
 clean-go:
 	rm -rf src/lambda-env/bin/
+
+sync-icons:
+	@echo "Syncing icon-map.json → React prototype..."
+	node docs/preview/lambda-env/scripts/generate-icon-map.js
+	@echo "Running validation..."
+	node docs/preview/lambda-env/scripts/validate-sync.js
+	@echo "Sync complete."

@@ -39,7 +39,7 @@ func TestExecuteActionSetsCorrectEnvVar(t *testing.T) {
 		t.Fatalf("save settings: %v", err)
 	}
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}
@@ -110,7 +110,7 @@ func TestExecuteModuleBackwardCompatibility(t *testing.T) {
 		t.Fatalf("save settings: %v", err)
 	}
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}
@@ -164,7 +164,7 @@ func TestExecuteActionWithNilParams(t *testing.T) {
 		t.Fatalf("save settings: %v", err)
 	}
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}

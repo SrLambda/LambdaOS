@@ -35,7 +35,7 @@ var v1_0_0Settings = map[string]interface{}{
 		"known_networks": []interface{}{},
 	},
 	"bluetooth": map[string]interface{}{
-		"enabled":       true,
+		"enabled":        true,
 		"paired_devices": []interface{}{},
 	},
 	"keyboard": map[string]interface{}{
@@ -222,7 +222,7 @@ func TestSettingsDeltaFlowAudioVolume(t *testing.T) {
 	settingsPath := filepath.Join(home, ".config", "lambdaos", "settings.json")
 	writeV1_0_0Settings(t, settingsPath)
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}
@@ -285,7 +285,7 @@ func TestSettingsDeltaFlowKeyboardLayout(t *testing.T) {
 	settingsPath := filepath.Join(home, ".config", "lambdaos", "settings.json")
 	writeV1_0_0Settings(t, settingsPath)
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}
@@ -341,7 +341,7 @@ func TestSettingsDeltaFlowAppearanceTheme(t *testing.T) {
 	settingsPath := filepath.Join(home, ".config", "lambdaos", "settings.json")
 	writeV1_0_0Settings(t, settingsPath)
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}
@@ -397,7 +397,7 @@ func TestSettingsDeltaFlowMultipleDeltas(t *testing.T) {
 	settingsPath := filepath.Join(home, ".config", "lambdaos", "settings.json")
 	writeV1_0_0Settings(t, settingsPath)
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}

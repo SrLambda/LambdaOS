@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"lambdaos.dev/lambda-env/internal/tui/icons"
 	"lambdaos.dev/lambda-env/internal/tui/views"
 	"lambdaos.dev/lambda-env/pkg/module"
 )
@@ -189,7 +190,7 @@ func TestDetailViewRendersAllModules(t *testing.T) {
 	for name := range moduleActionExpectations {
 		t.Run(name, func(t *testing.T) {
 			m := loadModuleManifest(t, name)
-			dv := views.NewDetailView(m)
+			dv := views.NewDetailView(m, icons.NewProvider(false))
 			rendered := dv.View()
 
 			if rendered == "" {
@@ -214,7 +215,7 @@ func TestDetailViewHandlesEmptyActionsGracefully(t *testing.T) {
 		Name:    "empty-module",
 		Actions: []module.ActionConfig{},
 	}
-	dv := views.NewDetailView(m)
+	dv := views.NewDetailView(m, icons.NewProvider(false))
 	rendered := dv.View()
 	if !strings.Contains(rendered, "No actions available") {
 		t.Errorf("view = %q, want to contain 'No actions available'", rendered)

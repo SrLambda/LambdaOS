@@ -303,9 +303,9 @@ func TestSetThemeEmptyDefaults(t *testing.T) {
 
 func TestSetThemeMapAllPresets(t *testing.T) {
 	cases := []struct {
-		theme            string
-		expectedNeovim   string
-		expectedQtile    string
+		theme          string
+		expectedNeovim string
+		expectedQtile  string
 	}{
 		{"dark", "tokyonight", "tokyonight"},
 		{"light", "tokyonight-light", "tokyonight-light"},
@@ -345,4 +345,3 @@ func TestSetThemeMapAllPresets(t *testing.T) {
 		})
 	}
 }
-
