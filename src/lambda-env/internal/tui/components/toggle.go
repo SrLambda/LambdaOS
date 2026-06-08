@@ -3,6 +3,7 @@ package components
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"lambdaos.dev/lambda-env/internal/tui/theme"
 )
 
 var (
@@ -10,13 +11,13 @@ var (
 				Bold(true)
 
 	toggleOnStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#04B575"))
+			Foreground(lipgloss.Color(theme.Success))
 
 	toggleOffStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#626262"))
+			Foreground(lipgloss.Color(theme.Dimmed))
 
 	toggleCursorStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#7D56F4"))
+				Foreground(lipgloss.Color(theme.Accent))
 )
 
 // ToggleChangedMsg is emitted when the toggle value changes.

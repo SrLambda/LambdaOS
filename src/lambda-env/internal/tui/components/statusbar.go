@@ -4,27 +4,28 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"lambdaos.dev/lambda-env/internal/tui/theme"
 )
 
 var (
 	statusBarStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#626262")).
-				Background(lipgloss.Color("#1A1A1A")).
-				Padding(0, 1).
-				Width(80)
+			Foreground(lipgloss.Color(theme.Dimmed)).
+			Background(lipgloss.Color(theme.StatusBg)).
+			Padding(0, 1).
+			Width(80)
 
 	statusBarContextStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#7D56F4")).
+				Foreground(lipgloss.Color(theme.Accent)).
 				Bold(true)
 
 	statusBarModuleStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#04B575"))
+				Foreground(lipgloss.Color(theme.Success))
 
 	statusBarModifiedStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#FF4672"))
+				Foreground(lipgloss.Color(theme.Error))
 
 	statusBarStateStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#F4D03F"))
+				Foreground(lipgloss.Color(theme.Warn))
 )
 
 // StatusBar is a persistent bar showing TUI context and state.
@@ -33,6 +34,7 @@ type StatusBar struct {
 	Module        string
 	SettingsState string
 	Modified      bool
+	Width         int
 }
 
 // NewStatusBar creates a new empty StatusBar.
@@ -64,6 +66,12 @@ func (s *StatusBar) SetModified(m bool) *StatusBar {
 	return s
 }
 
+// SetWidth sets the status bar width to match the terminal.
+func (s *StatusBar) SetWidth(w int) *StatusBar {
+	s.Width = w
+	return s
+}
+
 // View renders the status bar.
 func (s *StatusBar) View() string {
 	var parts []string
@@ -81,9 +89,15 @@ func (s *StatusBar) View() string {
 		parts = append(parts, statusBarModifiedStyle.Render("*"))
 	}
 
+	width := s.Width
+	if width == 0 {
+		width = 80
+	}
+	style := statusBarStyle.Width(width)
+
 	if len(parts) == 0 {
-		return statusBarStyle.Render(" ")
+		return style.Render(" ")
 	}
 
-	return statusBarStyle.Render(strings.Join(parts, "  |  "))
+	return style.Render(strings.Join(parts, "  |  "))
 }

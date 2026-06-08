@@ -6,6 +6,7 @@ import (
 
 	"lambdaos.dev/lambda-env/internal/hub"
 	"lambdaos.dev/lambda-env/internal/tui/components"
+	"lambdaos.dev/lambda-env/internal/tui/icons"
 	"lambdaos.dev/lambda-env/internal/tui/views"
 	"lambdaos.dev/lambda-env/pkg/module"
 )
@@ -54,7 +55,7 @@ func TestViewRendersModulesSubModel(t *testing.T) {
 	m.view = viewModules
 	m.modulesSub = views.NewModulesView([]module.Manifest{
 		{Name: "keyboard", Description: "Set layout"},
-	}, "system")
+	}, "system", icons.NewProvider(false))
 	m.activeSubModel = m.modulesSub
 	m.statusBar.SetContext("modules")
 
@@ -96,7 +97,8 @@ func createViewTestModel() Model {
 
 	m := Model{
 		categories:    cats,
-		categoriesSub: views.NewCategoriesView(cats, menu),
+		iconProvider:  icons.NewProvider(false),
+		categoriesSub: views.NewCategoriesView(cats, menu, icons.NewProvider(false)),
 		view:          viewCategories,
 		cursor:        0,
 		statusBar:     components.NewStatusBar(),

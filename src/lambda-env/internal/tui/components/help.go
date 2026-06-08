@@ -5,21 +5,22 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"lambdaos.dev/lambda-env/internal/tui/theme"
 )
 
 var (
 	helpOverlayStyle = lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("#7D56F4")).
+				BorderForeground(lipgloss.Color(theme.Accent)).
 				Padding(2, 4).
 				Width(50)
 
 	helpTitleStyle = lipgloss.NewStyle().
-				Bold(true).
-				MarginBottom(1)
+			Bold(true).
+			MarginBottom(1)
 
 	helpDismissStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#626262")).
+				Foreground(lipgloss.Color(theme.Dimmed)).
 				MarginTop(1)
 )
 

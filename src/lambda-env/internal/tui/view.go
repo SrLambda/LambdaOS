@@ -4,17 +4,18 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"lambdaos.dev/lambda-env/internal/tui/theme"
 )
 
 var (
 	okStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#04B575"))
+		Foreground(lipgloss.Color(theme.Success))
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FF4672"))
+			Foreground(lipgloss.Color(theme.Error))
 
 	warningStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#F4D03F"))
+			Foreground(lipgloss.Color(theme.Warn))
 )
 
 // View renders the TUI as a string.

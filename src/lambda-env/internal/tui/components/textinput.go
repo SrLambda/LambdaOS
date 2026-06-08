@@ -9,11 +9,12 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"lambdaos.dev/lambda-env/internal/tui/theme"
 )
 
 var (
 	textInputLabelStyle = lipgloss.NewStyle().Bold(true)
-	textInputErrorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF4672"))
+	textInputErrorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(theme.Error))
 )
 
 // TextInputSubmitMsg is emitted when the user presses Enter with a valid value.

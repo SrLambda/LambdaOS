@@ -5,12 +5,13 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"lambdaos.dev/lambda-env/internal/tui/theme"
 )
 
 var (
 	confirmOverlayStyle = lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("#7D56F4")).
+				BorderForeground(lipgloss.Color(theme.Accent)).
 				Padding(2, 4).
 				Width(40)
 
@@ -19,12 +20,12 @@ var (
 				MarginBottom(1)
 
 	confirmSelectedStyle = lipgloss.NewStyle().
-				Background(lipgloss.Color("#7D56F4")).
-				Foreground(lipgloss.Color("#FFFFFF")).
+				Background(lipgloss.Color(theme.Accent)).
+				Foreground(lipgloss.Color(theme.TextPrimary)).
 				Padding(0, 1)
 
 	confirmUnselectedStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#626262")).
+				Foreground(lipgloss.Color(theme.Dimmed)).
 				Padding(0, 1)
 )
 

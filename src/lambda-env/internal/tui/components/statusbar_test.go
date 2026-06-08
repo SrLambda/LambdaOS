@@ -3,6 +3,8 @@ package components
 import (
 	"strings"
 	"testing"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 func TestStatusBarInitialState(t *testing.T) {
@@ -127,5 +129,49 @@ func TestStatusBarChaining(t *testing.T) {
 	}
 	if sb.Modified {
 		t.Error("Modified = true, want false")
+	}
+}
+
+func TestStatusBarDynamicWidth(t *testing.T) {
+	tests := []struct {
+		name       string
+		width      int
+		wantWidth  int
+		setContext bool
+	}{
+		{
+			name:       "width 120 spans full terminal",
+			width:      120,
+			wantWidth:  120,
+			setContext: true,
+		},
+		{
+			name:       "width 40 adapts to narrow terminal",
+			width:      40,
+			wantWidth:  40,
+			setContext: true,
+		},
+		{
+			name:       "zero width falls back to default 80",
+			width:      0,
+			wantWidth:  80,
+			setContext: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sb := NewStatusBar()
+			if tt.setContext {
+				sb.SetContext("test")
+			}
+			sb.SetWidth(tt.width)
+
+			view := sb.View()
+			got := lipgloss.Width(view)
+			if got != tt.wantWidth {
+				t.Errorf("lipgloss.Width(view) = %d, want %d", got, tt.wantWidth)
+			}
+		})
 	}
 }

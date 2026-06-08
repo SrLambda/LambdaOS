@@ -1,0 +1,132 @@
+{
+  "categories": {
+    "system": {
+      "nerd": "\uf108",
+      "fallback": "\u2699"
+    },
+    "apps": {
+      "nerd": "\ue62b",
+      "fallback": "\u25a3"
+    },
+    "ops": {
+      "nerd": "\uf09b",
+      "fallback": "\u2692"
+    }
+  },
+  "modules": {
+    "display": {
+      "nerd": "\uf26c",
+      "fallback": "\u25a3"
+    },
+    "audio": {
+      "nerd": "\uf028",
+      "fallback": "\u266a"
+    },
+    "network": {
+      "nerd": "\uf1eb",
+      "fallback": "\u2601"
+    },
+    "bluetooth": {
+      "nerd": "\uf293",
+      "fallback": "\u260e"
+    },
+    "security": {
+      "nerd": "\uf13e",
+      "fallback": "\u26a0"
+    },
+    "neovim": {
+      "nerd": "\ue62b",
+      "fallback": "\u25c8"
+    },
+    "qtile": {
+      "nerd": "\uf2d0",
+      "fallback": "\u25a6"
+    },
+    "dotfiles": {
+      "nerd": "\uf09b",
+      "fallback": "\u2302"
+    },
+    "logs": {
+      "nerd": "\uf15c",
+      "fallback": "\u2630"
+    },
+    "storage": {
+      "nerd": "\uf0a0",
+      "fallback": "\u25c7"
+    },
+    "keyboard": {
+      "nerd": "\uf11c",
+      "fallback": "\u2328"
+    },
+    "appearance": {
+      "nerd": "\uf1fc",
+      "fallback": "\u25c8"
+    },
+    "power": {
+      "nerd": "\uf0e7",
+      "fallback": "\u26a1"
+    },
+    "defaults": {
+      "nerd": "\uf013",
+      "fallback": "\u25b7"
+    },
+    "hardware-dashboard": {
+      "nerd": "\uf080",
+      "fallback": "\u25a6"
+    }
+  },
+  "widgets": {
+    "toggle_on": {
+      "nerd": "\uf205",
+      "fallback": "\u25cf"
+    },
+    "toggle_off": {
+      "nerd": "\uf204",
+      "fallback": "\u25cb"
+    },
+    "loading": {
+      "nerd": "\uf021",
+      "fallback": "\u27f3"
+    },
+    "success": {
+      "nerd": "\uf00c",
+      "fallback": "\u2713"
+    },
+    "error": {
+      "nerd": "\uf06a",
+      "fallback": "\u2717"
+    },
+    "warning": {
+      "nerd": "\uf071",
+      "fallback": "\u26a0"
+    },
+    "search": {
+      "nerd": "\uf002",
+      "fallback": "\u2315"
+    },
+    "select": {
+      "nerd": "\uf0da",
+      "fallback": "\u25b6"
+    },
+    "text": {
+      "nerd": "\uf15c",
+      "fallback": "\u2328"
+    },
+    "execute": {
+      "nerd": "\uf04b",
+      "fallback": "\u25b6"
+    },
+    "spinner": {
+      "nerd": "\uf021",
+      "fallback": "\u27f3"
+    },
+    "confirm": {
+      "nerd": "\uf059",
+      "fallback": "\u2753"
+    },
+    "lock": {
+      "nerd": "\uf023",
+      "fallback": "\u26bf"
+    }
+  }
+}
