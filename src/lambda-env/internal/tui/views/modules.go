@@ -7,20 +7,22 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"lambdaos.dev/lambda-env/internal/tui/icons"
+	"lambdaos.dev/lambda-env/internal/tui/theme"
 	"lambdaos.dev/lambda-env/pkg/module"
 )
 
 var (
 	moduleCategoryStyle = lipgloss.NewStyle().
 				Bold(true).
-				Foreground(lipgloss.Color("#04B575"))
+				Foreground(lipgloss.Color(theme.Success))
 
 	moduleItemStyle = lipgloss.NewStyle().
-				PaddingLeft(2)
+			PaddingLeft(2)
 
 	moduleSelectedStyle = lipgloss.NewStyle().
 				PaddingLeft(2).
-				Foreground(lipgloss.Color("#7D56F4"))
+				Foreground(lipgloss.Color(theme.Accent))
 )
 
 // ModuleSelectedMsg is emitted when the user selects a module.
@@ -38,14 +40,16 @@ type ModulesView struct {
 	category       string
 	cursor         int
 	selectedModule string
+	iconProvider   icons.IconProvider
 }
 
 // NewModulesView creates a new ModulesView.
-func NewModulesView(mods []module.Manifest, category string) *ModulesView {
+func NewModulesView(mods []module.Manifest, category string, provider icons.IconProvider) *ModulesView {
 	return &ModulesView{
-		modules:  mods,
-		category: category,
-		cursor:   0,
+		modules:      mods,
+		category:     category,
+		cursor:       0,
+		iconProvider: provider,
 	}
 }
 
@@ -119,12 +123,15 @@ func (m *ModulesView) View() string {
 	b.WriteString(moduleCategoryStyle.Render(fmt.Sprintf("%s (%d)", m.category, len(m.modules))))
 	b.WriteString("\n")
 
+	width := m.iconProvider.Width()
 	for i, mod := range m.modules {
 		cursor := "  "
 		if m.cursor == i {
 			cursor = "> "
 		}
-		line := fmt.Sprintf("%s%s — %s", cursor, mod.Name, mod.Description)
+		icon := m.iconProvider.ForModule(mod.Name)
+		iconStr := icon + strings.Repeat(" ", width-1)
+		line := fmt.Sprintf("%s%s %s — %s", cursor, iconStr, mod.Name, mod.Description)
 		if m.cursor == i {
 			b.WriteString(moduleSelectedStyle.Render(line))
 		} else {

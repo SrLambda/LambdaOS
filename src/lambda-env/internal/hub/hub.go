@@ -8,6 +8,7 @@ import (
 
 	modlogger "lambdaos.dev/lambda-env/internal/module"
 	"lambdaos.dev/lambda-env/internal/settings"
+	"lambdaos.dev/lambda-env/internal/tui/icons"
 	"lambdaos.dev/lambda-env/pkg/module"
 )
 
@@ -20,14 +21,14 @@ type MenuCategory struct {
 
 // Hub is the central controller for module discovery and execution.
 type Hub struct {
-	Store        *settings.Settings
-	StorePath    string
-	Modules      []module.Manifest
-	Logger       *modlogger.Logger
+	Store     *settings.Settings
+	StorePath string
+	Modules   []module.Manifest
+	Logger    *modlogger.Logger
 }
 
 // New creates a Hub, initializing the settings store and running module discovery.
-func New(settingsPath string) (*Hub, error) {
+func New(settingsPath string, nerdFonts bool) (*Hub, error) {
 	store, err := settings.Load(settingsPath)
 	if err != nil {
 		return nil, fmt.Errorf("load settings: %w", err)
@@ -38,7 +39,8 @@ func New(settingsPath string) (*Hub, error) {
 		return nil, fmt.Errorf("init logger: %w", err)
 	}
 
-	modules, err := Scan()
+	iconProvider := icons.NewProvider(nerdFonts)
+	modules, err := Scan(iconProvider)
 	if err != nil {
 		logger.Close()
 		return nil, fmt.Errorf("module discovery: %w", err)

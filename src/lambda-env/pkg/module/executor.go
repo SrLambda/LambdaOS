@@ -50,14 +50,22 @@ type MockResponse struct {
 type MockExecutor struct {
 	Responses       map[string]MockResponse
 	DefaultResponse *MockResponse
+	Calls           []string
 }
 
 // Run looks up the command by key "cmd arg1 arg2 ..." and returns the canned response.
 func (m *MockExecutor) Run(cmd string, args ...string) (stdout string, stderr string, exitCode int, err error) {
-	key := cmd
-	if len(args) > 0 {
-		key = cmd + " " + strings.Join(args, " ")
+	var parts []string
+	parts = append(parts, cmd)
+	for _, a := range args {
+		if a == "" {
+			parts = append(parts, `""`)
+		} else {
+			parts = append(parts, a)
+		}
 	}
+	key := strings.Join(parts, " ")
+	m.Calls = append(m.Calls, key)
 
 	if resp, ok := m.Responses[key]; ok {
 		return resp.Stdout, resp.Stderr, resp.ExitCode, resp.Err

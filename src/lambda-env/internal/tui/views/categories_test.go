@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"lambdaos.dev/lambda-env/internal/hub"
+	"lambdaos.dev/lambda-env/internal/tui/icons"
 )
 
 func TestCategoriesViewInitialState(t *testing.T) {
@@ -16,7 +17,7 @@ func TestCategoriesViewInitialState(t *testing.T) {
 		{Name: "apps", Count: 2},
 	}
 
-	v := NewCategoriesView(cats, menu)
+	v := NewCategoriesView(cats, menu, icons.NewProvider(false))
 
 	if v.cursor != 0 {
 		t.Errorf("initial cursor = %d, want 0", v.cursor)
@@ -27,7 +28,7 @@ func TestCategoriesViewInitialState(t *testing.T) {
 }
 
 func TestCategoriesViewEmptyList(t *testing.T) {
-	v := NewCategoriesView([]string{}, []hub.MenuCategory{})
+	v := NewCategoriesView([]string{}, []hub.MenuCategory{}, icons.NewProvider(false))
 
 	view := v.View()
 	if !strings.Contains(view, "No modules found") {
@@ -43,7 +44,7 @@ func TestCategoriesViewDownNavigation(t *testing.T) {
 		{Name: "ops", Count: 1},
 	}
 
-	v := NewCategoriesView(cats, menu)
+	v := NewCategoriesView(cats, menu, icons.NewProvider(false))
 
 	// Press down
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyDown})
@@ -68,7 +69,7 @@ func TestCategoriesViewUpNavigation(t *testing.T) {
 		{Name: "ops", Count: 1},
 	}
 
-	v := NewCategoriesView(cats, menu)
+	v := NewCategoriesView(cats, menu, icons.NewProvider(false))
 	v.cursor = 2 // Start at last item
 
 	// Press up
@@ -86,7 +87,7 @@ func TestCategoriesViewWrapAroundDown(t *testing.T) {
 		{Name: "apps", Count: 2},
 	}
 
-	v := NewCategoriesView(cats, menu)
+	v := NewCategoriesView(cats, menu, icons.NewProvider(false))
 	v.cursor = 1 // At last item
 
 	// Press down should wrap to 0
@@ -104,7 +105,7 @@ func TestCategoriesViewWrapAroundUp(t *testing.T) {
 		{Name: "apps", Count: 2},
 	}
 
-	v := NewCategoriesView(cats, menu)
+	v := NewCategoriesView(cats, menu, icons.NewProvider(false))
 	v.cursor = 0 // At first item
 
 	// Press up should wrap to last item
@@ -122,7 +123,7 @@ func TestCategoriesViewSelectEmitsMessage(t *testing.T) {
 		{Name: "apps", Count: 2},
 	}
 
-	v := NewCategoriesView(cats, menu)
+	v := NewCategoriesView(cats, menu, icons.NewProvider(false))
 
 	updated, cmd := v.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	if cmd == nil {
@@ -155,7 +156,7 @@ func TestCategoriesViewJKeyNavigation(t *testing.T) {
 		{Name: "apps", Count: 2},
 	}
 
-	v := NewCategoriesView(cats, menu)
+	v := NewCategoriesView(cats, menu, icons.NewProvider(false))
 
 	// Press 'j' should act like down
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
@@ -172,7 +173,7 @@ func TestCategoriesViewKKeyNavigation(t *testing.T) {
 		{Name: "apps", Count: 2},
 	}
 
-	v := NewCategoriesView(cats, menu)
+	v := NewCategoriesView(cats, menu, icons.NewProvider(false))
 	v.cursor = 1
 
 	// Press 'k' should act like up
@@ -190,7 +191,7 @@ func TestCategoriesViewShowsCategoryCount(t *testing.T) {
 		{Name: "apps", Count: 2},
 	}
 
-	v := NewCategoriesView(cats, menu)
+	v := NewCategoriesView(cats, menu, icons.NewProvider(false))
 	view := v.View()
 
 	if !strings.Contains(view, "system") {
@@ -209,11 +210,42 @@ func TestCategoriesViewSelectedCategory(t *testing.T) {
 		{Name: "ops", Count: 1},
 	}
 
-	v := NewCategoriesView(cats, menu)
+	v := NewCategoriesView(cats, menu, icons.NewProvider(false))
 	v.cursor = 1
 
 	view := v.View()
 	if !strings.Contains(view, "apps") {
 		t.Errorf("view = %q, want to contain 'apps'", view)
+	}
+}
+
+func TestCategoriesViewRendersWithIcons(t *testing.T) {
+	cats := []string{"system", "apps"}
+	menu := []hub.MenuCategory{
+		{Name: "system", Count: 3},
+		{Name: "apps", Count: 2},
+	}
+
+	tests := []struct {
+		name      string
+		nerdFonts bool
+		wantIcon  string
+	}{
+		{"nerd mode", true, "\uf108"},
+		{"fallback mode", false, "\u2699"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := icons.NewProvider(tt.nerdFonts)
+			v := NewCategoriesView(cats, menu, p)
+			view := v.View()
+			if !strings.Contains(view, tt.wantIcon) {
+				t.Errorf("view = %q, want to contain icon %q", view, tt.wantIcon)
+			}
+			if !strings.Contains(view, "system") {
+				t.Errorf("view = %q, want to contain 'system'", view)
+			}
+		})
 	}
 }

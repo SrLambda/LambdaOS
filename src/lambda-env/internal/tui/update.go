@@ -90,7 +90,7 @@ func (m Model) handleCategorySelected(msg views.CategorySelectedMsg) (tea.Model,
 	m.cursor = 0
 	m.statusMsg = ""
 
-	m.modulesSub = views.NewModulesView(m.modules, m.currentCategory)
+	m.modulesSub = views.NewModulesView(m.modules, m.currentCategory, m.iconProvider)
 	m.activeSubModel = m.modulesSub
 
 	if m.statusBar != nil {
@@ -105,7 +105,7 @@ func (m Model) handleModuleSelected(msg views.ModuleSelectedMsg) (tea.Model, tea
 	m.cursor = 0
 	m.statusMsg = ""
 
-	m.detailSub = views.NewDetailView(msg.Module)
+	m.detailSub = views.NewDetailView(msg.Module, m.iconProvider)
 	m.activeSubModel = m.detailSub
 
 	if m.statusBar != nil {
@@ -152,6 +152,9 @@ func (m Model) handleActionExecute(msg views.ActionExecuteMsg) (tea.Model, tea.C
 	if m.hub == nil {
 		return m, nil
 	}
+	if m.detailSub != nil {
+		m.detailSub.SetExecuting(m.detailSub.LastExecutedIndex(), true)
+	}
 	return m, executeActionCmd(m.hub, msg.Module, msg.Action, msg.Params)
 }
 
@@ -163,6 +166,10 @@ func (m Model) handleExecMsg(msg execMsg) (tea.Model, tea.Cmd) {
 	if msg.err != nil {
 		m.statusBar.SetSettingsState("error: " + msg.err.Error())
 		m.statusType = "error"
+		if m.detailSub != nil {
+			m.detailSub.SetExecuting(m.detailSub.LastExecutedIndex(), false)
+			m.detailSub.SetActionResult(m.detailSub.LastExecutedIndex(), "error")
+		}
 	} else if msg.response != nil {
 		switch msg.response.Status {
 		case "ok":
@@ -172,6 +179,10 @@ func (m Model) handleExecMsg(msg execMsg) (tea.Model, tea.Cmd) {
 			}
 			m.statusBar.SetSettingsState(msgStr)
 			m.statusType = "ok"
+			if m.detailSub != nil {
+				m.detailSub.SetExecuting(m.detailSub.LastExecutedIndex(), false)
+				m.detailSub.SetActionResult(m.detailSub.LastExecutedIndex(), "success")
+			}
 		case "error":
 			msgStr := msg.response.Message
 			if msgStr == "" {
@@ -179,6 +190,10 @@ func (m Model) handleExecMsg(msg execMsg) (tea.Model, tea.Cmd) {
 			}
 			m.statusBar.SetSettingsState(msgStr)
 			m.statusType = "error"
+			if m.detailSub != nil {
+				m.detailSub.SetExecuting(m.detailSub.LastExecutedIndex(), false)
+				m.detailSub.SetActionResult(m.detailSub.LastExecutedIndex(), "error")
+			}
 		case "warning":
 			msgStr := msg.response.Message
 			if msgStr == "" {
@@ -186,9 +201,15 @@ func (m Model) handleExecMsg(msg execMsg) (tea.Model, tea.Cmd) {
 			}
 			m.statusBar.SetSettingsState(msgStr)
 			m.statusType = "warning"
+			if m.detailSub != nil {
+				m.detailSub.SetExecuting(m.detailSub.LastExecutedIndex(), false)
+			}
 		default:
 			m.statusBar.SetSettingsState("Unknown response status")
 			m.statusType = "error"
+			if m.detailSub != nil {
+				m.detailSub.SetExecuting(m.detailSub.LastExecutedIndex(), false)
+			}
 		}
 	}
 

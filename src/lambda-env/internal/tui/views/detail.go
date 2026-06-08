@@ -3,29 +3,32 @@ package views
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	"lambdaos.dev/lambda-env/internal/tui/components"
+	"lambdaos.dev/lambda-env/internal/tui/icons"
+	"lambdaos.dev/lambda-env/internal/tui/theme"
 	"lambdaos.dev/lambda-env/pkg/module"
 )
 
 var (
 	detailTitleStyle = lipgloss.NewStyle().
 				Bold(true).
-				Foreground(lipgloss.Color("#7D56F4")).
+				Foreground(lipgloss.Color(theme.Accent)).
 				MarginBottom(1)
 
 	detailItemStyle = lipgloss.NewStyle().
-				PaddingLeft(2)
+			PaddingLeft(2)
 
 	detailSelectedStyle = lipgloss.NewStyle().
-					PaddingLeft(2).
-					Foreground(lipgloss.Color("#7D56F4"))
+				PaddingLeft(2).
+				Foreground(lipgloss.Color(theme.Accent))
 
 	detailCursorStyle = lipgloss.NewStyle().
-					Foreground(lipgloss.Color("#7D56F4"))
+				Foreground(lipgloss.Color(theme.Accent))
 )
 
 // ActionExecuteMsg is emitted when the user triggers an action.
@@ -51,6 +54,12 @@ type widgetState struct {
 	textFocused bool
 }
 
+// actionResult holds the result of an executed action for feedback display.
+type actionResult struct {
+	status    string
+	timestamp time.Time
+}
+
 // DetailView is a sub-model for the module detail screen.
 type DetailView struct {
 	manifest           module.Manifest
@@ -60,13 +69,19 @@ type DetailView struct {
 	showingConfirm     bool
 	confirmDialog      *components.Confirm
 	lastExecutedAction string
+	lastExecutedIndex  int
 	warning            string
+	iconProvider       icons.IconProvider
+	executing          []bool
+	lastResult         []actionResult
 }
 
 // NewDetailView creates a new DetailView for the given manifest.
-func NewDetailView(mod module.Manifest) *DetailView {
+func NewDetailView(mod module.Manifest, provider icons.IconProvider) *DetailView {
 	states := make([]widgetState, len(mod.Actions))
 	textInputs := make([]*components.TextInput, len(mod.Actions))
+	executing := make([]bool, len(mod.Actions))
+	lastResult := make([]actionResult, len(mod.Actions))
 
 	for i, a := range mod.Actions {
 		if a.Type == "text" {
@@ -77,10 +92,13 @@ func NewDetailView(mod module.Manifest) *DetailView {
 	}
 
 	return &DetailView{
-		manifest:   mod,
-		cursor:     0,
-		states:     states,
-		textInputs: textInputs,
+		manifest:     mod,
+		cursor:       0,
+		states:       states,
+		textInputs:   textInputs,
+		iconProvider: provider,
+		executing:    executing,
+		lastResult:   lastResult,
 	}
 }
 
@@ -258,6 +276,7 @@ func (d *DetailView) handleAction() (tea.Model, tea.Cmd) {
 
 func (d *DetailView) emitAction(actionName string, value interface{}) tea.Cmd {
 	d.lastExecutedAction = actionName
+	d.lastExecutedIndex = d.cursor
 	params := make(map[string]interface{})
 	if value != nil {
 		params["value"] = value
@@ -274,6 +293,7 @@ func (d *DetailView) emitAction(actionName string, value interface{}) tea.Cmd {
 
 func (d *DetailView) emitConfirmAction(actionName string, confirmed bool) tea.Cmd {
 	d.lastExecutedAction = actionName
+	d.lastExecutedIndex = d.cursor
 	params := map[string]interface{}{
 		"confirmed": confirmed,
 	}
@@ -287,11 +307,30 @@ func (d *DetailView) emitConfirmAction(actionName string, confirmed bool) tea.Cm
 	}
 }
 
+// SetExecuting sets the executing state for the given action index.
+func (d *DetailView) SetExecuting(idx int, executing bool) {
+	if idx >= 0 && idx < len(d.executing) {
+		d.executing[idx] = executing
+	}
+}
+
+// SetActionResult sets the result status for the given action index.
+func (d *DetailView) SetActionResult(idx int, status string) {
+	if idx >= 0 && idx < len(d.lastResult) {
+		d.lastResult[idx] = actionResult{status: status, timestamp: time.Now()}
+	}
+}
+
+// LastExecutedIndex returns the index of the last executed action.
+func (d *DetailView) LastExecutedIndex() int {
+	return d.lastExecutedIndex
+}
+
 // View renders the detail view.
 func (d *DetailView) View() string {
 	var b strings.Builder
 
-	b.WriteString(detailTitleStyle.Render(d.manifest.Name))
+	b.WriteString(detailTitleStyle.Render(d.iconProvider.ForModule(d.manifest.Name) + " " + d.manifest.Name))
 	b.WriteString("\n\n")
 
 	if len(d.manifest.Actions) == 0 {
@@ -316,7 +355,7 @@ func (d *DetailView) View() string {
 
 	if d.warning != "" {
 		b.WriteString("\n")
-		warningStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#F4D03F"))
+		warningStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.Warn))
 		b.WriteString(warningStyle.Render("⚠ " + d.warning))
 		b.WriteString("\n")
 	}
@@ -331,37 +370,68 @@ func (d *DetailView) View() string {
 }
 
 func (d *DetailView) renderActionLine(idx int, act module.ActionConfig) string {
+	ico := d.iconProvider
+	width := ico.Width()
+	pad := strings.Repeat(" ", width-1)
+
+	var prefix strings.Builder
+
+	// Loading state: prepend spinner icon
+	if d.executing[idx] {
+		prefix.WriteString(ico.ForWidget("spinner"))
+		prefix.WriteString(pad)
+		prefix.WriteString(" ")
+	}
+
+	// Success/error feedback: prepend status icon for 2 seconds
+	if d.lastResult[idx].status != "" && time.Since(d.lastResult[idx].timestamp) < 2*time.Second {
+		if d.lastResult[idx].status == "success" {
+			prefix.WriteString(theme.SuccessStyle.Render(ico.ForWidget("success")))
+		} else {
+			prefix.WriteString(theme.ErrorStyle.Render(ico.ForWidget("error")))
+		}
+		prefix.WriteString(pad)
+		prefix.WriteString(" ")
+	}
+
+	var body string
 	switch act.Type {
 	case "toggle":
-		state := "○ Off"
+		onOff := ico.ForWidget("toggle_off")
+		stateText := "Off"
 		if d.states[idx].toggleOn {
-			state = "● On"
+			onOff = ico.ForWidget("toggle_on")
+			stateText = "On"
 		}
-		return fmt.Sprintf("%s  %s", act.Label, state)
+		body = fmt.Sprintf("%s  %s %s", act.Label, onOff, stateText)
 
 	case "select", "list":
 		selected := ""
 		if d.states[idx].selectIndex < len(act.Options) {
 			selected = act.Options[d.states[idx].selectIndex]
 		}
-		return fmt.Sprintf("%s  ◄ %s ►", act.Label, selected)
+		body = fmt.Sprintf("%s  ◄ %s ►", act.Label, selected)
 
 	case "text":
 		placeholder := act.Label
 		if d.textInputs[idx] != nil {
 			placeholder = d.textInputs[idx].View()
 		}
-		return fmt.Sprintf("%s  %s", act.Label, placeholder)
+		body = fmt.Sprintf("%s  %s", act.Label, placeholder)
 
 	case "confirm":
-		return fmt.Sprintf("%s  [Press Enter to confirm]", act.Label)
+		body = fmt.Sprintf("%s  [Press Enter to confirm]", act.Label)
 
 	case "execute":
-		return fmt.Sprintf("%s  [Press Enter to execute]", act.Label)
+		body = fmt.Sprintf("%s  [Press Enter to execute]", act.Label)
 
 	default:
-		return act.Label
+		body = act.Label
 	}
+
+	// Prepend widget type icon
+	widgetIcon := ico.ForWidget(act.Type)
+	return fmt.Sprintf("%s%s%s %s", prefix.String(), widgetIcon, pad, body)
 }
 
 // MergeDynamicOptions merges dynamic options from a module response into the view state.

@@ -4,15 +4,18 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"lambdaos.dev/lambda-env/internal/hub"
+	"lambdaos.dev/lambda-env/pkg/module"
 )
 
 func TestViewStateValues(t *testing.T) {
 	// Verify all expected view states exist and have correct values
 	states := map[viewState]string{
-		viewCategories:     "categories",
-		viewModules:        "modules",
-		viewModuleDetail:   "moduleDetail",
-		viewConfirmDialog:  "confirmDialog",
+		viewCategories:    "categories",
+		viewModules:       "modules",
+		viewModuleDetail:  "moduleDetail",
+		viewConfirmDialog: "confirmDialog",
 	}
 
 	for state, expected := range states {
@@ -84,6 +87,33 @@ func TestNewModelInitializesCategoriesSub(t *testing.T) {
 	m := Model{}
 	if m.categoriesSub != nil {
 		t.Error("categoriesSub should be nil on zero value Model")
+	}
+}
+
+func TestNewModelInitializesIconProvider(t *testing.T) {
+	modules := []module.Manifest{
+		{Name: "keyboard", Description: "Set layout", Category: "system"},
+	}
+	h := &hub.Hub{Modules: modules}
+
+	m := NewModel(h, false)
+
+	if m.iconProvider == nil {
+		t.Error("NewModel should initialize iconProvider")
+	}
+}
+
+func TestModelIconProviderResolvesIcons(t *testing.T) {
+	modules := []module.Manifest{
+		{Name: "keyboard", Description: "Set layout", Category: "system"},
+	}
+	h := &hub.Hub{Modules: modules}
+
+	m := NewModel(h, false)
+
+	icon := m.iconProvider.Get("categories.system")
+	if icon == "" || icon == "\u00b7" {
+		t.Errorf("iconProvider should resolve system category icon, got %q", icon)
 	}
 }
 

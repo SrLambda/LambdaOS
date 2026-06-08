@@ -8,6 +8,7 @@ import (
 
 	"lambdaos.dev/lambda-env/internal/hub"
 	"lambdaos.dev/lambda-env/internal/tui/components"
+	"lambdaos.dev/lambda-env/internal/tui/icons"
 	"lambdaos.dev/lambda-env/internal/tui/views"
 	"lambdaos.dev/lambda-env/pkg/module"
 )
@@ -57,7 +58,7 @@ func TestModuleSelectedWithNilHub(t *testing.T) {
 		{Name: "keyboard", Description: "Set layout", Actions: []module.ActionConfig{
 			{Name: "apply", Label: "Apply", Type: "execute"},
 		}},
-	}, "system")
+	}, "system", icons.NewProvider(false))
 	m.activeSubModel = m.modulesSub
 
 	// Simulate selecting a module with nil hub — should transition to detail view
@@ -87,7 +88,7 @@ func TestModuleSelectedWithHub(t *testing.T) {
 		{Name: "keyboard", Description: "Set layout", Actions: []module.ActionConfig{
 			{Name: "apply", Label: "Apply", Type: "execute"},
 		}},
-	}, "system")
+	}, "system", icons.NewProvider(false))
 	m.activeSubModel = m.modulesSub
 	m.hub = &hub.Hub{}
 
@@ -115,7 +116,7 @@ func TestBackMsgReturnsToCategories(t *testing.T) {
 	m.view = viewModules
 	m.modulesSub = views.NewModulesView([]module.Manifest{
 		{Name: "keyboard", Description: "Set layout"},
-	}, "system")
+	}, "system", icons.NewProvider(false))
 	m.activeSubModel = m.modulesSub
 
 	// Send back message
@@ -236,7 +237,8 @@ func createTestModel() Model {
 
 	m := Model{
 		categories:    cats,
-		categoriesSub: views.NewCategoriesView(cats, menu),
+		iconProvider:  icons.NewProvider(false),
+		categoriesSub: views.NewCategoriesView(cats, menu, icons.NewProvider(false)),
 		view:          viewCategories,
 		cursor:        0,
 		statusBar:     components.NewStatusBar(),
@@ -262,7 +264,7 @@ func TestModuleSelectedTransitionsToDetailView(t *testing.T) {
 		{Name: "keyboard", Description: "Set layout", Actions: []module.ActionConfig{
 			{Name: "toggle-feature", Label: "Feature", Type: "toggle"},
 		}},
-	}, "system")
+	}, "system", icons.NewProvider(false))
 	m.activeSubModel = m.modulesSub
 
 	// Select a module — should transition to detail view
@@ -295,7 +297,7 @@ func TestActionExecuteMsgWithNilHub(t *testing.T) {
 		Actions: []module.ActionConfig{
 			{Name: "apply", Label: "Apply", Type: "execute"},
 		},
-	})
+	}, icons.NewProvider(false))
 	m.activeSubModel = m.detailSub
 
 	// ActionExecuteMsg with nil hub should not crash and produce no cmd
@@ -322,7 +324,7 @@ func TestActionExecuteMsgWithHub(t *testing.T) {
 		Actions: []module.ActionConfig{
 			{Name: "apply", Label: "Apply", Type: "execute"},
 		},
-	})
+	}, icons.NewProvider(false))
 	m.activeSubModel = m.detailSub
 	m.hub = &hub.Hub{}
 
@@ -359,7 +361,7 @@ func TestExecMsgUpdatesDetailViewState(t *testing.T) {
 		Actions: []module.ActionConfig{
 			{Name: "layout", Label: "Layout", Type: "select", Options: []string{"us", "dvorak"}},
 		},
-	})
+	}, icons.NewProvider(false))
 	m.activeSubModel = m.detailSub
 
 	// Simulate an execMsg with data that should update detail view
@@ -407,7 +409,7 @@ func TestModuleSelectedWithHubLoadsDynamicOptions(t *testing.T) {
 		{Name: "keyboard", Description: "Set layout", Actions: []module.ActionConfig{
 			{Name: "layout", Label: "Layout", Type: "select", Options: []string{"us"}},
 		}},
-	}, "system")
+	}, "system", icons.NewProvider(false))
 	m.activeSubModel = m.modulesSub
 	m.hub = &hub.Hub{}
 
@@ -444,13 +446,13 @@ func TestBackFromDetailReturnsToModules(t *testing.T) {
 	m.view = viewModuleDetail
 	m.modulesSub = views.NewModulesView([]module.Manifest{
 		{Name: "keyboard", Description: "Set layout"},
-	}, "system")
+	}, "system", icons.NewProvider(false))
 	m.detailSub = views.NewDetailView(module.Manifest{
 		Name: "keyboard",
 		Actions: []module.ActionConfig{
 			{Name: "toggle", Label: "Toggle", Type: "toggle"},
 		},
-	})
+	}, icons.NewProvider(false))
 	m.activeSubModel = m.detailSub
 
 	// Send back message

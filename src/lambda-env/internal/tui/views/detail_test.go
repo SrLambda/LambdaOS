@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"lambdaos.dev/lambda-env/internal/tui/icons"
 	"lambdaos.dev/lambda-env/pkg/module"
 )
 
@@ -18,7 +20,7 @@ func TestDetailViewInitialState(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	if v.cursor != 0 {
 		t.Errorf("initial cursor = %d, want 0", v.cursor)
 	}
@@ -29,7 +31,7 @@ func TestDetailViewInitialState(t *testing.T) {
 
 func TestDetailViewEmptyActions(t *testing.T) {
 	mod := module.Manifest{Name: "keyboard"}
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 
 	view := v.View()
 	if !strings.Contains(view, "No actions") {
@@ -45,7 +47,7 @@ func TestDetailViewRendersToggle(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	view := v.View()
 	if !strings.Contains(view, "Enable Feature") {
 		t.Errorf("view = %q, want to contain 'Enable Feature'", view)
@@ -60,7 +62,7 @@ func TestDetailViewRendersSelect(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	view := v.View()
 	if !strings.Contains(view, "Theme") {
 		t.Errorf("view = %q, want to contain 'Theme'", view)
@@ -78,7 +80,7 @@ func TestDetailViewRendersText(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	view := v.View()
 	if !strings.Contains(view, "Variant") {
 		t.Errorf("view = %q, want to contain 'Variant'", view)
@@ -93,7 +95,7 @@ func TestDetailViewRendersConfirm(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	view := v.View()
 	if !strings.Contains(view, "Reset Settings") {
 		t.Errorf("view = %q, want to contain 'Reset Settings'", view)
@@ -108,7 +110,7 @@ func TestDetailViewRendersExecute(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	view := v.View()
 	if !strings.Contains(view, "Apply Changes") {
 		t.Errorf("view = %q, want to contain 'Apply Changes'", view)
@@ -125,7 +127,7 @@ func TestDetailViewDownNavigation(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyDown})
 	dv := updated.(*DetailView)
 	if dv.cursor != 1 {
@@ -142,7 +144,7 @@ func TestDetailViewUpNavigation(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	v.cursor = 1
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyUp})
 	dv := updated.(*DetailView)
@@ -160,7 +162,7 @@ func TestDetailViewWrapAroundDown(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	v.cursor = 1
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyDown})
 	dv := updated.(*DetailView)
@@ -178,7 +180,7 @@ func TestDetailViewWrapAroundUp(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	v.cursor = 0
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyUp})
 	dv := updated.(*DetailView)
@@ -195,7 +197,7 @@ func TestDetailViewToggleStateTracking(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	if v.states[0].toggleOn != false {
 		t.Errorf("initial toggle = %v, want false", v.states[0].toggleOn)
 	}
@@ -230,7 +232,7 @@ func TestDetailViewSelectStateTracking(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	if v.states[0].selectIndex != 0 {
 		t.Errorf("initial selectIndex = %d, want 0", v.states[0].selectIndex)
 	}
@@ -258,7 +260,7 @@ func TestDetailViewTextStateTracking(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	if v.states[0].textValue != "" {
 		t.Errorf("initial text = %q, want empty", v.states[0].textValue)
 	}
@@ -291,7 +293,7 @@ func TestDetailViewExecuteEmitsMessage(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	updated, cmd := v.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	if cmd == nil {
 		t.Fatal("expected cmd after enter on execute, got nil")
@@ -323,7 +325,7 @@ func TestDetailViewConfirmShowsDialog(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	dv := updated.(*DetailView)
 	if !dv.showingConfirm {
@@ -339,7 +341,7 @@ func TestDetailViewConfirmDialogEmitsExecuteOnYes(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	// Show confirm dialog
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	dv := updated.(*DetailView)
@@ -372,7 +374,7 @@ func TestDetailViewConfirmDialogDismissedOnNo(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	dv := updated.(*DetailView)
 
@@ -405,7 +407,7 @@ func TestDetailViewBackOnEsc(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	updated, cmd := v.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	if cmd == nil {
 		t.Fatal("expected cmd after esc, got nil")
@@ -423,7 +425,7 @@ func TestDetailViewBackOnEsc(t *testing.T) {
 		Actions: []module.ActionConfig{
 			{Name: "text", Label: "Text", Type: "text"},
 		},
-	})
+	}, icons.NewProvider(false))
 	v2.Update(tea.KeyMsg{Type: tea.KeyEnter}) // focus text
 	updated, cmd = v2.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	dv := updated.(*DetailView)
@@ -443,7 +445,7 @@ func TestDetailViewMergeDynamicOptions(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 
 	// Merge dynamic options that expand the list
 	v.MergeDynamicOptions(
@@ -467,7 +469,7 @@ func TestDetailViewMergeDynamicOptionsFallbackToStatic(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 
 	// Merge with no dynamic options for this action — should keep static
 	v.MergeDynamicOptions(
@@ -488,7 +490,7 @@ func TestDetailViewDynamicOptionsErrorShowsWarning(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	v.SetWarning("Dynamic options unavailable — using static list")
 
 	view := v.View()
@@ -505,7 +507,7 @@ func TestDetailViewHandlesDynamicOptionsMsg(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	updated, _ := v.Update(DynamicOptionsMsg{
 		Options: map[string][]string{"layout": {"us", "dvorak", "colemak"}},
 		Values:  map[string]interface{}{"layout": "dvorak"},
@@ -529,7 +531,7 @@ func TestDetailViewHandlesDynamicOptionsMsgError(t *testing.T) {
 		},
 	}
 
-	v := NewDetailView(mod)
+	v := NewDetailView(mod, icons.NewProvider(false))
 	updated, _ := v.Update(DynamicOptionsMsg{
 		Options: nil,
 		Values:  nil,
@@ -542,5 +544,106 @@ func TestDetailViewHandlesDynamicOptionsMsgError(t *testing.T) {
 	}
 	if !strings.Contains(dv.warning, "timed out") {
 		t.Errorf("warning = %q, want to contain 'timed out'", dv.warning)
+	}
+}
+
+func TestRenderActionLineWithIcons(t *testing.T) {
+	tests := []struct {
+		name         string
+		nerdFonts    bool
+		actType      string
+		toggleOn     bool
+		wantContains string
+	}{
+		{"toggle off nerd", true, "toggle", false, "\uf204"},
+		{"toggle on nerd", true, "toggle", true, "\uf205"},
+		{"toggle off fallback", false, "toggle", false, "\u25cb"},
+		{"toggle on fallback", false, "toggle", true, "\u25cf"},
+		{"select nerd", true, "select", false, "\uf0da"},
+		{"select fallback", false, "select", false, "\u25b6"},
+		{"confirm nerd", true, "confirm", false, "\uf059"},
+		{"confirm fallback", false, "confirm", false, "\u2753"},
+		{"execute nerd", true, "execute", false, "\uf04b"},
+		{"execute fallback", false, "execute", false, "\u25b6"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mod := module.Manifest{
+				Name: "test",
+				Actions: []module.ActionConfig{
+					{Name: "act", Label: "Action", Type: tt.actType, Options: []string{"a", "b"}},
+				},
+			}
+			p := icons.NewProvider(tt.nerdFonts)
+			v := NewDetailView(mod, p)
+			if tt.toggleOn {
+				v.states[0].toggleOn = true
+			}
+			line := v.renderActionLine(0, v.manifest.Actions[0])
+			if !strings.Contains(line, tt.wantContains) {
+				t.Errorf("line = %q, want to contain %q", line, tt.wantContains)
+			}
+			if !strings.Contains(line, "Action") {
+				t.Errorf("line = %q, want to contain 'Action'", line)
+			}
+		})
+	}
+}
+
+func TestRenderActionLineLoadingState(t *testing.T) {
+	mod := module.Manifest{
+		Name: "test",
+		Actions: []module.ActionConfig{
+			{Name: "run", Label: "Run", Type: "execute"},
+		},
+	}
+	p := icons.NewProvider(true)
+	v := NewDetailView(mod, p)
+	v.executing = []bool{true}
+	line := v.renderActionLine(0, v.manifest.Actions[0])
+	if !strings.Contains(line, "\uf021") {
+		t.Errorf("line = %q, want to contain loading icon", line)
+	}
+	if !strings.Contains(line, "Run") {
+		t.Errorf("line = %q, want to contain 'Run'", line)
+	}
+}
+
+func TestRenderActionLineSuccessState(t *testing.T) {
+	mod := module.Manifest{
+		Name: "test",
+		Actions: []module.ActionConfig{
+			{Name: "run", Label: "Run", Type: "execute"},
+		},
+	}
+	p := icons.NewProvider(true)
+	v := NewDetailView(mod, p)
+	v.lastResult = []actionResult{{status: "success", timestamp: time.Now()}}
+	line := v.renderActionLine(0, v.manifest.Actions[0])
+	if !strings.Contains(line, "\uf00c") {
+		t.Errorf("line = %q, want to contain success icon", line)
+	}
+	if !strings.Contains(line, "Run") {
+		t.Errorf("line = %q, want to contain 'Run'", line)
+	}
+}
+
+func TestRenderActionLineErrorState(t *testing.T) {
+	mod := module.Manifest{
+		Name: "test",
+		Actions: []module.ActionConfig{
+			{Name: "run", Label: "Run", Type: "execute"},
+		},
+	}
+	p := icons.NewProvider(true)
+	v := NewDetailView(mod, p)
+	v.lastResult = []actionResult{{status: "error", timestamp: time.Now()}}
+	line := v.renderActionLine(0, v.manifest.Actions[0])
+	if !strings.Contains(line, "\uf06a") {
+		t.Errorf("line = %q, want to contain error icon", line)
+	}
+	if !strings.Contains(line, "Run") {
+		t.Errorf("line = %q, want to contain 'Run'", line)
 	}
 }

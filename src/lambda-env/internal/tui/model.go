@@ -3,6 +3,7 @@ package tui
 import (
 	"lambdaos.dev/lambda-env/internal/hub"
 	"lambdaos.dev/lambda-env/internal/tui/components"
+	"lambdaos.dev/lambda-env/internal/tui/icons"
 	"lambdaos.dev/lambda-env/internal/tui/views"
 	"lambdaos.dev/lambda-env/pkg/module"
 
@@ -45,10 +46,13 @@ type Model struct {
 	// Components
 	statusBar   *components.StatusBar
 	helpOverlay *components.Help
+
+	// Icon provider for Nerd Font / fallback resolution
+	iconProvider icons.IconProvider
 }
 
 // NewModel creates a Model from a Hub instance.
-func NewModel(h *hub.Hub) Model {
+func NewModel(h *hub.Hub, nerdFonts bool) Model {
 	menu := h.BuildMenu()
 	cats := make([]string, 0, len(menu))
 	for _, c := range menu {
@@ -56,14 +60,15 @@ func NewModel(h *hub.Hub) Model {
 	}
 
 	m := Model{
-		hub:        h,
-		categories: cats,
-		view:       viewCategories,
-		cursor:     0,
+		hub:          h,
+		categories:   cats,
+		view:         viewCategories,
+		cursor:       0,
+		iconProvider: icons.NewProvider(nerdFonts),
 	}
 
 	// Initialize sub-models
-	m.categoriesSub = views.NewCategoriesView(cats, h.BuildMenu())
+	m.categoriesSub = views.NewCategoriesView(cats, h.BuildMenu(), m.iconProvider)
 	m.activeSubModel = m.categoriesSub
 
 	// Initialize components

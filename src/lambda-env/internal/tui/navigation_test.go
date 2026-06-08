@@ -8,6 +8,7 @@ import (
 
 	"lambdaos.dev/lambda-env/internal/hub"
 	"lambdaos.dev/lambda-env/internal/tui/components"
+	"lambdaos.dev/lambda-env/internal/tui/icons"
 	"lambdaos.dev/lambda-env/internal/tui/views"
 	"lambdaos.dev/lambda-env/pkg/module"
 )
@@ -209,7 +210,8 @@ func createNavTestModel() Model {
 	m := Model{
 		hub:           h,
 		categories:    cats,
-		categoriesSub: views.NewCategoriesView(cats, menu),
+		iconProvider:  icons.NewProvider(false),
+		categoriesSub: views.NewCategoriesView(cats, menu, icons.NewProvider(false)),
 		view:          viewCategories,
 		cursor:        0,
 		statusBar:     components.NewStatusBar().SetContext("categories"),

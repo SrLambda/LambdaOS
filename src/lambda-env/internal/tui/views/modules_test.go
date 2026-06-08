@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"lambdaos.dev/lambda-env/internal/tui/icons"
 	"lambdaos.dev/lambda-env/pkg/module"
 )
 
@@ -15,7 +16,7 @@ func TestModulesViewInitialState(t *testing.T) {
 		{Name: "audio", Description: "Configure audio"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 
 	if v.cursor != 0 {
 		t.Errorf("initial cursor = %d, want 0", v.cursor)
@@ -29,7 +30,7 @@ func TestModulesViewInitialState(t *testing.T) {
 }
 
 func TestModulesViewEmptyList(t *testing.T) {
-	v := NewModulesView([]module.Manifest{}, "apps")
+	v := NewModulesView([]module.Manifest{}, "apps", icons.NewProvider(false))
 
 	view := v.View()
 	if !strings.Contains(view, "No modules") {
@@ -47,7 +48,7 @@ func TestModulesViewDownNavigation(t *testing.T) {
 		{Name: "appearance", Description: "Set theme"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyDown})
 	mv := updated.(*ModulesView)
@@ -68,7 +69,7 @@ func TestModulesViewUpNavigation(t *testing.T) {
 		{Name: "audio", Description: "Configure audio"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 	v.cursor = 1
 
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyUp})
@@ -84,7 +85,7 @@ func TestModulesViewWrapAroundDown(t *testing.T) {
 		{Name: "audio", Description: "Configure audio"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 	v.cursor = 1
 
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyDown})
@@ -100,7 +101,7 @@ func TestModulesViewWrapAroundUp(t *testing.T) {
 		{Name: "audio", Description: "Configure audio"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 	v.cursor = 0
 
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyUp})
@@ -116,7 +117,7 @@ func TestModulesViewSelectEmitsMessage(t *testing.T) {
 		{Name: "audio", Description: "Configure audio"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 
 	updated, cmd := v.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	if cmd == nil {
@@ -147,7 +148,7 @@ func TestModulesViewJKeyNavigation(t *testing.T) {
 		{Name: "audio", Description: "Configure audio"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
 	mv := updated.(*ModulesView)
@@ -162,7 +163,7 @@ func TestModulesViewKKeyNavigation(t *testing.T) {
 		{Name: "audio", Description: "Configure audio"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 	v.cursor = 1
 
 	updated, _ := v.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}})
@@ -178,7 +179,7 @@ func TestModulesViewShowsModuleInfo(t *testing.T) {
 		{Name: "audio", Description: "Configure audio"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 	view := v.View()
 
 	if !strings.Contains(view, "keyboard") {
@@ -199,7 +200,7 @@ func TestModulesViewSelectedModule(t *testing.T) {
 		{Name: "appearance", Description: "Set theme"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 	v.cursor = 1
 
 	view := v.View()
@@ -213,7 +214,7 @@ func TestModulesViewBackNavigation(t *testing.T) {
 		{Name: "keyboard", Description: "Set keyboard layout"},
 	}
 
-	v := NewModulesView(mods, "system")
+	v := NewModulesView(mods, "system", icons.NewProvider(false))
 
 	updated, cmd := v.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	if cmd == nil {
@@ -229,5 +230,35 @@ func TestModulesViewBackNavigation(t *testing.T) {
 	mv := updated.(*ModulesView)
 	if mv.cursor != 0 {
 		t.Errorf("cursor after back = %d, want 0", mv.cursor)
+	}
+}
+
+func TestModulesViewRendersWithIcons(t *testing.T) {
+	mods := []module.Manifest{
+		{Name: "audio", Description: "Configure audio"},
+		{Name: "display", Description: "Set display"},
+	}
+
+	tests := []struct {
+		name      string
+		nerdFonts bool
+		wantIcon  string
+	}{
+		{"nerd mode", true, "\uf028"},
+		{"fallback mode", false, "\u266a"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := icons.NewProvider(tt.nerdFonts)
+			v := NewModulesView(mods, "system", p)
+			view := v.View()
+			if !strings.Contains(view, tt.wantIcon) {
+				t.Errorf("view = %q, want to contain icon %q", view, tt.wantIcon)
+			}
+			if !strings.Contains(view, "audio") {
+				t.Errorf("view = %q, want to contain 'audio'", view)
+			}
+		})
 	}
 }

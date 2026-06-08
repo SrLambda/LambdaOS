@@ -8,12 +8,14 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"lambdaos.dev/lambda-env/internal/hub"
+	"lambdaos.dev/lambda-env/internal/tui/icons"
+	"lambdaos.dev/lambda-env/internal/tui/theme"
 )
 
 var (
 	categoryTitleStyle = lipgloss.NewStyle().
 				Bold(true).
-				Foreground(lipgloss.Color("#7D56F4")).
+				Foreground(lipgloss.Color(theme.Accent)).
 				MarginBottom(1)
 
 	categoryItemStyle = lipgloss.NewStyle().
@@ -21,7 +23,7 @@ var (
 
 	categorySelectedStyle = lipgloss.NewStyle().
 				PaddingLeft(2).
-				Foreground(lipgloss.Color("#7D56F4"))
+				Foreground(lipgloss.Color(theme.Accent))
 )
 
 // CategorySelectedMsg is emitted when the user selects a category.
@@ -36,14 +38,16 @@ type CategoriesView struct {
 	menu             []hub.MenuCategory
 	cursor           int
 	selectedCategory string
+	iconProvider     icons.IconProvider
 }
 
 // NewCategoriesView creates a new CategoriesView.
-func NewCategoriesView(cats []string, menu []hub.MenuCategory) *CategoriesView {
+func NewCategoriesView(cats []string, menu []hub.MenuCategory, provider icons.IconProvider) *CategoriesView {
 	return &CategoriesView{
-		categories: cats,
-		menu:       menu,
-		cursor:     0,
+		categories:   cats,
+		menu:         menu,
+		cursor:       0,
+		iconProvider: provider,
 	}
 }
 
@@ -118,13 +122,16 @@ func (c *CategoriesView) View() string {
 		catCount[m.Name] = m.Count
 	}
 
+	width := c.iconProvider.Width()
 	for i, cat := range c.categories {
 		cursor := "  "
 		if c.cursor == i {
 			cursor = "> "
 		}
 		count := catCount[cat]
-		line := fmt.Sprintf("%s%s (%d)", cursor, cat, count)
+		icon := c.iconProvider.ForCategory(cat)
+		iconStr := icon + strings.Repeat(" ", width-1)
+		line := fmt.Sprintf("%s%s %s (%d)", cursor, iconStr, cat, count)
 		if c.cursor == i {
 			b.WriteString(categorySelectedStyle.Render(line))
 		} else {
