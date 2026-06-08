@@ -299,6 +299,26 @@ func handleSetVariant(settingsPath, variant string) {
 	emit(resp)
 }
 
+func mergeComposeOption(currentOptions, compose string) string {
+	if currentOptions == "" {
+		return compose
+	}
+	opts := strings.Split(currentOptions, ",")
+	for _, opt := range opts {
+		if opt == compose {
+			return currentOptions
+		}
+	}
+	var filtered []string
+	for _, opt := range opts {
+		if !strings.HasPrefix(opt, "compose:") {
+			filtered = append(filtered, opt)
+		}
+	}
+	filtered = append(filtered, compose)
+	return strings.Join(filtered, ",")
+}
+
 func handleSetCompose(settingsPath, compose string) {
 	if compose == "" {
 		emitError("set-compose", "compose option is required", "")
@@ -317,15 +337,29 @@ func handleSetCompose(settingsPath, compose string) {
 		return
 	}
 
-	_, _, exitCode, err := executor.Run("setxkbmap", "-option", compose)
-	if exitCode != 0 || err != nil {
-		emitError("set-compose", fmt.Sprintf("setxkbmap failed: %v", err), "")
-		return
+	_, _, currentOptions, err := parseCurrentLayout(executor)
+	if err != nil {
+		currentOptions = ""
+	}
+
+	merged := mergeComposeOption(currentOptions, compose)
+
+	if merged != currentOptions {
+		_, _, exitCode, err := executor.Run("setxkbmap", "-option", "")
+		if exitCode != 0 || err != nil {
+			emitError("set-compose", fmt.Sprintf("setxkbmap failed: %v", err), "")
+			return
+		}
+		_, _, exitCode, err = executor.Run("setxkbmap", "-option", merged)
+		if exitCode != 0 || err != nil {
+			emitError("set-compose", fmt.Sprintf("setxkbmap failed: %v", err), "")
+			return
+		}
 	}
 
 	delta := map[string]interface{}{
 		"keyboard": map[string]interface{}{
-			"options": compose,
+			"options": merged,
 		},
 	}
 	if err := settings.SaveDelta(settingsPath, delta); err != nil {

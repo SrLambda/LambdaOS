@@ -50,13 +50,13 @@ func main() {
 		}
 		handleSetPosition(settingsPath, value)
 	case "set-primary":
-		primary := false
+		var value interface{}
 		if params != nil {
-			if v, ok := params["value"].(bool); ok {
-				primary = v
+			if v, ok := params["value"]; ok {
+				value = v
 			}
 		}
-		handleSetPrimary(settingsPath, primary)
+		handleSetPrimary(settingsPath, value)
 	case "save-profile":
 		name := ""
 		if params != nil {
@@ -335,12 +335,12 @@ func handleRun(settingsPath string) {
 	}
 
 	data := map[string]interface{}{
-		"session_type":    sessionType,
-		"outputs":         outputs,
-		"active_profile":  s.Display.ActiveProfile,
+		"session_type":   sessionType,
+		"outputs":        outputs,
+		"active_profile": s.Display.ActiveProfile,
 		"available_options": map[string]interface{}{
-			"set-mode":       modeOptions,
-			"load-profile":   profileNames,
+			"set-mode":     modeOptions,
+			"load-profile": profileNames,
 		},
 		"current_value": map[string]interface{}{
 			"load-profile": s.Display.ActiveProfile,
@@ -598,7 +598,7 @@ func handleSetPosition(settingsPath, value string) {
 	emit(resp)
 }
 
-func handleSetPrimary(settingsPath string, primary bool) {
+func handleSetPrimary(settingsPath string, value interface{}) {
 	sessionType, err := detectSessionType(executor)
 	if err != nil {
 		emitError("set-primary", fmt.Sprintf("detect session: %v", err), "")
@@ -616,30 +616,52 @@ func handleSetPrimary(settingsPath string, primary bool) {
 		return
 	}
 
-	var target string
-	for _, out := range outputs {
-		if out.Connected {
-			target = out.Name
-			if primary && out.Primary {
-				emitError("set-primary", fmt.Sprintf("%s is already primary", out.Name), "")
-				return
-			}
-			if !primary && !out.Primary {
-				target = out.Name
-			}
-		}
-	}
-	if target == "" {
-		emitError("set-primary", "no connected outputs found", "")
-		return
-	}
-
-	if primary {
-		_, _, exitCode, err := executor.Run("xrandr", "--output", target, "--primary")
-		if exitCode != 0 || err != nil {
-			emitError("set-primary", fmt.Sprintf("xrandr failed: %v", err), "")
+	requestedOutput := ""
+	switch v := value.(type) {
+	case bool:
+		if !v {
+			emitError("set-primary", "Cannot unset primary display — at least one output must be primary. Use set-primary to assign a different output.", "")
 			return
 		}
+	case string:
+		requestedOutput = v
+	}
+
+	var target string
+	if requestedOutput != "" {
+		valid := false
+		for _, out := range outputs {
+			if out.Connected && out.Name == requestedOutput {
+				valid = true
+				if out.Primary {
+					emitError("set-primary", fmt.Sprintf("%s is already primary", out.Name), "")
+					return
+				}
+				target = out.Name
+				break
+			}
+		}
+		if !valid {
+			emitError("set-primary", fmt.Sprintf("output %q is not connected", requestedOutput), "")
+			return
+		}
+	} else {
+		for _, out := range outputs {
+			if out.Connected && !out.Primary {
+				target = out.Name
+				break
+			}
+		}
+		if target == "" {
+			emitError("set-primary", "no connected non-primary outputs found", "")
+			return
+		}
+	}
+
+	_, _, exitCode, err := executor.Run("xrandr", "--output", target, "--primary")
+	if exitCode != 0 || err != nil {
+		emitError("set-primary", fmt.Sprintf("xrandr failed: %v", err), "")
+		return
 	}
 
 	resp := module.Response{

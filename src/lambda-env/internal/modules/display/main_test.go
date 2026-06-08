@@ -551,3 +551,179 @@ func TestHandleLoadProfileMissingOutput(t *testing.T) {
 		t.Errorf("expected warning about missing HDMI-1, got: %s", resp.Message)
 	}
 }
+
+func TestSetPrimaryFalseReturnsError(t *testing.T) {
+	mock := &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"which xrandr": {
+				Stdout:   "/usr/bin/xrandr\n",
+				ExitCode: 0,
+			},
+			"xrandr --query": {
+				Stdout: `eDP-1 connected primary 1920x1080+0+0
+   1920x1080     60.03 +
+HDMI-1 connected 1920x1080+1920+0
+   1920x1080     60.00 +
+`,
+				ExitCode: 0,
+			},
+		},
+	}
+	oldExecutor := executor
+	executor = mock
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	t.Setenv("XDG_SESSION_TYPE", "x11")
+	resp := captureDisplayResponse(t, "set-primary", `{"value":false}`, settingsPath)
+	if resp.Status != "error" {
+		t.Fatalf("expected status error, got %s", resp.Status)
+	}
+	if len(mock.Calls) != 2 {
+		t.Errorf("expected 2 calls, got %v", mock.Calls)
+	}
+}
+
+func TestSetPrimaryWithOutputName(t *testing.T) {
+	mock := &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"which xrandr": {
+				Stdout:   "/usr/bin/xrandr\n",
+				ExitCode: 0,
+			},
+			"xrandr --query": {
+				Stdout: `eDP-1 connected primary 1920x1080+0+0
+   1920x1080     60.03 +
+HDMI-1 connected 1920x1080+1920+0
+   1920x1080     60.00 +
+`,
+				ExitCode: 0,
+			},
+			"xrandr --output HDMI-1 --primary": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+		},
+	}
+	oldExecutor := executor
+	executor = mock
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	t.Setenv("XDG_SESSION_TYPE", "x11")
+	resp := captureDisplayResponse(t, "set-primary", `{"value":"HDMI-1"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	if !strings.Contains(resp.Message, "HDMI-1") {
+		t.Errorf("expected HDMI-1 in message, got: %s", resp.Message)
+	}
+	found := false
+	for _, call := range mock.Calls {
+		if call == "xrandr --output HDMI-1 --primary" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected xrandr --output HDMI-1 --primary to be called, got calls: %v", mock.Calls)
+	}
+}
+
+func TestSetPrimaryInvalidOutputName(t *testing.T) {
+	mock := &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"which xrandr": {
+				Stdout:   "/usr/bin/xrandr\n",
+				ExitCode: 0,
+			},
+			"xrandr --query": {
+				Stdout: `eDP-1 connected primary 1920x1080+0+0
+   1920x1080     60.03 +
+`,
+				ExitCode: 0,
+			},
+		},
+	}
+	oldExecutor := executor
+	executor = mock
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	t.Setenv("XDG_SESSION_TYPE", "x11")
+	resp := captureDisplayResponse(t, "set-primary", `{"value":"DP-1"}`, settingsPath)
+	if resp.Status != "error" {
+		t.Fatalf("expected status error, got %s", resp.Status)
+	}
+}
+
+func TestSetPrimaryNoValueFallsBack(t *testing.T) {
+	mock := &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"which xrandr": {
+				Stdout:   "/usr/bin/xrandr\n",
+				ExitCode: 0,
+			},
+			"xrandr --query": {
+				Stdout: `eDP-1 connected 1920x1080+0+0
+   1920x1080     60.03 +
+HDMI-1 connected 1920x1080+1920+0
+   1920x1080     60.00 +
+`,
+				ExitCode: 0,
+			},
+			"xrandr --output eDP-1 --primary": {
+				Stdout:   "",
+				ExitCode: 0,
+			},
+		},
+	}
+	oldExecutor := executor
+	executor = mock
+	defer func() { executor = oldExecutor }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	t.Setenv("XDG_SESSION_TYPE", "x11")
+	// No value provided — should fall back to first connected non-primary output.
+	resp := captureDisplayResponse(t, "set-primary", `{}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	if !strings.Contains(resp.Message, "eDP-1") {
+		t.Errorf("expected eDP-1 in message, got: %s", resp.Message)
+	}
+	found := false
+	for _, call := range mock.Calls {
+		if call == "xrandr --output eDP-1 --primary" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected xrandr --output eDP-1 --primary to be called, got calls: %v", mock.Calls)
+	}
+}

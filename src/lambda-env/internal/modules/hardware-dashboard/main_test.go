@@ -335,12 +335,12 @@ func TestHandleRunNeverEmitsSettingsDelta(t *testing.T) {
 	oldExecutor := executor
 	executor = &module.MockExecutor{
 		Responses: map[string]module.MockResponse{
-			"lscpu":      {Stdout: "CPU(s): 2\n", ExitCode: 0},
-			"free -m":    {Stdout: "Mem: 4096 1024 3072\n", ExitCode: 0},
-			"df -h /":    {Stdout: "Filesystem Size Used Avail Use%\n/dev/sda1 50G 10G 40G 20% /\n", ExitCode: 0},
-			"sensors":    {Stdout: "", ExitCode: 127},
-			"upower -d":  {Stdout: "", ExitCode: 1},
-			"uptime -p":  {Stdout: "up 10 minutes\n", ExitCode: 0},
+			"lscpu":     {Stdout: "CPU(s): 2\n", ExitCode: 0},
+			"free -m":   {Stdout: "Mem: 4096 1024 3072\n", ExitCode: 0},
+			"df -h /":   {Stdout: "Filesystem Size Used Avail Use%\n/dev/sda1 50G 10G 40G 20% /\n", ExitCode: 0},
+			"sensors":   {Stdout: "", ExitCode: 127},
+			"upower -d": {Stdout: "", ExitCode: 1},
+			"uptime -p": {Stdout: "up 10 minutes\n", ExitCode: 0},
 		},
 	}
 	defer func() { executor = oldExecutor }()

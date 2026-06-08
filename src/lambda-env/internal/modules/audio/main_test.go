@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -705,5 +706,176 @@ func TestSetAppVolumeInvalidFormat(t *testing.T) {
 	resp := captureAudioResponse(t, "set-app-volume", `{"value":"invalid"}`, settingsPath)
 	if resp.Status != "error" {
 		t.Fatalf("expected status error, got %s", resp.Status)
+	}
+}
+
+func TestDiscoverPerAppVolumesReal(t *testing.T) {
+	oldExecutor := executor
+	defer func() { executor = oldExecutor }()
+
+	mock := &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"wpctl status": {
+				Stdout: "PipeWire 'pipewire-0' [0.3.48]\n" +
+					" \u2514\u2500 Clients:\n" +
+					" \u2514\u2500 Sinks:\n" +
+					" \u2514\u2500 Sources:\n" +
+					" \u2514\u2500 Streams:\n" +
+					"        55. firefox       [Stream/Output/Audio]\n" +
+					"        56. spotify       [Stream/Output/Audio]\n",
+				ExitCode: 0,
+			},
+			"wpctl inspect 55": {
+				Stdout: "id: 55\n" +
+					"  Volume: 0.40\n" +
+					"  Mute: 0\n",
+				ExitCode: 0,
+			},
+			"wpctl inspect 56": {
+				Stdout: "id: 56\n" +
+					"  Volume: 0.75\n" +
+					"  Mute: 0\n",
+				ExitCode: 0,
+			},
+		},
+	}
+	executor = mock
+
+	apps, warning, err := discoverPerAppVolumes(executor)
+	if err != nil {
+		t.Fatalf("discoverPerAppVolumes error: %v", err)
+	}
+	if warning != "" {
+		t.Errorf("unexpected warning: %s", warning)
+	}
+	if len(apps) != 2 {
+		t.Fatalf("expected 2 apps, got %d", len(apps))
+	}
+	if apps[0].ID != "55" || apps[0].Name != "firefox" {
+		t.Errorf("app[0] = %+v", apps[0])
+	}
+	if apps[0].Volume != 0.40 {
+		t.Errorf("app[0].Volume = %v, want 0.40", apps[0].Volume)
+	}
+	if apps[1].ID != "56" || apps[1].Name != "spotify" {
+		t.Errorf("app[1] = %+v", apps[1])
+	}
+	if apps[1].Volume != 0.75 {
+		t.Errorf("app[1].Volume = %v, want 0.75", apps[1].Volume)
+	}
+
+	wantCalls := []string{
+		"wpctl status",
+		"wpctl inspect 55",
+		"wpctl inspect 56",
+	}
+	if len(mock.Calls) != len(wantCalls) {
+		t.Errorf("calls = %v, want %v", mock.Calls, wantCalls)
+	} else {
+		for i := range mock.Calls {
+			if mock.Calls[i] != wantCalls[i] {
+				t.Errorf("call[%d] = %q, want %q", i, mock.Calls[i], wantCalls[i])
+			}
+		}
+	}
+}
+
+func TestSetProfileAppliesHardware(t *testing.T) {
+	oldExecutor := executor
+	defer func() { executor = oldExecutor }()
+
+	tests := []struct {
+		name      string
+		profile   settings.AudioProfile
+		wantCalls []string
+		wantDelta map[string]interface{}
+	}{
+		{
+			name: "profile with sink source volume",
+			profile: settings.AudioProfile{
+				Name:          "Headphones",
+				DefaultSink:   "alsa_output.usb",
+				DefaultSource: "alsa_input.usb",
+				Volume:        80,
+			},
+			wantCalls: []string{
+				"pactl set-default-sink alsa_output.usb",
+				"pactl set-default-source alsa_input.usb",
+				"pactl set-sink-volume alsa_output.usb 80%",
+			},
+			wantDelta: map[string]interface{}{
+				"profile":        "Headphones",
+				"default_sink":   "alsa_output.usb",
+				"default_source": "alsa_input.usb",
+				"volume":         float64(80),
+			},
+		},
+		{
+			name: "profile with no fields",
+			profile: settings.AudioProfile{
+				Name: "Empty",
+			},
+			wantCalls: []string{},
+			wantDelta: map[string]interface{}{
+				"profile": "Empty",
+			},
+		},
+		{
+			name: "clear profile",
+			profile: settings.AudioProfile{
+				Name: "",
+			},
+			wantCalls: []string{},
+			wantDelta: map[string]interface{}{
+				"profile": "",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &module.MockExecutor{
+				Responses: map[string]module.MockResponse{},
+			}
+			for _, cmd := range tt.wantCalls {
+				mock.Responses[cmd] = module.MockResponse{Stdout: "", ExitCode: 0}
+			}
+			executor = mock
+
+			tmpDir := t.TempDir()
+			settingsPath := filepath.Join(tmpDir, "settings.json")
+			s := settings.Defaults()
+			if tt.profile.Name != "" {
+				s.Audio.Profiles = []settings.AudioProfile{tt.profile}
+			}
+			if err := settings.Save(settingsPath, &s); err != nil {
+				t.Fatalf("Save: %v", err)
+			}
+
+			value := tt.profile.Name
+			resp := captureAudioResponse(t, "set-profile", fmt.Sprintf(`{"value":"%s"}`, value), settingsPath)
+			if resp.Status != "ok" {
+				t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+			}
+			delta, ok := resp.SettingsDelta["audio"].(map[string]interface{})
+			if !ok {
+				t.Fatalf("expected audio delta")
+			}
+			for k, v := range tt.wantDelta {
+				if delta[k] != v {
+					t.Errorf("delta[%s] = %v, want %v", k, delta[k], v)
+				}
+			}
+
+			if len(mock.Calls) != len(tt.wantCalls) {
+				t.Errorf("calls = %v, want %v", mock.Calls, tt.wantCalls)
+			} else {
+				for i := range mock.Calls {
+					if mock.Calls[i] != tt.wantCalls[i] {
+						t.Errorf("call[%d] = %q, want %q", i, mock.Calls[i], tt.wantCalls[i])
+					}
+				}
+			}
+		})
 	}
 }

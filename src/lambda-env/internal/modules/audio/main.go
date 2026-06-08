@@ -172,6 +172,22 @@ type perAppVolume struct {
 
 // discoverPerAppVolumes attempts to list per-application volumes using wpctl.
 // This is best-effort and only works when PipeWire is the backend.
+func parseWpctlVolume(stdout string) float64 {
+	for _, line := range strings.Split(stdout, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "Volume:") {
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				v, err := strconv.ParseFloat(strings.TrimSuffix(parts[1], ","), 64)
+				if err == nil {
+					return v
+				}
+			}
+		}
+	}
+	return 0
+}
+
 func discoverPerAppVolumes(exe module.CLIExecutor) ([]perAppVolume, string, error) {
 	stdout, _, exitCode, err := exe.Run("wpctl", "status")
 	if exitCode != 0 || err != nil {
@@ -198,10 +214,15 @@ func discoverPerAppVolumes(exe module.CLIExecutor) ([]perAppVolume, string, erro
 				idStr := strings.TrimSuffix(parts[0], ".")
 				name := parts[1]
 				if idStr != "" && name != "" {
+					volume := 0.0
+					inspectStdout, _, inspectExitCode, inspectErr := exe.Run("wpctl", "inspect", idStr)
+					if inspectExitCode == 0 && inspectErr == nil {
+						volume = parseWpctlVolume(inspectStdout)
+					}
 					apps = append(apps, perAppVolume{
 						ID:     idStr,
 						Name:   name,
-						Volume: 0, // wpctl status doesn't show volume; we'd need inspect
+						Volume: volume,
 					})
 				}
 			}
@@ -270,11 +291,11 @@ func handleRun(settingsPath string) {
 			"set-profile": profileNames,
 		},
 		"current_value": map[string]interface{}{
-			"set-volume":   s.Audio.Volume,
-			"set-mute":     s.Audio.Muted,
-			"set-sink":     s.Audio.DefaultSink,
-			"set-source":   s.Audio.DefaultSource,
-			"set-profile":  s.Audio.Profile,
+			"set-volume":  s.Audio.Volume,
+			"set-mute":    s.Audio.Muted,
+			"set-sink":    s.Audio.DefaultSink,
+			"set-source":  s.Audio.DefaultSource,
+			"set-profile": s.Audio.Profile,
 		},
 	}
 	if perAppWarning != "" {
@@ -483,12 +504,13 @@ func handleSetProfile(settingsPath, profile string) {
 		return
 	}
 
-	// Validate profile exists (empty means clear profile).
+	var matchedProfile *settings.AudioProfile
 	if profile != "" {
 		found := false
-		for _, p := range s.Audio.Profiles {
+		for i, p := range s.Audio.Profiles {
 			if p.Name == profile {
 				found = true
+				matchedProfile = &s.Audio.Profiles[i]
 				break
 			}
 		}
@@ -498,10 +520,47 @@ func handleSetProfile(settingsPath, profile string) {
 		}
 	}
 
+	audioDelta := map[string]interface{}{
+		"profile": profile,
+	}
+
+	if matchedProfile != nil {
+		if matchedProfile.DefaultSink != "" {
+			_, _, exitCode, err := executor.Run("pactl", "set-default-sink", matchedProfile.DefaultSink)
+			if exitCode != 0 || err != nil {
+				emitError("set-profile", fmt.Sprintf("pactl set-default-sink failed: %v", err), "")
+				return
+			}
+			audioDelta["default_sink"] = matchedProfile.DefaultSink
+		}
+		if matchedProfile.DefaultSource != "" {
+			_, _, exitCode, err := executor.Run("pactl", "set-default-source", matchedProfile.DefaultSource)
+			if exitCode != 0 || err != nil {
+				emitError("set-profile", fmt.Sprintf("pactl set-default-source failed: %v", err), "")
+				return
+			}
+			audioDelta["default_source"] = matchedProfile.DefaultSource
+		}
+		if matchedProfile.Volume > 0 {
+			sink := s.Audio.DefaultSink
+			if matchedProfile.DefaultSink != "" {
+				sink = matchedProfile.DefaultSink
+			}
+			if sink == "" {
+				emitError("set-profile", "no default sink configured to apply volume", "")
+				return
+			}
+			_, _, exitCode, err := executor.Run("pactl", "set-sink-volume", sink, fmt.Sprintf("%d%%", matchedProfile.Volume))
+			if exitCode != 0 || err != nil {
+				emitError("set-profile", fmt.Sprintf("pactl set-sink-volume failed: %v", err), "")
+				return
+			}
+			audioDelta["volume"] = matchedProfile.Volume
+		}
+	}
+
 	delta := map[string]interface{}{
-		"audio": map[string]interface{}{
-			"profile": profile,
-		},
+		"audio": audioDelta,
 	}
 	if err := settings.SaveDelta(settingsPath, delta); err != nil {
 		emitError("set-profile", fmt.Sprintf("save delta: %v", err), "")

@@ -361,3 +361,146 @@ func TestReadSysBattery(t *testing.T) {
 		t.Errorf("state = %v, want charging", battery["state"])
 	}
 }
+
+func TestSetSleepTimeoutAppliesToSystemd(t *testing.T) {
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	sleepFile := filepath.Join(tmpDir, "sleep.conf")
+	if err := os.WriteFile(sleepFile, []byte(""), 0644); err != nil {
+		t.Fatalf("write sleep.conf: %v", err)
+	}
+	oldSleepPath := sleepConfPath
+	sleepConfPath = sleepFile
+	defer func() { sleepConfPath = oldSleepPath }()
+
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"systemctl --version": {
+				Stdout:   "systemd 256 (256.7-2-arch)\n+PAM +AUDIT -SELINUX ...\n",
+				ExitCode: 0,
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	resp := capturePowerResponse(t, "set-sleep-timeout", `{"value":"1800"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+
+	data, err := os.ReadFile(sleepFile)
+	if err != nil {
+		t.Fatalf("read sleep.conf: %v", err)
+	}
+	if !strings.Contains(string(data), "SleepTimeout=1800") {
+		t.Errorf("sleep.conf missing SleepTimeout=1800: %s", string(data))
+	}
+
+	loaded, err := settings.Load(settingsPath)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if loaded.Power.SleepTimeout != 1800 {
+		t.Errorf("Power.SleepTimeout = %d, want 1800", loaded.Power.SleepTimeout)
+	}
+}
+
+func TestSetSleepTimeoutBelowScreenWarns(t *testing.T) {
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	s.Power.ScreenTimeout = 600
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	oldSleepPath := sleepConfPath
+	sleepConfPath = filepath.Join(tmpDir, "nonexistent")
+	defer func() { sleepConfPath = oldSleepPath }()
+
+	resp := capturePowerResponse(t, "set-sleep-timeout", `{"value":"300"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	if !strings.Contains(resp.Message, "warning") {
+		t.Errorf("expected warning in message, got: %s", resp.Message)
+	}
+
+	loaded, err := settings.Load(settingsPath)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if loaded.Power.SleepTimeout != 300 {
+		t.Errorf("Power.SleepTimeout = %d, want 300", loaded.Power.SleepTimeout)
+	}
+}
+
+func TestSetSleepTimeoutGracefulDegradation(t *testing.T) {
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	oldSleepPath := sleepConfPath
+	sleepConfPath = filepath.Join(tmpDir, "nonexistent", "sleep.conf")
+	defer func() { sleepConfPath = oldSleepPath }()
+
+	resp := capturePowerResponse(t, "set-sleep-timeout", `{"value":"1800"}`, settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	if !strings.Contains(resp.Message, "requires systemd >= 255") {
+		t.Errorf("expected graceful degradation note, got: %s", resp.Message)
+	}
+
+	loaded, err := settings.Load(settingsPath)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if loaded.Power.SleepTimeout != 1800 {
+		t.Errorf("Power.SleepTimeout = %d, want 1800", loaded.Power.SleepTimeout)
+	}
+}
+
+func TestHandleRunSleepTimeoutWarning(t *testing.T) {
+	oldExecutor := executor
+	executor = &module.MockExecutor{
+		Responses: map[string]module.MockResponse{
+			"upower -d": {
+				Stdout:   "",
+				ExitCode: 1,
+				Stderr:   "No battery",
+			},
+		},
+	}
+	defer func() { executor = oldExecutor }()
+
+	oldPath := sysBatteryPath
+	sysBatteryPath = filepath.Join(t.TempDir(), "nonexistent")
+	defer func() { sysBatteryPath = oldPath }()
+
+	tmpDir := t.TempDir()
+	settingsPath := filepath.Join(tmpDir, "settings.json")
+	s := settings.Defaults()
+	s.Power.ScreenTimeout = 600
+	s.Power.SleepTimeout = 300
+	if err := settings.Save(settingsPath, &s); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	resp := capturePowerResponse(t, "run", "", settingsPath)
+	if resp.Status != "ok" {
+		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+	}
+	if resp.Data["sleep_timeout_warning"] == nil {
+		t.Error("expected sleep_timeout_warning in response data")
+	}
+}

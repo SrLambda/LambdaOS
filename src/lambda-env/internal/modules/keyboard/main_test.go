@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -543,4 +544,95 @@ func TestSetOptionsClearsBeforeApplying(t *testing.T) {
 		t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
 	}
 	// The clear command was executed (mock key matched), so this passes if no mock miss.
+}
+
+func TestSetComposePreservesOtherOptions(t *testing.T) {
+	oldExecutor := executor
+	defer func() { executor = oldExecutor }()
+
+	tests := []struct {
+		name         string
+		queryOptions string
+		compose      string
+		wantOptions  string
+		wantCalls    []string
+	}{
+		{
+			name:         "add compose to existing options",
+			queryOptions: "caps:swapescape",
+			compose:      "compose:ralt",
+			wantOptions:  "caps:swapescape,compose:ralt",
+			wantCalls: []string{
+				"setxkbmap -query",
+				"setxkbmap -option \"\"",
+				"setxkbmap -option caps:swapescape,compose:ralt",
+			},
+		},
+		{
+			name:         "replace existing compose key",
+			queryOptions: "caps:swapescape,compose:ralt",
+			compose:      "compose:caps",
+			wantOptions:  "caps:swapescape,compose:caps",
+			wantCalls: []string{
+				"setxkbmap -query",
+				"setxkbmap -option \"\"",
+				"setxkbmap -option caps:swapescape,compose:caps",
+			},
+		},
+		{
+			name:         "already present is no-op",
+			queryOptions: "caps:swapescape,compose:ralt",
+			compose:      "compose:ralt",
+			wantOptions:  "caps:swapescape,compose:ralt",
+			wantCalls: []string{
+				"setxkbmap -query",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mock := &module.MockExecutor{
+				Responses: map[string]module.MockResponse{
+					"setxkbmap -query": {
+						Stdout:   fmt.Sprintf("layout: us\noptions: %s\n", tt.queryOptions),
+						ExitCode: 0,
+					},
+				},
+			}
+			for _, cmd := range tt.wantCalls {
+				if cmd == "setxkbmap -query" {
+					continue
+				}
+				mock.Responses[cmd] = module.MockResponse{Stdout: "", ExitCode: 0}
+			}
+			executor = mock
+
+			tmpDir := t.TempDir()
+			settingsPath := filepath.Join(tmpDir, "settings.json")
+			s := settings.Defaults()
+			if err := settings.Save(settingsPath, &s); err != nil {
+				t.Fatalf("Save: %v", err)
+			}
+
+			resp := captureKeyboardResponse(t, "set-compose", fmt.Sprintf(`{"value":"%s"}`, tt.compose), settingsPath)
+			if resp.Status != "ok" {
+				t.Fatalf("expected status ok, got %s: %s", resp.Status, resp.Message)
+			}
+			delta, ok := resp.SettingsDelta["keyboard"].(map[string]interface{})
+			if !ok || delta["options"] != tt.wantOptions {
+				t.Errorf("settings delta options = %v, want %s", delta["options"], tt.wantOptions)
+			}
+
+			if len(mock.Calls) != len(tt.wantCalls) {
+				t.Errorf("calls = %v, want %v", mock.Calls, tt.wantCalls)
+			} else {
+				for i := range mock.Calls {
+					if mock.Calls[i] != tt.wantCalls[i] {
+						t.Errorf("call[%d] = %q, want %q", i, mock.Calls[i], tt.wantCalls[i])
+					}
+				}
+			}
+		})
+	}
 }

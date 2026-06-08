@@ -114,6 +114,32 @@ func updateLogindConfKey(data, key, value string) string {
 	return data + "\n[Login]\n" + line + "\n"
 }
 
+var sleepConfPath = "/etc/systemd/sleep.conf"
+
+func updateSleepConfKey(data, key, value string) string {
+	re := regexp.MustCompile(`(?m)^` + regexp.QuoteMeta(key) + `\s*=.*$`)
+	line := key + "=" + value
+	if re.MatchString(data) {
+		return re.ReplaceAllString(data, line)
+	}
+	if strings.Contains(data, "[Sleep]") {
+		return strings.Replace(data, "[Sleep]", "[Sleep]\n"+line, 1)
+	}
+	return data + "\n[Sleep]\n" + line + "\n"
+}
+
+func getSystemdVersion(exe module.CLIExecutor) (int, error) {
+	stdout, _, exitCode, err := exe.Run("systemctl", "--version")
+	if exitCode != 0 || err != nil {
+		return 0, err
+	}
+	re := regexp.MustCompile(`(?m)^systemd\s+(\d+)`)
+	if m := re.FindStringSubmatch(stdout); len(m) > 1 {
+		return strconv.Atoi(m[1])
+	}
+	return 0, fmt.Errorf("unable to parse systemd version")
+}
+
 func readBatteryStatus(exe module.CLIExecutor) (map[string]interface{}, string) {
 	// Try upower first.
 	stdout, _, exitCode, execErr := exe.Run("upower", "-d")
@@ -226,13 +252,13 @@ func handleRun(settingsPath string) {
 	battery, batteryWarning := readBatteryStatus(executor)
 
 	data := map[string]interface{}{
-		"screen_timeout":  screenTimeout,
-		"sleep_timeout":   sleepTimeout,
+		"screen_timeout":   screenTimeout,
+		"sleep_timeout":    sleepTimeout,
 		"lid_close_action": lidAction,
 		"current_value": map[string]interface{}{
-			"set-screen-timeout":    screenTimeout,
-			"set-sleep-timeout":     sleepTimeout,
-			"set-lid-close-action":  lidAction,
+			"set-screen-timeout":   screenTimeout,
+			"set-sleep-timeout":    sleepTimeout,
+			"set-lid-close-action": lidAction,
 		},
 		"available_options": map[string]interface{}{
 			"set-lid-close-action": allowedLidActions,
@@ -243,6 +269,9 @@ func handleRun(settingsPath string) {
 	}
 	if batteryWarning != "" {
 		data["battery_warning"] = batteryWarning
+	}
+	if sleepTimeout <= screenTimeout {
+		data["sleep_timeout_warning"] = "sleep timeout is less than or equal to screen timeout; display may not sleep before system does"
 	}
 
 	resp := module.Response{
@@ -299,9 +328,33 @@ func handleSetSleepTimeout(settingsPath, timeoutStr string) {
 		return
 	}
 
-	// Note: there is no standard standalone systemd key for sleep timeout separate from
-	// idle action. We persist the value in settings and document that applying it to
-	// the system may require root and manual configuration.
+	s, err := settings.Load(settingsPath)
+	if err != nil {
+		emitError("set-sleep-timeout", fmt.Sprintf("load settings: %v", err), "")
+		return
+	}
+
+	// Best-effort application to systemd sleep.conf.
+	// SleepTimeout is supported in systemd >= 255; older versions or missing sleep.conf
+	// gracefully degrade to settings-only persistence.
+	data, readErr := os.ReadFile(sleepConfPath)
+	if readErr == nil {
+		systemdVersion, _ := getSystemdVersion(executor)
+		if systemdVersion >= 255 {
+			updated := updateSleepConfKey(string(data), "SleepTimeout", strconv.Itoa(timeout))
+			writeErr := os.WriteFile(sleepConfPath, []byte(updated), 0644)
+			if writeErr == nil {
+				confirmData, confirmErr := os.ReadFile(sleepConfPath)
+				if confirmErr != nil || !strings.Contains(string(confirmData), "SleepTimeout="+strconv.Itoa(timeout)) {
+					readErr = fmt.Errorf("SleepTimeout not confirmed in sleep.conf")
+				}
+			} else {
+				readErr = writeErr
+			}
+		} else {
+			readErr = fmt.Errorf("systemd version %d does not support SleepTimeout", systemdVersion)
+		}
+	}
 
 	delta := map[string]interface{}{
 		"power": map[string]interface{}{
@@ -313,11 +366,19 @@ func handleSetSleepTimeout(settingsPath, timeoutStr string) {
 		return
 	}
 
+	msg := fmt.Sprintf("Sleep timeout set to %d seconds", timeout)
+	if readErr != nil {
+		msg += " (requires systemd >= 255 with sleep.conf to apply to system)"
+	}
+	if timeout < s.Power.ScreenTimeout {
+		msg += fmt.Sprintf(" (warning: sleep timeout %d is less than screen timeout %d)", timeout, s.Power.ScreenTimeout)
+	}
+
 	resp := module.Response{
 		Status:        "ok",
 		Action:        "set-sleep-timeout",
 		SettingsDelta: delta,
-		Message:       fmt.Sprintf("Sleep timeout set to %d seconds", timeout),
+		Message:       msg,
 	}
 	emit(resp)
 }
