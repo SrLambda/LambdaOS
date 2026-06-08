@@ -1,0 +1,50 @@
+{
+  "name": "defaults",
+  "version": "0.1.0",
+  "description": "Configure default applications: browser, terminal, editor, file manager",
+  "description_es": "Configurar aplicaciones por defecto: navegador, terminal, editor, gestor de archivos",
+  "category": "system",
+  "requires_root": false,
+  "dependencies": ["xdg-mime", "xdg-settings"],
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "run",
+      "label": "Refresh",
+      "type": "execute"
+    },
+    {
+      "name": "set-browser",
+      "label": "Default Browser",
+      "type": "select",
+      "field": "defaults.browser",
+      "options": ["firefox", "chromium", "brave", "chrome"]
+    },
+    {
+      "name": "set-terminal",
+      "label": "Default Terminal",
+      "type": "select",
+      "field": "defaults.terminal",
+      "options": ["kitty", "foot", "alacritty", "st", "xterm"]
+    },
+    {
+      "name": "set-editor",
+      "label": "Default Editor",
+      "type": "select",
+      "field": "defaults.editor",
+      "options": ["nvim", "vim", "nano", "emacs", "code"]
+    },
+    {
+      "name": "set-file-manager",
+      "label": "Default File Manager",
+      "type": "select",
+      "field": "defaults.file_manager",
+      "options": ["thunar", "pcmanfm", "nautilus", "dolphin"]
+    },
+    {
+      "name": "apply",
+      "label": "Apply to System",
+      "type": "confirm"
+    }
+  ]
+}

@@ -5,3 +5,9 @@ tmp/
 __pycache__/
 .pytest_cache/
 *.pyc
+# Local Pi runtime state
+.atl/
+.pi/
+# Compiled Go binaries
+src/lambda-env/lambda-env
+src/lambda-env/internal/modules/*/module

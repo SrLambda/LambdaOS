@@ -84,7 +84,7 @@ func TestDiscoveryWithFixtures(t *testing.T) {
 		t.Fatalf("save settings: %v", err)
 	}
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}
@@ -128,7 +128,7 @@ func TestModuleExecutionAndJSONParse(t *testing.T) {
 		t.Fatalf("save settings: %v", err)
 	}
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}
@@ -181,7 +181,7 @@ func TestSettingsDeltaMerge(t *testing.T) {
 		t.Fatalf("save settings: %v", err)
 	}
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}
@@ -235,7 +235,7 @@ func TestExecutionLog(t *testing.T) {
 		t.Fatalf("save settings: %v", err)
 	}
 
-	h, err := hub.New(settingsPath)
+	h, err := hub.New(settingsPath, false)
 	if err != nil {
 		t.Fatalf("hub.New: %v", err)
 	}

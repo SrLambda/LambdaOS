@@ -1,0 +1,17 @@
+{
+  "name": "hardware-dashboard",
+  "version": "0.1.0",
+  "description": "Hardware status overview — CPU, RAM, disk, temperatures, battery",
+  "description_es": "Resumen de hardware — CPU, RAM, disco, temperaturas, batería",
+  "category": "system",
+  "requires_root": false,
+  "dependencies": ["lscpu", "free", "df", "sensors", "upower"],
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "run",
+      "label": "Refresh",
+      "type": "execute"
+    }
+  ]
+}

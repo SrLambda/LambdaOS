@@ -1,0 +1,60 @@
+# Maintainer: LambdaOS Team <packages@lambdaos.local>
+pkgname=lambdaos-tui
+pkgver=0.2.0
+pkgrel=1
+pkgdesc="TUI configuration suite for LambdaOS"
+arch=('x86_64')
+license=('MIT')
+url="https://github.com/lambdaos/lambdaos"
+depends=('glibc' 'stow' 'qtile' 'neovim')
+makedepends=('go')
+# Git source allows SKIP for sha256sums since integrity is verified via git tag
+source=("${pkgname}::git+file://${PWD}/../..#tag=v${pkgver}")
+sha256sums=('SKIP')
+
+build() {
+    cd "${pkgname}/src/lambda-env"
+    export CGO_ENABLED=0
+    export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw"
+
+    # Build hub binary
+    go build -o lambda-env ./cmd/lambda-env
+
+    # Build module binaries
+    go build -o lambda-env-module-neovim ./internal/modules/neovim/
+    go build -o lambda-env-module-qtile ./internal/modules/qtile/
+    go build -o lambda-env-module-dotfiles ./internal/modules/dotfiles/
+}
+
+check() {
+    cd "${pkgname}/src/lambda-env"
+    go test ./...
+}
+
+package() {
+    cd "${pkgname}/src/lambda-env"
+
+    # Install hub binary
+    install -Dm755 lambda-env "${pkgdir}/usr/bin/lambda-env"
+
+    # Install module binaries
+    install -dm755 "${pkgdir}/usr/share/lambda-env/modules/neovim"
+    install -Dm755 lambda-env-module-neovim "${pkgdir}/usr/share/lambda-env/modules/neovim/module"
+
+    install -dm755 "${pkgdir}/usr/share/lambda-env/modules/qtile"
+    install -Dm755 lambda-env-module-qtile "${pkgdir}/usr/share/lambda-env/modules/qtile/module"
+
+    install -dm755 "${pkgdir}/usr/share/lambda-env/modules/dotfiles"
+    install -Dm755 lambda-env-module-dotfiles "${pkgdir}/usr/share/lambda-env/modules/dotfiles/module"
+
+    # Install module manifests
+    install -Dm644 internal/modules/neovim/manifest.json "${pkgdir}/usr/share/lambda-env/modules/neovim/manifest.json"
+    install -Dm644 internal/modules/qtile/manifest.json "${pkgdir}/usr/share/lambda-env/modules/qtile/manifest.json"
+    install -Dm644 internal/modules/dotfiles/manifest.json "${pkgdir}/usr/share/lambda-env/modules/dotfiles/manifest.json"
+
+    # Install default settings
+    install -Dm644 "${srcdir}/settings.json" "${pkgdir}/etc/lambdaos/settings.json"
+
+    # Create log directory
+    install -dm755 "${pkgdir}/var/log/lambda-env"
+}

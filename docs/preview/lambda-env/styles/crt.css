@@ -1,0 +1,129 @@
+/* CRT / Terminal Effects */
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes flicker {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; }
+  20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.92; }
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { text-shadow: 0 0 4px #6D40FF, 0 0 8px #6D40FF; }
+  50% { text-shadow: 0 0 8px #6D40FF, 0 0 16px #6D40FF, 0 0 24px #6D40FF; }
+}
+
+@keyframes boot-in {
+  0% { opacity: 0; transform: scaleY(0.01); filter: brightness(4); }
+  10% { opacity: 1; transform: scaleY(0.02); filter: brightness(3); }
+  30% { transform: scaleY(1); filter: brightness(1.5); }
+  100% { transform: scaleY(1); filter: brightness(1); }
+}
+
+@keyframes type-in {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes noise {
+  0%, 100% { background-position: 0 0; }
+  10% { background-position: -1% -1%; }
+  20% { background-position: 1% 1%; }
+  30% { background-position: 0 -1%; }
+  40% { background-position: -1% 0; }
+  50% { background-position: 1% -1%; }
+  60% { background-position: -1% 1%; }
+  70% { background-position: 0 1%; }
+  80% { background-position: 1% 0; }
+  90% { background-position: -1% -1%; }
+}
+
+@keyframes phosphor-fade {
+  0% { opacity: 1; }
+  100% { opacity: 0.85; }
+}
+
+.crt-screen {
+  animation: boot-in 0.5s ease-out, flicker 12s infinite 1s;
+  position: relative;
+}
+
+.crt-screen::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.04) 3px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.crt-screen::after {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(transparent, rgba(125, 86, 244, 0.05), transparent);
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+  z-index: 9998;
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.glow-text {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.tui-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.tui-scrollbar::-webkit-scrollbar-track {
+  background: #000;
+  border-left: 1px solid #6D40FF;
+}
+.tui-scrollbar::-webkit-scrollbar-thumb {
+  background: #6D40FF;
+}
+.tui-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #8B6FFF;
+}
+
+.tui-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: #1a0a3d;
+  outline: none;
+  border: 1px solid #6D40FF;
+}
+.tui-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #000;
+  border: 2px solid #6D40FF;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(109,64,255,0.8);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+.tui-slider::-webkit-slider-thumb:hover {
+  background: #6D40FF;
+}

@@ -1,0 +1,19 @@
+post_install() {
+    echo "==> Creating default config directory..."
+    if [ ! -f /etc/lambdaos/settings.json ]; then
+        echo "==> Default settings already exist at /etc/lambdaos/settings.json"
+    fi
+    echo "==> lambdaos-tui installed successfully."
+    echo "==> Run 'lambda-env' to start the TUI."
+    echo "==> User settings will be created at ~/.config/lambdaos/settings.json on first run."
+}
+
+post_upgrade() {
+    post_install
+    echo "==> lambdaos-tui upgraded to $2."
+}
+
+pre_remove() {
+    echo "==> lambdaos-tui is being removed."
+    echo "==> User settings at ~/.config/lambdaos/settings.json are preserved."
+}

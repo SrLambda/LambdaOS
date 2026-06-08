@@ -8,10 +8,11 @@ import (
 	"sort"
 	"strings"
 
+	"lambdaos.dev/lambda-env/internal/tui/icons"
 	"lambdaos.dev/lambda-env/pkg/module"
 )
 
-const (
+var (
 	// SystemModulesPath is the system-wide module directory.
 	SystemModulesPath = "/usr/share/lambda-env/modules"
 	// UserModulesPath is the user-specific module directory.
@@ -21,8 +22,8 @@ const (
 // Scan discovers modules from system and user paths.
 // User modules override system modules with the same name.
 // Results are sorted by category, then name.
-func Scan() ([]module.Manifest, error) {
-	system, err := scanPath(SystemModulesPath)
+func Scan(provider icons.IconProvider) ([]module.Manifest, error) {
+	system, err := scanPath(SystemModulesPath, provider)
 	if err != nil {
 		// Non-fatal: system path may not exist.
 		if !os.IsNotExist(err) {
@@ -31,7 +32,7 @@ func Scan() ([]module.Manifest, error) {
 	}
 
 	userPath := expandHome(UserModulesPath)
-	user, err := scanPath(userPath)
+	user, err := scanPath(userPath, provider)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -62,7 +63,7 @@ func Scan() ([]module.Manifest, error) {
 	return result, nil
 }
 
-func scanPath(base string) ([]module.Manifest, error) {
+func scanPath(base string, provider icons.IconProvider) ([]module.Manifest, error) {
 	entries, err := os.ReadDir(base)
 	if err != nil {
 		return nil, err
@@ -96,6 +97,7 @@ func scanPath(base string) ([]module.Manifest, error) {
 		}
 
 		m.Path = filepath.Join(base, entry.Name())
+		m.Icon = provider.ForModule(m.Name)
 		manifests = append(manifests, m)
 	}
 

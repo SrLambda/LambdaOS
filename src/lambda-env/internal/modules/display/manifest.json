@@ -1,0 +1,48 @@
+{
+  "name": "display",
+  "version": "0.1.0",
+  "description": "Configure displays: detect monitors, set resolution, position, primary output, and manage display profiles",
+  "description_es": "Configurar pantallas: detectar monitores, resolución, posición, salida primaria y perfiles",
+  "category": "system",
+  "requires_root": false,
+  "dependencies": ["xrandr", "wlr-randr"],
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "run",
+      "label": "Refresh",
+      "type": "execute"
+    },
+    {
+      "name": "set-mode",
+      "label": "Resolution",
+      "type": "select",
+      "field": "display.mode",
+      "options": ["auto"]
+    },
+    {
+      "name": "set-position",
+      "label": "Position",
+      "type": "text",
+      "field": "display.position"
+    },
+    {
+      "name": "set-primary",
+      "label": "Primary",
+      "type": "toggle"
+    },
+    {
+      "name": "save-profile",
+      "label": "Save Profile",
+      "type": "text",
+      "field": "display.active_profile"
+    },
+    {
+      "name": "load-profile",
+      "label": "Load Profile",
+      "type": "select",
+      "field": "display.active_profile",
+      "options": ["default"]
+    }
+  ]
+}

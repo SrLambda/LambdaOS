@@ -1,0 +1,42 @@
+{
+  "name": "neovim",
+  "version": "0.1.0",
+  "description": "Configure Neovim: toggles for LSP, Copilot, Neo-tree, and theme",
+  "description_es": "Configurar Neovim: toggles para LSP, Copilot, Neo-tree y tema",
+  "category": "apps",
+  "requires_root": false,
+  "dependencies": ["neovim"],
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "toggle-lsp",
+      "label": "Enable LSP",
+      "type": "toggle",
+      "field": "neovim.enable_lsp"
+    },
+    {
+      "name": "toggle-copilot",
+      "label": "Enable Copilot",
+      "type": "toggle",
+      "field": "neovim.enable_copilot"
+    },
+    {
+      "name": "toggle-neotree",
+      "label": "Enable Neo-tree",
+      "type": "toggle",
+      "field": "neovim.enable_neotree"
+    },
+    {
+      "name": "set-theme",
+      "label": "Theme",
+      "type": "select",
+      "field": "neovim.theme",
+      "options": ["tokyonight", "gruvbox", "catppuccin", "nord"]
+    },
+    {
+      "name": "apply",
+      "label": "Apply Configuration",
+      "type": "execute"
+    }
+  ]
+}

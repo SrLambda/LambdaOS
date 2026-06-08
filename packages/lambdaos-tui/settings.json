@@ -1,0 +1,63 @@
+{
+  "version": "1.0.0",
+  "appearance": {
+    "theme": "dark",
+    "font_size": 14,
+    "opacity": 100,
+    "wallpaper": ""
+  },
+  "display": {
+    "active_profile": "default",
+    "profiles": []
+  },
+  "audio": {
+    "default_sink": "",
+    "volume": 75,
+    "muted": false
+  },
+  "network": {
+    "wifi_enabled": true,
+    "known_networks": []
+  },
+  "bluetooth": {
+    "enabled": true,
+    "paired_devices": []
+  },
+  "keyboard": {
+    "layout": "us",
+    "variant": "",
+    "options": ""
+  },
+  "neovim": {
+    "theme": "tokyonight",
+    "font": "JetBrainsMono",
+    "lines": 40,
+    "columns": 120,
+    "enable_lsp": true,
+    "enable_copilot": true,
+    "enable_neotree": true,
+    "lsp_servers": ["gopls", "pyright"]
+  },
+  "qtile": {
+    "bar_position": "top",
+    "bar_size": 24,
+    "layouts": [],
+    "terminal": "kitty",
+    "browser": "firefox",
+    "default_file_manager": "thunar",
+    "groups": [
+      {"name": "1"},
+      {"name": "2"},
+      {"name": "3"},
+      {"name": "4"},
+      {"name": "5"},
+      {"name": "6"},
+      {"name": "7"},
+      {"name": "8"},
+      {"name": "9"}
+    ]
+  },
+  "services": {
+    "enabled": []
+  }
+}

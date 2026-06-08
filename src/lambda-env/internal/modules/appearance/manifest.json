@@ -1,0 +1,36 @@
+{
+  "name": "appearance",
+  "version": "0.1.0",
+  "description": "Configure appearance: theme, wallpaper, and font size",
+  "description_es": "Configurar apariencia: tema, fondo de pantalla y tamaño de fuente",
+  "category": "system",
+  "requires_root": false,
+  "dependencies": ["feh"],
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "run",
+      "label": "Refresh",
+      "type": "execute"
+    },
+    {
+      "name": "set-theme",
+      "label": "Theme",
+      "type": "select",
+      "field": "appearance.theme",
+      "options": ["dark", "light", "nord", "catppuccin"]
+    },
+    {
+      "name": "set-wallpaper",
+      "label": "Wallpaper Path",
+      "type": "text",
+      "field": "appearance.wallpaper"
+    },
+    {
+      "name": "set-font-size",
+      "label": "Font Size",
+      "type": "text",
+      "field": "appearance.font_size"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "qtile",
+  "version": "0.1.0",
+  "description": "Configure Qtile WM: default terminal, browser, file manager, and reload",
+  "description_es": "Configurar Qtile WM: terminal, navegador, gestor de archivos por defecto y recargar",
+  "category": "apps",
+  "requires_root": false,
+  "dependencies": ["qtile"],
+  "min_hub_version": "1.0.0",
+  "actions": [
+    {
+      "name": "set-terminal",
+      "label": "Default Terminal",
+      "type": "select",
+      "field": "qtile.terminal",
+      "options": ["kitty", "foot", "alacritty", "st", "xterm"]
+    },
+    {
+      "name": "set-browser",
+      "label": "Default Browser",
+      "type": "select",
+      "field": "qtile.browser",
+      "options": ["firefox", "chromium", "brave", "chrome"]
+    },
+    {
+      "name": "set-file-manager",
+      "label": "Default File Manager",
+      "type": "select",
+      "field": "qtile.default_file_manager",
+      "options": ["thunar", "pcmanfm", "nautilus", "dolphin"]
+    },
+    {
+      "name": "reload",
+      "label": "Reload Qtile",
+      "type": "execute"
+    }
+  ]
+}
