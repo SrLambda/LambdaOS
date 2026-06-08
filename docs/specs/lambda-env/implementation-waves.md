@@ -1,5 +1,9 @@
 # lambda-env — Plan de Implementación por Waves
 
+> **Última actualización**: Junio 2026 — Agregada Wave 3.5 (Visual Design Foundation con Nerd Fonts).  
+> **Prototipo de referencia**: `docs/preview/lambda-env/` (22/31 módulos, React + TypeScript).  
+> **Spec UI/UX**: `docs/Specs_lambda-env_UI/UX.md`.
+
 ## Visión
 
 `lambda-env` es la suite de configuración TUI de LambdaOS. Equivale a "GNOME Settings" + "KDE System Settings" pero completamente en terminal.
@@ -10,7 +14,8 @@
 2. **Cambios atómicos** — cada spec es un cambio independiente con su propio commit.
 3. **Monorepo hasta v1.0** — todo en este repo.
 4. **Framework agnóstico** — la TUI no está atada a un lenguaje. El hub descubre y ejecuta módulos como CLI tools independientes.
-5. **Proyecto personal** — waves pequeñas (2-9 specs) para mantener en ventanas de tiempo limitadas.
+5. **Nerd Fonts es el estándar visual** — `nerd-fonts-monoid` incluido en la ISO base. Cada icono tiene fallback Unicode.
+6. **Proyecto personal** — waves pequeñas (2-9 specs) para mantener en ventanas de tiempo limitadas.
 
 ## Estrategia de CI/CD progresiva
 
@@ -23,7 +28,7 @@
 
 ---
 
-## Wave 0: Pipeline + ISO mínima funcional
+## Wave 0: Pipeline + ISO mínima funcional ✅
 
 **Duración estimada**: 2-3 días
 **Specs**: 4
@@ -35,13 +40,11 @@
 | 3 | `pkg-01-flameshot` | Flameshot instalado + keybinding Qtile (Mod+Shift+S) |
 | 4 | `branding-06-iso-name` | ISO con nombre LambdaOS correcto |
 
-**Criterio de salida**: Push a main → CI buildea ISO → ISO bootea en QEMU → Flameshot disponible. ISO se llama `LambdaOS-v0.0.1-x86_64.iso`.
-
-**Dependencias**: Ninguna.
+**Criterio de salida**: Push a main → CI buildea ISO → ISO bootea en QEMU → Flameshot disponible.
 
 ---
 
-## Wave 1: Decisiones arquitectónicas de la TUI
+## Wave 1: Decisiones arquitectónicas de la TUI ✅
 
 **Duración estimada**: 3-5 días
 **Specs**: 3
@@ -52,13 +55,11 @@
 | 6 | `core/01-hub-plugin-system` | Framework elegido, hub binario, descubre módulos |
 | 7 | `infra-01-repo-pacman-setup` | Repo pacman local configurado |
 
-**Criterio de salida**: `lambda-env` ejecuta desde terminal. Muestra menú. El contrato de módulos está definido. Framework decidido (Go/Python agnóstico/bash).
-
-**Dependencias**: Wave 0 (CI funcionando).
+**Criterio de salida**: `lambda-env` ejecuta desde terminal. Contrato de módulos definido.
 
 ---
 
-## Wave 2: Primeros módulos funcionales
+## Wave 2: Primeros módulos funcionales ✅
 
 **Duración estimada**: 5-7 días
 **Specs**: 4
@@ -70,13 +71,9 @@
 | 10 | `ops-05-dotfiles` | TUI stow/unstow → dotfiles aplicados |
 | 11 | `infra-02-repo-package-tui` | TUI instalable como paquete pacman |
 
-**Criterio de salida**: `lambda-env` → Neovim → toggle LSP → nvim abre sin LSP. Stow/unstow desde TUI. `pacman -S lambdaos-tui` funciona.
-
-**Dependencias**: Wave 1 (hub + settings schema).
-
 ---
 
-## Wave 3: TUI Interface + System Modules ✅ COMPLETADO
+## Wave 3: TUI Interface + System Modules ✅
 
 **Estado**: Completado (junio 2026)
 **Duración real**: ~10 días
@@ -86,30 +83,44 @@
 
 | Categoría | Módulo | Acciones |
 |-----------|--------|----------|
-| system | **appearance** | set-theme (dark/light/nord/catppuccin), set-wallpaper, set-font-size |
+| system | **appearance** | set-theme, set-wallpaper, set-font-size |
 | system | **audio** | set-volume, set-mute, set-sink |
-| system | **keyboard** | set-layout (us), set-variant |
-| system | **defaults** | set-browser, set-terminal, set-editor, set-file-manager, apply |
-| apps | **neovim** | toggle-lsp, toggle-copilot, toggle-neotree, set-theme, apply |
+| system | **keyboard** | set-layout, set-variant |
+| system | **defaults** | set-browser/terminal/editor/file-manager, apply |
+| apps | **neovim** | toggle-lsp, toggle-copilot, toggle-neotree, set-theme |
 | apps | **qtile** | set-terminal, set-browser, set-file-manager, reload |
 | ops | **dotfiles** | stow, unstow, backup |
 
-### TUI interface construida
-- **3 vistas jerárquicas**: Categories → Modules → ModuleDetail
-- **Sub-modelos Bubble Tea**: cada vista es un `tea.Model` independiente
-- **5 tipos de widgets**: toggle, select, text, confirm, execute
-- **Help overlay**: `?` muestra teclas disponibles
-- **Status bar**: contexto + nombre de módulo + estado
-- **Confirm dialogs**: para acciones destructivas (unstow, backup)
+### TUI construida
+- 3 vistas jerárquicas: Categories → Modules → ModuleDetail
+- Sub-modelos Bubble Tea
+- 5 tipos de widgets: toggle, select, text, confirm, execute
+- Help overlay (`?`), status bar, confirm dialogs
 
-### Settings schema (v1.1.0)
-17 categorías definidas en `settings.json` — solo 7 tienen módulo implementado.
+---
 
-### Lo que quedó PENDIENTE de la Wave 3 original
-Los siguientes specs del Track B original NO se implementaron y se redistribuyen en Waves 4-6:
-`system-01-screen`, `system-03-network`, `system-04-bluetooth`, `system-05-power`, `system-11-autostart`, `system-12-services`, `system-13-updates`, `system-14-security`, `system-15-fonts`, `system-16-notifications`
+## Wave 3.5: Visual Design Foundation 🆕
 
-**Dependencias**: Wave 2 completa.
+**Duración estimada**: 3-5 días
+**Specs**: 5
+
+Esta wave no agrega módulos nuevos. Establece el **lenguaje visual** que todas las waves futuras usarán. Todo lo construido hasta Wave 3 se actualiza retroactivamente.
+
+| # | Spec | Qué valida | Impacto |
+|---|---|---|---|
+| 3.5.1 | **nerd-fonts-foundation** | `nerd-fonts-monoid` instalado en ISO base. Mapa de iconos cargado al inicio. Detección de disponibilidad + fallback automático a Unicode. | 🔴 Fundacional |
+| 3.5.2 | **module-icon-set** | Cada módulo recibe su icono Nerd Fonts según tabla de diseño. Vista de categorías y módulos actualizada con nuevos iconos. | 🟡 Alto |
+| 3.5.3 | **widget-icons** | Toggle, loading, success, error, warning, search, confirm — todos los widgets migrados a iconos Nerd Fonts. | 🟡 Alto |
+| 3.5.4 | **color-palette-refined** | Paleta de 5 colores ajustada para contraste WCAG AA. Status bar, toggles, y errores verificados contra el spec UI/UX. | 🟢 Medio |
+| 3.5.5 | **prototype-icon-sync** | Los 22 módulos del prototipo React actualizados para usar Nerd Fonts. El prototipo y la implementación Go comparten el mismo set de iconos. | 🟢 Medio |
+
+**Criterio de salida**: 
+- `lambda-env` ejecuta en terminal con Nerd Fonts → todos los iconos renderizan correctamente.
+- Terminal sin Nerd Fonts (raw tty, SSH básico) → fallback Unicode automático, sin glifos rotos.
+- Contraste de colores verificado con tooling (WCAG AA).
+- Prototipo React y código Go comparten el mismo `icon-map.json`.
+
+**Dependencias**: Wave 3 completada.
 
 ---
 
@@ -118,17 +129,17 @@ Los siguientes specs del Track B original NO se implementaron y se redistribuyen
 **Duración estimada**: 7-10 días
 **Specs**: 5
 
-| # | Spec | Qué valida | Tipo |
+| # | Spec | Qué valida | Nerd Fonts |
 |---|---|---|---|
-| 12 | `display-module` | Detectar monitores, cambiar resolución, refresh rate, perfiles → xrandr/wlr-randr | system |
-| 13 | `power-module` | Sleep timeout, lid close action, battery status → systemd-logind + upower | system |
-| 14 | `keyboard-enhanced` | Ampliar layouts (es, la, de, fr), variants, compose key, options → setxkbmap + localectl | system |
-| 15 | `audio-enhanced` | Sink/source selection dinámica, perfiles de audio, volume per-app | system |
-| 16 | `hardware-dashboard` | Vista resumen de hardware: CPU, RAM, disk, temp, battery — solo lectura, actualizable | system |
+| 12 | `display-module` | Detectar monitores, cambiar resolución, refresh rate, perfiles, **countdown 10s con auto-revert** | `` desktop + `` laptop |
+| 13 | `power-module` | Sleep timeout, lid close action, battery status con **iconos de batería 5 niveles** (``→``) | `` bolt + ``→`` |
+| 14 | `keyboard-enhanced` | Layouts (10+), variants, compose key, options → setxkbmap + localectl | `` keyboard |
+| 15 | `audio-enhanced` | Sink/source dinámica, perfiles de audio, **per-app volume sliders** | `` volume |
+| 16 | `hardware-dashboard` | Vista resumen hardware con **barras de progreso** (CPU, RAM, disco, temp) | `` chart |
 
-**Criterio de salida**: TUI gestiona pantalla (resolución, monitores), energía (sleep, batería), teclado (10+ layouts), audio (selección de sinks). Dashboard muestra estado del hardware en tiempo real.
+**Criterio de salida**: TUI gestiona pantalla (countdown auto-revert), energía (iconos batería), audio (per-app volume). Dashboard con progress bars en tiempo real.
 
-**Dependencias**: Wave 3 (hub + settings schema + TUI interface).
+**Dependencias**: Wave 3.5 (Nerd Fonts) + Wave 3 (hub + TUI).
 
 ---
 
@@ -137,61 +148,60 @@ Los siguientes specs del Track B original NO se implementaron y se redistribuyen
 **Duración estimada**: 7-10 días
 **Specs**: 5
 
-| # | Spec | Qué valida | Tipo |
+| # | Spec | Qué valida | Nerd Fonts |
 |---|---|---|---|
-| 17 | `network-module` | WiFi scan/connect/disconnect, Ethernet status, IP info → NetworkManager/nmcli | system |
-| 18 | `bluetooth-module` | Scan, pair, trust, connect, disconnect devices → bluez/bluetoothctl | system |
-| 19 | `known-networks` | Lista de redes conocidas, forget, auto-connect toggle → nmcli connection | system |
-| 20 | `vpn-stubs` | Placeholder para VPN (WireGuard/OpenVPN) — detectar configuraciones existentes | system |
-| 21 | `connection-status` | Widget en status bar: WiFi/BT íconos con estado (connected/disconnected/scanning) | tui |
+| 17 | `network-module` | WiFi scan/connect, **signal bars visuales**, inline connection panel, Ethernet status | `` wifi + `` globe |
+| 18 | `bluetooth-module` | Scan, pair, trust, **disconnect modal**, device list con estados | `` bluetooth |
+| 19 | `known-networks` | Redes conocidas, forget, auto-connect toggle | `` check |
+| 20 | `vpn-stubs` | Placeholder VPN (WireGuard/OpenVPN) | `` lock |
+| 21 | `connection-status-bar` | Widget en status bar con íconos WiFi/BT + estado en tiempo real | `` + `` |
 
-**Criterio de salida**: TUI gestiona WiFi y Bluetooth completamente desde la terminal. Conectarse a una red o pair-ear un dispositivo sin salir de la TUI.
+**Criterio de salida**: WiFi y Bluetooth 100% desde TUI. Conectarse a una red o pair-ear auriculares sin salir de la TUI.
 
-**Dependencias**: Wave 3 (hub + TUI interface).
+**Dependencias**: Wave 3.5 + Wave 3.
 
 ---
 
 ## Wave 6: System Management
 
 **Duración estimada**: 7-10 días
-**Specs**: 7
+**Specs**: ??
 
-| # | Spec | Qué valida | Tipo |
+| # | Spec | Qué valida | Nerd Fonts |
 |---|---|---|---|
-| 22 | `services-module` | Listar, enable, disable, start, stop systemd units → systemctl | system |
-| 23 | `autostart-module` | Gestionar apps que arrancan con sesión → XDG autostart .desktop files | system |
-| 24 | `updates-module` | Check updates disponibles, trigger pacman -Syu, mostrar changelog → pacman + checkupdates | system |
-| 25 | `security-module` | Firewall (ufw enable/disable, allow/deny ports), sudo timeout, screen lock timeout | system |
-| 26 | `fonts-module` | Listar fuentes instaladas, cambiar monospace/sans/serif defaults → fc-list + fontconfig | system |
-| 27 | `notifications-module` | Do not disturb toggle, timeout, per-app rules → dunst config | system |
-| 28 | `system-health` | Dashboard extendido: servicios running, temp, disk usage, últimas actualizaciones | ops |
+| 22 | `services-module` | Listar, enable/disable, start/stop systemd units. **Indicador de estado**: `●` running, `○` stopped, `` failed | `` cogs |
+| 23 | `autostart-module` | apps que arrancan con sesión → XDG autostart .desktop files | `` cog |
+| 24 | `updates-module` | Check updates, trigger pacman -Syu, **progress bar** durante actualización | `` refresh |
+| 25 | `security-module` | Firewall toggle, reglas, SSH/GPG keys, **nivel de seguridad dinámico** (CRÍTICO→MÁXIMO) | `` shield |
+| 26 | `fonts-module` | Listar fuentes, preview con `` + nombre real, instalar/desinstalar | `` font |
+| 27 | `notifications-module` | DND toggle ``, timeout, posición, per-app rules | `` bell |
 
-**Criterio de salida**: TUI gestiona systemd, autostart, paquetes, firewall, fuentes y notificaciones. Dashboard de salud del sistema funcional.
+**Criterio de salida**: TUI gestiona systemd, autostart, paquetes, firewall, fuentes y notificaciones. Nivel de seguridad dinámico funcional.
 
-**Dependencias**: Wave 3 (hub + TUI interface). Puede correr en paralelo con Waves 4 y 5.
+**Dependencias**: Wave 3.5 + Wave 3. Puede correr en paralelo con Waves 4 y 5.
 
 ---
 
-## Wave 7: TUI UX Enhancement — Cross-cutting
+## Wave 7: UX Enhancement — Cross-cutting
 
 **Duración estimada**: 10-14 días
 **Specs**: 7
 
-Esta wave no agrega módulos nuevos. Mejora la experiencia de uso de TODOS los módulos existentes.
+Esta wave no agrega módulos nuevos. Eleva la experiencia de TODOS los módulos existentes al nivel del prototipo.
 
 | # | Spec | Qué valida | Impacto |
 |---|---|---|---|
-| 29 | `global-search` | `Ctrl+F` busca a través de TODOS los settings de todos los módulos. Resultados navegables con Enter para ir directo al setting. | 🔴 Crítico |
-| 30 | `breadcrumbs` | Ruta de navegación visible y clickeable: `Sistema → Teclado → Layout`. Cada segmento es navegable. | 🟡 Alto |
-| 31 | `restore-defaults` | "Reset to default" por módulo y global. Diálogo de confirmación. Defaults definidos en el schema. | 🟡 Alto |
-| 32 | `import-export` | Exportar `settings.json` completo a un archivo. Importar desde archivo con validación + merge. Soporte para profiles. | 🟡 Alto |
-| 33 | `real-time-preview` | Cambios de tema, fuente, wallpaper se aplican en tiempo real sin "Apply" explícito. Acciones no destructivas son instantáneas. | 🟢 Medio |
-| 34 | `theme-sync` | `use_global_theme` conectado: cambiar tema en appearance → neovim y qtile reflejan el cambio automáticamente. Resuelve el open question de Wave 3. | 🟡 Alto |
-| 35 | `settings-diff` | Antes de aplicar cambios, mostrar diff de qué cambió. Opción de undo por sesión. | 🟢 Medio |
+| 28 | **header-bar** | Header con **breadcrumb clickable** + **reloj** (`tea.Tick`) + **hint de búsqueda** (`/`). Visible en todas las vistas. | 🔴 Crítico |
+| 29 | **global-search** | `Ctrl+F` o `/` busca en TODOS los settings. **Overlay** con resultados navegables. Enter va directo al setting. | 🔴 Crítico |
+| 30 | **section-collapse** | `TUISection` colapsable con ``/``. Usado retroactivamente en todos los módulos existentes. | 🔴 Crítico |
+| 31 | **loading-states** | Botones con estados `` (loading), `` (done), `` (error). Aplicado retroactivamente. | 🟡 Alto |
+| 32 | **slider-widget** | `TUISlider` con `←/→`, track visual, min/max labels. Reemplaza inputs numéricos en audio, display, power, neovim, qtile. | 🟡 Alto |
+| 33 | **restore-defaults** | "Reset to default" por módulo y global. Diálogo `` confirmación. Defaults del schema. | 🟡 Alto |
+| 34 | **import-export** | Exportar/importar `settings.json` con validación + merge. Soporte para profiles. | 🟢 Medio |
 
-**Criterio de salida**: La TUI se siente como una app de settings profesional. Buscar "wifi" te lleva al módulo de red. Los breadcrumbs te dicen dónde estás. Restaurar defaults es un comando. Exportás tu config y la importás en otra máquina.
+**Criterio de salida**: La TUI se siente como una app profesional. Buscar "wifi" te lleva al módulo de red. Breadcrumbs te dicen dónde estás. Botones tienen feedback visual. Secciones colapsables organizan módulos complejos.
 
-**Dependencias**: Waves 3-6 completas (necesita todos los módulos para search y theme-sync).
+**Dependencias**: Waves 3.5 + 4 + 5 + 6 completas (necesita todos los módulos para search global).
 
 ---
 
@@ -200,21 +210,21 @@ Esta wave no agrega módulos nuevos. Mejora la experiencia de uso de TODOS los m
 **Duración estimada**: 7-10 días
 **Specs**: 9
 
-| # | Spec | Qué valida | Tipo |
+| # | Spec | Qué valida | Nerd Fonts |
 |---|---|---|---|
-| 36 | `apps-screenshot` | Configurar Flameshot: tecla, formato, destino → flameshot config | apps |
-| 37 | `apps-recording` | Configurar OBS: escenas, fuentes, calidad → obs-websocket | apps |
-| 38 | `apps-terminal` | Configurar Kitty: fuente, tema, opacidad → kitty.conf | apps |
-| 39 | `apps-filemanager` | Configurar Yazi: tema, preview, plugins → yazi.toml | apps |
-| 40 | `apps-ai` | Configurar OpenCode: modelo, API key, contexto → opencode.json | apps |
-| 41 | `ops-monitor` | htop-like dentro de la TUI: procesos, CPU, memoria, red | ops |
-| 42 | `ops-storage` | Discos, particiones, espacio libre → lsblk + df | ops |
-| 43 | `ops-logs` | Viewer de journalctl con filtros (service, priority, time) | ops |
-| 44 | `ops-backup` | Snapshots BTRFS + snapper: list, create, rollback | ops |
+| 35 | `apps-screenshot` | Flameshot: tecla, formato, destino | `` camera |
+| 36 | `apps-recording` | OBS: escenas, fuentes, calidad | `` film |
+| 37 | `apps-terminal` | Kitty/Alacritty: fuente, tema, opacidad | `` terminal |
+| 38 | `apps-filemanager` | Yazi: tema, preview, plugins | `` folder |
+| 39 | `apps-ai` | OpenCode: modelo, API key, contexto | `` brain |
+| 40 | `ops-monitor` | htop-like TUI: procesos, CPU, memoria, red | `` chart |
+| 41 | `ops-storage` | Discos, particiones, **progress bars** por uso | `` hdd |
+| 42 | `ops-logs` | **journalctl viewer con follow en vivo**, filtros, colores severidad 8 niveles, **iconos ``/``/``** | `` file_text |
+| 43 | `ops-backup` | Snapshots BTRFS + snapper: list, create, rollback | `` archive |
 
-**Criterio de salida**: Todas las apps del ecosistema LambdaOS son configurables desde la TUI. Monitor, storage, logs y backup funcionales.
+**Criterio de salida**: Apps del ecosistema configurables desde TUI. Logs con follow en vivo. Storage con progress bars.
 
-**Dependencias**: Wave 4 (OBS), Wave 5 (OpenCode), Wave 3 (hub).
+**Dependencias**: Wave 3.5 + Waves 3-6.
 
 ---
 
@@ -223,45 +233,42 @@ Esta wave no agrega módulos nuevos. Mejora la experiencia de uso de TODOS los m
 **Duración estimada**: 10-14 días
 **Specs**: 9
 
-| # | Spec | Qué valida | Tipo |
+| # | Spec | Qué valida | Nerd Fonts |
 |---|---|---|---|
-| 45 | `setup-wizard` | Wizard de primer boot: idioma, teclado, timezone, usuario, tema, apps default | setup |
-| 46 | `setup-profiles` | Perfiles predefinidos: dev (gcc, go, rust, docker), gaming (steam, lutris, wine), rescue (herramientas de sistema) | setup |
-| 47 | `users-module` | Crear/eliminar usuarios, grupos, cambiar contraseña, auto-login → useradd + passwd | system |
-| 48 | `datetime-module` | Timezone, NTP toggle, formato 12/24h → timedatectl | system |
-| 49 | `regional-module` | Locale, idioma del sistema, formato de números/moneda → localectl + locale.conf | system |
-| 50 | `accessibility-basic` | Alto contraste, texto grande, sticky keys → gsettings + config files | system |
-| 51 | `installer-calamares` | Integración Calamares: scaffolding, módulos, branding LambdaOS, launcher desde TUI | installer |
-| 52 | `installer-disk` | Particionado guiado: automático, manual simple, LUKS opcional | installer |
-| 53 | `system-advanced-dashboard` | Vista integrada de Users + Datetime + Regional + Accessibility | system |
+| 44 | `setup-wizard` | Wizard primer boot: idioma, teclado, timezone, usuario, tema | `` wizard |
+| 45 | `setup-profiles` | Perfiles: dev (gcc, go, rust), gaming (steam, lutris), rescue | `` cubes |
+| 46 | `users-module` | Crear/eliminar usuarios, grupos, contraseña, **avatares con iniciales** `[L]` | `` user |
+| 47 | `datetime-module` | Timezone, NTP toggle, formato 12/24h, **reloj grande** en vista | `` clock |
+| 48 | `regional-module` | Locale, idioma, formato números/moneda | `` globe |
+| 49 | `accessibility-basic` | Alto contraste, texto grande, sticky keys | `` universal_access |
+| 50 | `installer-calamares` | Integración Calamares: scaffolding, branding LambdaOS | `` download |
+| 51 | `installer-disk` | Particionado guiado: automático, manual, LUKS opcional | `` hdd |
+| 52 | `system-advanced-dashboard` | Vista integrada: Users + Datetime + Regional + Accessibility | `` cog |
 
-**Criterio de salida**: Primer boot wizard funcional. Usuario creado con wizard. ISO instalable en disco con Calamares. Timezone y locale configurables desde TUI.
+**Criterio de salida**: Primer boot wizard funcional. ISO instalable con Calamares. Timezone/locale configurables.
 
-**Dependencias**: Waves 3-6 (system modules), Wave 8 (apps), Wave 0 (CI).
+**Dependencias**: Waves 3-7.
 
 ---
 
-## Wave 10: Advanced & Release
+## Wave 10: Advanced & Release (v1.0.0)
 
 **Duración estimada**: 10-14 días
 **Specs**: 9
 
-| # | Spec | Qué valida | Tipo |
-|---|---|---|---|
-| 54 | `printers-module` | Detectar impresoras, añadir, cola de trabajos → CUPS + system-config-printer | system |
-| 55 | `online-accounts` | Conectar Google, Nextcloud (stubs con OAuth2 placeholder) → GNOME Online Accounts o similar | system |
-| 56 | `sharing-module` | Compartir pantalla (VNC), archivos (Samba stubs) | system |
-| 57 | `accessibility-advanced` | Lector de pantalla (Orca), teclado en pantalla, opciones de contraste avanzadas | system |
-| 58 | `polish-sysctl` | Optimizaciones sysctl (swappiness, cache pressure, network buffers) | polish |
-| 59 | `polish-services` | Servicios por defecto auditados y optimizados (mask/unmask innecesarios) | polish |
-| 60 | `polish-mkinitcpio` | Initramfs optimizado (hook systemd, compresión zstd, early KMS) | polish |
-| 61 | `cd-automation` | Push tag → CI buildea ISO, corre smoke + feature + install tests, crea GitHub Release | ci-cd |
-| 62 | `public-demo` | Demo interactiva en GitHub Pages: TUI navegable via terminal emulator WASM | demo |
+| # | Spec | Qué valida |
+|---|---|---|
+| 53 | `printers-module` | Detectar impresoras, añadir, cola → CUPS |
+| 54 | `online-accounts` | Conectar Google, Nextcloud (OAuth2 stubs) |
+| 55 | `sharing-module` | Compartir pantalla (VNC), archivos (Samba stubs) |
+| 56 | `accessibility-advanced` | Lector pantalla (Orca), teclado en pantalla |
+| 57 | `polish-sysctl` | swappiness, cache pressure, network buffers |
+| 58 | `polish-services` | Servicios auditados y optimizados |
+| 59 | `polish-mkinitcpio` | Initramfs optimizado (systemd, zstd, early KMS) |
+| 60 | `cd-automation` | Push tag → CI build + test + release automático |
+| 61 | `public-demo` | Demo interactiva en GitHub Pages (terminal WASM) |
 
-**Criterio de salida**: Distro completa. Push tag → release automático. Demo pública navegable. Sistema optimizado.
-**Versión**: `v1.0.0` — Release público.
-
-**Dependencias**: Todo lo anterior. Esta es la wave de salida.
+**Criterio de salida**: **LambdaOS v1.0.0**. Release público.
 
 ---
 
@@ -270,17 +277,18 @@ Esta wave no agrega módulos nuevos. Mejora la experiencia de uso de TODOS los m
 | Wave | Estado | Días | Specs | Entregable clave |
 |---|---|---|---|---|
 | **0** | ✅ | 2-3 | 4 | CI buildea ISO |
-| **1** | ✅ | 3-5 | 3 | Hub + settings schema + repo pacman |
-| **2** | ✅ | 5-7 | 4 | Neovim, Qtile, Dotfiles configurables |
-| **3** | ✅ | 10 | 7 módulos | TUI interactiva, 7 módulos system/apps/ops |
-| **4** | 🔲 | 7-10 | 5 | Display, power, keyboard+, audio+, dashboard |
-| **5** | 🔲 | 7-10 | 5 | WiFi, Bluetooth, known networks, VPN stubs |
-| **6** | 🔲 | 7-10 | 7 | Services, autostart, updates, security, fonts, notifications |
-| **7** | 🔲 | 10-14 | 7 | Search global, breadcrumbs, restore defaults, import/export, preview, theme sync |
-| **8** | 🔲 | 7-10 | 9 | Apps (screenshot, recording, terminal, fm, AI) + Ops (monitor, storage, logs, backup) |
-| **9** | 🔲 | 10-14 | 9 | Wizard, perfiles, users, datetime, regional, accessibility, Calamares |
-| **10** | 🔲 | 10-14 | 9 | Printers, online accounts, sharing, polish, CD auto, demo, v1.0.0 |
-| **Total** | | **80-109 días** | **62 specs** | **LambdaOS v1.0.0** |
+| **1** | ✅ | 3-5 | 3 | Hub + settings schema |
+| **2** | ✅ | 5-7 | 4 | Neovim, Qtile, Dotfiles |
+| **3** | ✅ | 10 | 7 módulos | TUI interactiva, 7 módulos |
+| **3.5** 🆕 | 🔲 | 3-5 | 5 | Nerd Fonts foundation, iconos, paleta WCAG AA |
+| **4** | 🔲 | 7-10 | 5 | Hardware (display countdown, per-app audio, dashboard) |
+| **5** | 🔲 | 7-10 | 5 | Connectivity (WiFi signal bars, BT modals) |
+| **6** | 🔲 | 7-10 | 6 | System (services status, security level, fonts preview) |
+| **7** | 🔲 | 10-14 | 7 | UX (header, search, sections, loading, slider, undo) |
+| **8** | 🔲 | 7-10 | 9 | Apps + Ops (logs follow, storage progress) |
+| **9** | 🔲 | 10-14 | 9 | Setup, users, wizard, Calamares |
+| **10** | 🔲 | 10-14 | 9 | Advanced, polish, CD, demo, **v1.0.0** |
+| **Total** | | **83-112 días** | **61 specs** | **LambdaOS v1.0.0** |
 
 ---
 
@@ -295,26 +303,31 @@ Wave 0 (CI + pipeline) ✅
               │
               └─→ Wave 3 (TUI interface + 7 system modules) ✅
                     │
-                    ├─→ Wave 4 (hardware: display, power, keyboard, audio)
-                    │     │
-                    │     └─→ Wave 8 (apps + ops)
-                    │
-                    ├─→ Wave 5 (connectivity: network, bluetooth)
-                    │     │
-                    │     └─→ Wave 8 (apps + ops)
-                    │
-                    └─→ Wave 6 (system: services, autostart, updates, security, fonts, notifications)
+                    └─→ Wave 3.5 (VISUAL DESIGN: Nerd Fonts + iconos + paleta) 🆕
                           │
-                          ├─→ Wave 7 (UX: search, breadcrumbs, restore, import/export, preview, sync)
+                          ├─→ Wave 4 (hardware: display, power, keyboard, audio, dash)
                           │     │
-                          │     └─→ Wave 9 (setup, users, regional, installer)
-                          │           │
-                          │           └─→ Wave 10 (advanced, polish, CD, demo → v1.0.0)
+                          │     └─→ Wave 8 (apps + ops)
                           │
-                          └─→ Wave 9 (setup, users, regional, installer)
+                          ├─→ Wave 5 (connectivity: network, bluetooth)
+                          │     │
+                          │     └─→ Wave 8 (apps + ops)
+                          │
+                          └─→ Wave 6 (system: services, autostart, updates, security, fonts, notif)
+                                │
+                                ├─→ Wave 7 (UX: header, search, sections, loading, slider, undo)
+                                │     │
+                                │     └─→ Wave 9 (setup, users, regional, installer)
+                                │           │
+                                │           └─→ Wave 10 (advanced, polish, CD, demo → v1.0.0)
+                                │
+                                └─→ Wave 9 (setup, users, regional, installer)
 ```
 
-**Nota**: Waves 4, 5 y 6 pueden desarrollarse en paralelo (no dependen entre sí, solo de Wave 3).
+**Notas**:
+- Waves 4, 5 y 6 pueden desarrollarse en paralelo (solo dependen de Wave 3.5).
+- Wave 3.5 es requisito para TODO lo que sigue. Ningún módulo nuevo se construye sin Nerd Fonts.
+- Wave 7 (UX) requiere Waves 4-6 completas para aplicar los enhancements a todos los módulos.
 
 ---
 
@@ -323,7 +336,7 @@ Wave 0 (CI + pipeline) ✅
 1. No avanzar a la siguiente wave sin que la ISO de la wave actual buildea y bootea en QEMU.
 2. Cada spec dentro de una wave es un commit independiente (o PR encadenado si excede 400 líneas).
 3. Si una wave se bloquea por una decisión arquitectónica, documentar la decisión y continuar.
-4. Las waves 4, 5 y 6 pueden desarrollarse en paralelo entre sí (solo dependen de Wave 3).
-5. La Wave 7 (UX) requiere Waves 4-6 completas para indexar todos los módulos en el search global.
-6. A partir de Wave 4, cada módulo nuevo usa el patrón establecido en Wave 3: `manifest.json` + binario Go en `internal/modules/<name>/`.
-7. Las especificaciones vivas están en `openspec/specs/`. Las specs de planning histórico están en `docs/specs/lambda-env/`.
+4. Waves 4, 5 y 6 pueden desarrollarse en paralelo entre sí.
+5. A partir de Wave 3.5, **todo módulo nuevo debe usar iconos Nerd Fonts con fallback Unicode**.
+6. El prototipo React en `docs/preview/lambda-env/` debe mantenerse sincronizado con los cambios de diseño visual.
+7. Las especificaciones vivas usan Engram como artifact store (sin archivos `openspec/` en el repo).
